@@ -95,9 +95,13 @@ class FusionEngine:
         self._calibrator.reset()
 
     def update_acoustic(self, score: AcousticScore) -> None:
-        self._last_acoustic = score
+        # Sticky speech scores: non-speech frames must not wipe acoustic
+        # evidence (otherwise deepfake-probe risk collapses between words).
         if score.is_speech:
+            self._last_acoustic = score
             self._ac_hist.append(score.synthetic_prob)
+        elif self._last_acoustic is None:
+            self._last_acoustic = score
 
     def update_linguistic(self, score: LinguisticScore) -> None:
         self._last_linguistic = score
@@ -121,8 +125,20 @@ class FusionEngine:
         ac = self._last_acoustic
         li = self._last_linguistic
 
-        synth = ac.synthetic_prob if ac and ac.is_speech else 0.0
-        ac_conf = ac.confidence if ac and ac.is_speech else 0.0
+        # Prefer peak recent acoustic evidence (sticky last speech + window max)
+        synth_last = ac.synthetic_prob if ac and ac.is_speech else (
+            ac.synthetic_prob if ac else 0.0
+        )
+        if ac and not ac.is_speech and self._ac_hist:
+            synth_last = float(self._ac_hist[-1])
+        synth_peak = float(max(self._ac_hist)) if self._ac_hist else synth_last
+        # Blend peak (probe sensitivity) with last (stability)
+        synth = 0.55 * synth_peak + 0.45 * synth_last
+        # Residual cue when available strengthens deepfake evidence under mild language
+        residual_cue = float(getattr(ac, "residual_cue", 0.0) or 0.0) if ac else 0.0
+        synth_eff = float(np.clip(max(synth, 0.65 * residual_cue + 0.35 * synth), 0.0, 1.0))
+
+        ac_conf = ac.confidence if ac and (ac.is_speech or self._ac_hist) else 0.0
         fraud = li.fraud_prob if li else 0.0
         li_conf = li.confidence if li else 0.0
         escalation = li.escalation_factor if li else 1.0
@@ -134,11 +150,11 @@ class FusionEngine:
         if ts is None:
             ts = (ac.timestamp_sec if ac else None) or (li.timestamp_sec if li else 0.0)
 
-        # Confidence-weighted stream blend
+        # Confidence-weighted stream blend (use synth_eff for decision path)
         aw = self.acoustic_weight * (0.5 + 0.5 * ac_conf)
         lw = self.linguistic_weight * (0.5 + 0.5 * li_conf)
         wsum = aw + lw + 1e-8
-        base = (aw * synth + lw * fraud) / wsum * (self.acoustic_weight + self.linguistic_weight)
+        base = (aw * synth_eff + lw * fraud) / wsum * (self.acoustic_weight + self.linguistic_weight)
 
         # Joint trajectory
         self._history.append(base)
@@ -157,13 +173,24 @@ class FusionEngine:
         if coact > 0.35:
             base *= 1.0 + 0.55 * coact
 
-        # Regime-specific adjustments
-        # Social engineering: trust language more
-        if fraud > 0.55 and synth < 0.35:
-            base = max(base, 0.85 * fraud * min(escalation, 2.0))
-        # Deepfake probe: elevate even with mild language
-        if synth > 0.55 and fraud < 0.3:
-            base = max(base, 0.75 * synth)
+        # Regime-specific adjustments (core CSCF novelty vs naive weighted sum)
+        # Social engineering: human (or uncertain) voice + hostile script →
+        # language dominates. Without this, acoustic "human" evidence would
+        # incorrectly suppress a clear vishing path.
+        if fraud >= 0.45 and synth_eff < 0.50:
+            se_floor = 0.90 * fraud * min(max(escalation, 1.0), 2.0)
+            if depth >= 3:
+                se_floor = max(se_floor, 0.55 + 0.08 * min(depth, 6))
+            base = max(base, se_floor)
+        # Deepfake probe: synthetic residual/voice with mild language still elevates
+        if synth_eff >= 0.35 and fraud < 0.40:
+            base = max(base, 0.85 * synth_eff + 0.05 * fraud)
+        # Dual threat: both elevated → super-linear (beyond coactivation)
+        if synth_eff >= 0.45 and fraud >= 0.45:
+            base = max(base, 0.5 * (synth_eff + fraud) + 0.25 * min(synth_eff, fraud))
+
+        # Expose effective acoustic probability in output fields
+        synth = synth_eff
 
         risk = float(np.clip(base, 0.0, 1.0))
 

@@ -4,7 +4,7 @@ Research-grade **streaming dual-stream detection engine** for real-time joint **
 
 This repository is the technical core for a differentiated national-interest research and engineering agenda. It is deliberately separate from the consumer Expo application so detection science can be developed, evaluated, and claimed independently.
 
-## Novel stack (v0.2)
+## Research stack (v0.2) — implemented, measured, prior-art grounded
 
 | Acronym | Subsystem | Role |
 |---------|-----------|------|
@@ -16,7 +16,19 @@ This repository is the technical core for a differentiated national-interest res
 | **CSR** | Conformal Streaming Risk | Uncertainty bands + abstention |
 | **CTE** | Counterfactual Threat Explanations | Minimal interventions that drop risk |
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/NOVELTY.md](docs/NOVELTY.md).
+**Evidence, not slogans:**
+
+- [docs/PRIOR_ART.md](docs/PRIOR_ART.md) — landscape vs this system  
+- [docs/RESEARCH.md](docs/RESEARCH.md) — claim → code → experiment map  
+- [docs/NOVELTY.md](docs/NOVELTY.md) — what is / is not claimed  
+- [docs/PATENT_PATHWAY.md](docs/PATENT_PATHWAY.md) — **official USPTO/WIPO filing links**  
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — system design  
+
+```bash
+pytest -q
+python scripts/run_benchmark.py
+python scripts/run_ablation.py   # falsification gates for novelty claims
+```
 
 ## Architecture
 
