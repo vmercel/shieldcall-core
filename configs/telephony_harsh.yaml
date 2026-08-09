@@ -1,0 +1,24 @@
+# Stress profile: G.711 + noise + packet loss (VoIP / degraded PSTN)
+audio:
+  target_sr: 8000
+  frame_ms: 25.0
+  hop_ms: 10.0
+  channel_profile: harsh_voip
+
+fusion:
+  acoustic_weight: 0.35
+  linguistic_weight: 0.65
+  suspicious_threshold: 0.32
+  high_risk_threshold: 0.58
+  use_conformal: true
+  conformal_alpha: 0.15
+
+acoustic:
+  strf_weight: 0.50
+  prototype_weight: 0.50
+  history_frames: 40
+
+linguistic:
+  window_seconds: 60.0
+  pattern_weight: 0.50
+  discourse_weight: 0.50

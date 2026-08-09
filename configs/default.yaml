@@ -1,0 +1,24 @@
+# ShieldCall Core — default operating profile
+audio:
+  target_sr: 8000
+  frame_ms: 25.0
+  hop_ms: 10.0
+  channel_profile: narrowband
+
+fusion:
+  acoustic_weight: 0.40
+  linguistic_weight: 0.60
+  suspicious_threshold: 0.35
+  high_risk_threshold: 0.62
+  use_conformal: true
+  conformal_alpha: 0.10
+
+acoustic:
+  strf_weight: 0.45
+  prototype_weight: 0.55
+  history_frames: 30
+
+linguistic:
+  window_seconds: 45.0
+  pattern_weight: 0.55
+  discourse_weight: 0.45

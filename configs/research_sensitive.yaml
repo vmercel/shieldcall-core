@@ -1,0 +1,24 @@
+# High-sensitivity research profile (more alerts, wider conformal bands)
+audio:
+  target_sr: 8000
+  frame_ms: 20.0
+  hop_ms: 10.0
+  channel_profile: g711_ulaw
+
+fusion:
+  acoustic_weight: 0.45
+  linguistic_weight: 0.55
+  suspicious_threshold: 0.28
+  high_risk_threshold: 0.55
+  use_conformal: true
+  conformal_alpha: 0.05
+
+acoustic:
+  strf_weight: 0.40
+  prototype_weight: 0.60
+  history_frames: 50
+
+linguistic:
+  window_seconds: 45.0
+  pattern_weight: 0.45
+  discourse_weight: 0.55
