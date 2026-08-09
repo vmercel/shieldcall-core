@@ -1,5 +1,5 @@
 """
-ASR bridge — pluggable streaming transcript interface.
+ASR bridge  -  pluggable streaming transcript interface.
 
 ShieldCall never requires a specific ASR vendor. Any system that can
 emit partial/final text fragments with timestamps can feed the
@@ -53,7 +53,7 @@ class PassthroughASR(ASRBridge):
 class ScheduledTranscriptASR(ASRBridge):
     """
     Demo/eval ASR that emits scheduled (time, text) pairs when stream
-    time reaches each cue — no real speech recognition required.
+    time reaches each cue  -  no real speech recognition required.
     """
 
     def __init__(self, schedule: Optional[List[tuple[float, str]]] = None):

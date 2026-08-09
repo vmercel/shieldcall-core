@@ -5,12 +5,12 @@ Scam Discourse Trajectory Graph (SDTG)
 Keyword lists miss the *script structure* of social-engineering calls.
 Real scams walk a progressive path:
 
-  GREETING → AUTHORITY → PROBLEM → URGENCY → HARVEST → PAYMENT → SECRECY → THREAT
+  GREETING  ->  AUTHORITY  ->  PROBLEM  ->  URGENCY  ->  HARVEST  ->  PAYMENT  ->  SECRECY  ->  THREAT
 
 SDTG models this as a probabilistic stage machine. Emissions come from
 pattern groups; transitions encode how professional scammers escalate.
 The path-likelihood of the observed stage sequence is a signal no
-static bag-of-words detector can produce — and it fires earlier when
+static bag-of-words detector can produce  -  and it fires earlier when
 the *trajectory* is scam-like even before the payment ask.
 
 Novelty: continuous, streaming stage inference with path log-likelihood
@@ -215,7 +215,7 @@ class ScamDiscourseGraph:
     def _path_to_score(self) -> float:
         """
         Map progression depth + path structure to [0,1].
-        Deep progression through scam stages → high score.
+        Deep progression through scam stages  ->  high score.
         """
         depth = self._progression_depth()
         # Unique scam stages visited (exclude BENIGN/GREETING lightly)

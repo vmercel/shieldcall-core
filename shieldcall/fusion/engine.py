@@ -9,7 +9,7 @@ Key mechanisms:
   1. Asymmetric stream weights (language often leads in vishing).
   2. Joint-score trajectory (rising risk is itself a feature).
   3. Cross-modal co-activation: both streams hot within a causal
-     window → super-additive risk (deepfake-enabled social engineering).
+     window  ->  super-additive risk (deepfake-enabled social engineering).
   4. Disagreement regimes: high fraud + low synth = human social
      engineer; high synth + low fraud = deepfake probe / spoof.
   5. Conformal calibration bands + optional abstention.
@@ -174,7 +174,7 @@ class FusionEngine:
             base *= 1.0 + 0.55 * coact
 
         # Regime-specific adjustments (core CSCF novelty vs naive weighted sum)
-        # Social engineering: human (or uncertain) voice + hostile script →
+        # Social engineering: human (or uncertain) voice + hostile script  -> 
         # language dominates. Without this, acoustic "human" evidence would
         # incorrectly suppress a clear vishing path.
         if fraud >= 0.45 and synth_eff < 0.50:
@@ -185,7 +185,7 @@ class FusionEngine:
         # Deepfake probe: synthetic residual/voice with mild language still elevates
         if synth_eff >= 0.35 and fraud < 0.40:
             base = max(base, 0.85 * synth_eff + 0.05 * fraud)
-        # Dual threat: both elevated → super-linear (beyond coactivation)
+        # Dual threat: both elevated  ->  super-linear (beyond coactivation)
         if synth_eff >= 0.45 and fraud >= 0.45:
             base = max(base, 0.5 * (synth_eff + fraud) + 0.25 * min(synth_eff, fraud))
 

@@ -7,7 +7,7 @@ from shieldcall.eval.harness import run_full_benchmark
 
 
 def main() -> None:
-    print("ShieldCall Core — full synthetic benchmark")
+    print("ShieldCall Core  -  full synthetic benchmark")
     print("=" * 72)
     results = run_full_benchmark(seed=0)
     for name, r in results.items():

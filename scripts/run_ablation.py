@@ -189,7 +189,7 @@ def ablation_adaptation() -> List[Row]:
 
 def ablation_regimes() -> List[Row]:
     """
-    Hard cases where modalities disagree — this is where CSCF must
+    Hard cases where modalities disagree  -  this is where CSCF must
     catch threats that unimodal detectors miss.
     """
     from shieldcall.eval.harness import _synth_tone, _synth_vocoder_like
@@ -259,7 +259,7 @@ def ablation_regimes() -> List[Row]:
             "acoustic_only_on_social_eng",
             "risk",
             ac_se,
-            "often low — shows why fusion is needed",
+            "often low  -  shows why fusion is needed",
         )
     )
 
@@ -270,7 +270,7 @@ def ablation_regimes() -> List[Row]:
 
 
 def main() -> None:
-    print("ShieldCall Core — Research Ablations")
+    print("ShieldCall Core  -  Research Ablations")
     print("=" * 72)
     all_rows: List[Row] = []
     sections = [
@@ -348,7 +348,7 @@ def main() -> None:
             failed += 1
     print("=" * 72)
     if failed:
-        print(f"{failed} gate(s) FAILED — do not freeze patent claim language on those claims.")
+        print(f"{failed} gate(s) FAILED  -  do not freeze patent claim language on those claims.")
         raise SystemExit(1)
     print("All gates passed on current synthetic suite.")
 

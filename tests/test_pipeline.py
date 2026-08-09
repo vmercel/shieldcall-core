@@ -52,7 +52,7 @@ def test_challenge_response():
     ch = cr.issue()
     assert "prompt" in ch
     assert "nonce" in ch
-    # Fresh challenge — nonce match must pass
+    # Fresh challenge  -  nonce match must pass
     ch = cr.issue()
     assert cr.verify_transcript(f"the code is {ch['nonce']}") is True
     # After consume, a new challenge is required

@@ -1,5 +1,5 @@
 """
-Adaptation interface — confirmed examples for online acoustic updates.
+Adaptation interface  -  confirmed examples for online acoustic updates.
 """
 
 from __future__ import annotations
@@ -58,7 +58,7 @@ class ChallengeResponseProtocol:
     Novelty: instead of passive detection only, ShieldCall can request
     a challenge (repeat phrase, change speaking rate, answer a nonce)
     and use the acoustic response as a high-trust adaptation / verify
-    signal — closing the loop between detection and enrollment of new
+    signal  -  closing the loop between detection and enrollment of new
     synthesizer failure modes.
     """
 

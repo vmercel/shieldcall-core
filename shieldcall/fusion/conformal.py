@@ -8,7 +8,7 @@ emits prediction sets / abstention when the model is not confident
 enough under the user-chosen error rate.
 
 Unlike fixed thresholds, conformal bands adapt to the operating
-distribution — critical when new synthesizers shift acoustic scores.
+distribution  -  critical when new synthesizers shift acoustic scores.
 """
 
 from __future__ import annotations

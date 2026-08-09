@@ -1,4 +1,4 @@
-# ShieldCall Core — default operating profile
+# ShieldCall Core  -  default operating profile
 audio:
   target_sr: 8000
   frame_ms: 25.0

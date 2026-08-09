@@ -12,7 +12,7 @@ This module tracks:
   - Per-family competence scores
 
 It turns adaptation from a vague aspiration into a measurable control
-loop — a first-class research metric for the national-interest agenda.
+loop  -  a first-class research metric for the national-interest agenda.
 """
 
 from __future__ import annotations

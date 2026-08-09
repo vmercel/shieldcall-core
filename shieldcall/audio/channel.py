@@ -6,8 +6,8 @@ A generative model of the telephone path that real calls traverse before
 reaching any detector. Unlike clean-lab evaluation, TCT synthesizes the
 compound distortions that erase or invent deepfake cues:
 
-  - G.711 µ-law quantization (8-bit, companded)
-  - Telephone bandlimiting (300–3400 Hz)
+  - G.711 mu-law quantization (8-bit, companded)
+  - Telephone bandlimiting (300-3400 Hz)
   - Packet loss with waveform-domain concealment artifacts
   - Additive line noise and SNR control
   - Optional jitter / frame drop clustering
@@ -46,7 +46,7 @@ class ChannelConfig:
 
 
 def _ulaw_encode_decode(x: np.ndarray, mu: float = 255.0) -> np.ndarray:
-    """µ-law compress → 8-bit quantize → expand (G.711 approximation)."""
+    """mu-law compress  ->  8-bit quantize  ->  expand (G.711 approximation)."""
     x = np.clip(x.astype(np.float64), -1.0, 1.0)
     sign = np.sign(x)
     abs_x = np.abs(x)
@@ -88,7 +88,7 @@ def _packet_loss(
 ) -> np.ndarray:
     """
     Drop packets and apply simple PLC (packet loss concealment):
-    repeat last good packet with mild attenuation — a common source of
+    repeat last good packet with mild attenuation  -  a common source of
     artificial periodicity that naive deepfake detectors misread.
     """
     if loss_rate <= 0.0:

@@ -2,7 +2,7 @@
 Streaming multi-feature voice activity detection for telephony audio.
 
 Combines energy, zero-crossing rate, and spectral flatness with hangover
-logic so short unvoiced consonants are not chopped — critical for both
+logic so short unvoiced consonants are not chopped  -  critical for both
 acoustic residual analysis and transcript alignment.
 """
 

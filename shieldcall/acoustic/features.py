@@ -97,7 +97,7 @@ def extract_frame_features(frame: np.ndarray, sr: int = 8000) -> np.ndarray:
     else:
         strf = strf[:16]
 
-    # MFCC-lite: log-mel filterbank DCT (telephone-aware 20 bands → 16 coeffs)
+    # MFCC-lite: log-mel filterbank DCT (telephone-aware 20 bands  ->  16 coeffs)
     n_mels = 20
     # Simple triangular mel filters on existing magnitude
     mel_lo = 2595 * np.log10(1 + 300 / 700)  # telephone low

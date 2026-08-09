@@ -79,7 +79,7 @@ def _synth_tone(sr: int, duration: float, freq: float, noise: float = 0.05, seed
 def _synth_vocoder_like(sr: int, duration: float, freq: float, seed: int = 0) -> np.ndarray:
     """
     Synthetic proxy for neural vocoder output: many phase-locked harmonics,
-    near-zero residual noise, periodic grid modulation — for offline eval
+    near-zero residual noise, periodic grid modulation  -  for offline eval
     without real TTS model weights.
     """
     rng = np.random.RandomState(seed)

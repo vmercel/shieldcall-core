@@ -2,7 +2,7 @@
 End-to-end streaming demo of the dual-stream ShieldCall engine.
 
 Generates synthetic audio + scheduled transcript fragments so the full
-stack (TCT → STRF → SDTG → CSCF → CSR → CTE) can be exercised without
+stack (TCT  ->  STRF  ->  SDTG  ->  CSCF  ->  CSR  ->  CTE) can be exercised without
 a live microphone or ASR service.
 """
 
@@ -51,7 +51,7 @@ def main() -> None:
         ]
     )
 
-    print("ShieldCall Core v0.2 — Dual-stream streaming demo")
+    print("ShieldCall Core v0.2  -  Dual-stream streaming demo")
     print("Subsystems: TCT | STRF | SDTG | CSCF | PMA | CSR | CTE")
     print("=" * 72)
 

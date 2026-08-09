@@ -1,5 +1,5 @@
 """
-ShieldCall Core — Streaming dual-stream detection engine.
+ShieldCall Core  -  Streaming dual-stream detection engine.
 
 Joint linguistic fraud-intent and acoustic synthesis-artifact analysis
 designed for real telephone conditions and rapid adaptation to new synthesizers.

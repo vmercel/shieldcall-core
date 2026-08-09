@@ -2,96 +2,79 @@
 
 ## Mission
 
-Real-time joint detection of **voice synthesis** and **linguistic fraud intent** on telephone audio — under the channel conditions that actually exist (narrowband, G.711, packet loss), with **measurable adaptation** when new synthesizers appear.
+Real-time joint detection of **voice synthesis** and **linguistic fraud intent** on telephone audio, under the channel conditions that actually exist (narrowband, G.711, packet loss), with **measurable adaptation** when new synthesizers appear.
 
-## Why this does not exist elsewhere
+## System data flow
 
-| Capability | Typical commercial stack | ShieldCall Core |
-|---|---|---|
-| Acoustic liveness | Strong (Pindrop-class) on contact-center audio | STRF residual fingerprints designed to *survive* telephony |
-| Fraud language | Keyword / topic models offline | Streaming **discourse trajectory graph** (script structure) |
-| Fusion | Alert rules or late score average | **Cross-Stream Causal Fusion** with co-activation & regimes |
-| New synthesizers | Wait for retraining | **Prototype Memory + coverage-debt loop** (few-shot) |
-| Uncertainty | Fixed thresholds | **Conformal streaming risk** with abstention |
-| Explainability | Generic text | **Counterfactual** interventions on fusion inputs |
-| Evaluation | Clean or proprietary sets | **Channel Twin** first-class in every benchmark |
+![Dual-stream pipeline architecture](figures/architecture_pipeline.png)
 
-## Data flow
+Incoming audio is prepared by the telephony preprocessor (optionally through the Channel Twin). Frames feed the acoustic stream (STRF and prototype memory) and, via an ASR bridge, the linguistic stream (patterns and SDTG). Cross-Stream Causal Fusion produces risk, tier, regime, conformal bands, and counterfactual explanations, along with a coverage-debt signal.
 
-```
-mic / RTP / file
-      │
-      ▼
- TelephonyPreprocessor ── optional Telephony Channel Twin (TCT)
-      │ frames + VAD
-      ├──────────────────────────────┐
-      ▼                              ▼
- AcousticDeepfakeScorer        ASRBridge → LinguisticFraudScorer
-  • STRF residual FP             • pattern groups (tactical)
-  • Prototype Memory (PMA)       • Scam Discourse Graph (strategic)
-      │                              │
-      └──────────┬───────────────────┘
-                 ▼
-         FusionEngine (CSCF)
-           • trajectory
-           • co-activation
-           • regime logic
-           • conformal bands (CSR)
-           • counterfactuals (CTE)
-                 │
-                 ▼
-     FusedRisk + CoverageDebtTracker
-```
+## Telephony and residual acoustics
 
-## Novel subsystems (research claims)
+![TCT and STRF path](figures/tct_strf.png)
 
-1. **TCT — Telephony Channel Twin**  
-   Stochastic generative model of the phone path (µ-law, bandlimit, PLC, SNR). Every acoustic claim is stress-tested through TCT.
+The Channel Twin applies bandlimiting, mu-law style quantization, noise, packet loss, and packet-loss concealment. STRF builds a residual fingerprint after a lightweight harmonic model so synthetic structure can still be scored after telephone distortion.
 
-2. **STRF — Spectral-Temporal Residual Fingerprinting**  
-   Harmonic-plus-noise residual statistics targeting neural vocoder artifacts that remain after narrowband distortion.
+## Scam discourse trajectory
 
-3. **SDTG — Scam Discourse Trajectory Graph**  
-   HMM-style stage machine over scam scripts; path score captures *structure*, not only keywords.
+![SDTG stages](figures/sdtg_stages.png)
 
-4. **CSCF — Cross-Stream Causal Fusion**  
-   Super-additive co-activation, disagreement regimes (social engineering vs deepfake probe), joint trajectory.
+SDTG models classic vishing scripts as a progressive stage path (greeting through threat). Path score and progression depth are first-class linguistic features, not post-hoc labels.
 
-5. **PMA + Coverage Debt**  
-   Online Mahalanobis prototypes; OOD gap is a first-class metric; few-shot recovery is measured.
+## Fusion regimes
 
-6. **CSR — Conformal Streaming Risk**  
-   Distribution-free intervals and abstention for high-stakes decisions.
+![CSCF regimes](figures/cscf_regimes.png)
 
-7. **CTE — Counterfactual Threat Explanations**  
-   Exact minimal interventions over fusion inputs for audit and UI.
+| Regime | Acoustic | Linguistic | Interpretation |
+|--------|----------|------------|----------------|
+| Agreement (safe) | Low synth | Low fraud | Streams agree on low threat |
+| Social engineering | Low synth | High fraud | Human voice; script is the weapon |
+| Deepfake probe | High synth | Low fraud | Synthetic voice; language secondary |
+| Dual threat | High synth | High fraud | Both streams hostile |
+
+## Adaptation and coverage debt
+
+![Adaptation loop](figures/adaptation_loop.png)
+
+Prototype Memory accepts few-shot labeled embeddings. Coverage gap measures distance from both human and synthetic manifolds. Challenge-response or human review can enroll new synthesizer families and reduce debt without a full retrain.
 
 ## Package map
 
+![Package map](figures/package_map.png)
+
 ```
 shieldcall/
-  audio/        preprocessor, VAD, channel twin
-  acoustic/     STRF features, residual, prototype scorer
-  linguistic/   patterns, discourse graph, ASR bridge
-  fusion/       CSCF engine, conformal, explain
-  adaptation/   buffers, challenge-response, coverage debt
-  eval/         metrics, harness, synthetic benchmark
-  demo/         streaming demo
-  pipeline.py   single entrypoint
-  config.py     YAML profiles
+ audio/ preprocessor, VAD, channel twin
+ acoustic/ STRF features, residual, prototype scorer
+ linguistic/ patterns, discourse graph, ASR bridge
+ fusion/ CSCF engine, conformal, explain
+ adaptation/ buffers, challenge-response, coverage debt
+ eval/ metrics, harness, synthetic benchmark
+ demo/ streaming demo
+ pipeline.py single entrypoint
+ config.py YAML profiles
 ```
 
 ## Latency budget (target)
 
 | Stage | Budget |
-|---|---|
-| Frame + VAD | < 1 ms |
-| STRF + features | < 5 ms |
-| Acoustic score | < 2 ms |
-| Linguistic update | < 1 ms |
-| Fusion + conformal | < 1 ms |
-| **Total / frame** | **≪ 20 ms** (real-time at 10 ms hop) |
+|-------|--------|
+| Frame and VAD | under 1 ms |
+| STRF and features | under 5 ms |
+| Acoustic score | under 2 ms |
+| Linguistic update | under 1 ms |
+| Fusion and conformal | under 1 ms |
+| **Total per frame** | well under 20 ms (real-time at 10 ms hop) |
 
 ## Version
 
-0.2.0 — full research skeleton with runnable science, tests, and channel-aware eval. Neural weight files and large telephony corpora are the next training milestone.
+0.2.0: full research skeleton with runnable science, tests, channel-aware evaluation, and rendered figures. Neural weight files and large telephony corpora remain the next training milestone.
+
+## Regenerating figures
+
+```bash
+python scripts/render_diagrams.py
+```
+
+Outputs land in `docs/figures/*.png`.

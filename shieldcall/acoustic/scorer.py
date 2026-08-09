@@ -115,14 +115,14 @@ class PrototypeMemory:
         bucket = self.synthetic if is_synthetic else self.human
         bucket.append(emb)
         if len(bucket) > self.max_prototypes:
-            # Drop oldest (FIFO) — keeps memory responsive to new synth families
+            # Drop oldest (FIFO)  -  keeps memory responsive to new synth families
             del bucket[0 : len(bucket) - self.max_prototypes]
         self._recompute_stats()
 
     def coverage_gap(self, embedding: np.ndarray) -> float:
         """
         How far is this sample from *both* manifolds?
-        High gap → unknown synthesizer / domain shift (coverage debt signal).
+        High gap  ->  unknown synthesizer / domain shift (coverage debt signal).
         """
         if self._human_mean is None or self._synth_mean is None:
             return 1.0
@@ -142,7 +142,7 @@ def _strf_heuristic_synth_prob(frame: np.ndarray, sr: int) -> float:
       - over-stable phase structure
 
     Important: high residual energy after a *failed* F0 lock is often natural
-    noise (breath, frication) — not a synthetic cue. Early versions inverted
+    noise (breath, frication)  -  not a synthetic cue. Early versions inverted
     this and scored humans as synthetic.
     """
     fp = extract_residual_fingerprint(frame, sr)
@@ -151,7 +151,7 @@ def _strf_heuristic_synth_prob(frame: np.ndarray, sr: int) -> float:
 
     score = 0.12
 
-    # 1) Grid / upsampling artifact — strongest telephony-stable cue
+    # 1) Grid / upsampling artifact  -  strongest telephony-stable cue
     score += float(np.clip(fp.grid_artifact_score / 12.0, 0.0, 0.55))
 
     if voiced:
@@ -167,9 +167,9 @@ def _strf_heuristic_synth_prob(frame: np.ndarray, sr: int) -> float:
         if fp.grid_artifact_score > 5:
             score += 0.15
         else:
-            score -= 0.05  # breathy residual → slightly more human
+            score -= 0.05  # breathy residual  ->  slightly more human
 
-    # 5) Phase irregularity: natural speech tends higher; very low → synthetic
+    # 5) Phase irregularity: natural speech tends higher; very low  ->  synthetic
     if fp.phase_irregularity < 0.8 and voiced:
         score += 0.08
 
@@ -233,7 +233,7 @@ class AcousticDeepfakeScorer:
         synthetic_prob = float(np.clip(synthetic_prob, 0.0, 1.0))
 
         conf = 0.35 + 0.45 * min(len(self._history) / self.history_frames, 1.0)
-        conf *= 1.0 - 0.5 * gap  # OOD → lower confidence
+        conf *= 1.0 - 0.5 * gap  # OOD  ->  lower confidence
         conf = float(np.clip(conf, 0.05, 0.95))
 
         return AcousticScore(

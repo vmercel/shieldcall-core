@@ -1,5 +1,5 @@
 """
-Spectral-Temporal Residual Fingerprinting (STRF) — residual core
+Spectral-Temporal Residual Fingerprinting (STRF)  -  residual core
 ================================================================
 
 Neural vocoders (HiFi-GAN, WaveNet-family, diffusion vocoders) leave
@@ -13,7 +13,7 @@ noise (HPN) decomposition*:
 
 Under telephone channels these cues weaken but do not vanish; STRF
 extracts residual statistics that remain informative after G.711 /
-narrowband distortion — the regime commercial liveness systems treat
+narrowband distortion  -  the regime commercial liveness systems treat
 as out-of-scope lab noise.
 
 This module performs a lightweight HPN-style residual extraction without

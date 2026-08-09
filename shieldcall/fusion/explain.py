@@ -3,7 +3,7 @@ Counterfactual Threat Explanations (CTE)
 ========================================
 
 Given a fused risk decision, compute minimal interventions that would
-drop the call into a safer tier. These are not post-hoc LLM stories —
+drop the call into a safer tier. These are not post-hoc LLM stories  - 
 they are gradient-free, exact counterfactuals over the fusion inputs:
 
   - Reduce linguistic fraud probability

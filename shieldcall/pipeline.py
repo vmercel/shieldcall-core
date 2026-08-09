@@ -1,7 +1,7 @@
 """
-ShieldCall streaming pipeline — single entrypoint for dual-stream detection.
+ShieldCall streaming pipeline  -  single entrypoint for dual-stream detection.
 
-Wires preprocessor → acoustic + linguistic → CSCF fusion → adaptation hooks
+Wires preprocessor  ->  acoustic + linguistic  ->  CSCF fusion  ->  adaptation hooks
 into one low-latency call loop suitable for embedding in a local service
 or mobile FFI later.
 """
