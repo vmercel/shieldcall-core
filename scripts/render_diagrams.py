@@ -14,23 +14,28 @@ from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 
 OUT = Path(__file__).resolve().parents[1] / "docs" / "figures"
 
+# Light, print-friendly palette (docs, slides, patent exhibits)
 C = {
-    "bg": "#0f1419",
-    "panel": "#1a2332",
-    "panel2": "#243044",
-    "border": "#3d5a80",
-    "accent": "#4cc9f0",
-    "accent2": "#f72585",
-    "accent3": "#7209b7",
-    "accent4": "#4361ee",
-    "green": "#2ec4b6",
-    "amber": "#ffb703",
-    "text": "#e8eef7",
-    "muted": "#9db0c7",
+    "bg": "#ffffff",
+    "panel": "#f7f9fc",
+    "panel2": "#eef3f9",
+    "border": "#8aa0b8",
+    "accent": "#0b6bcb",
+    "accent2": "#c6286a",
+    "accent3": "#5b2d8e",
+    "accent4": "#2f4fbf",
+    "green": "#0f7a66",
+    "amber": "#b36b00",
+    "text": "#1a2332",
+    "muted": "#5a6b7d",
     "white": "#ffffff",
-    "soft": "#d6e2f0",
-    "danger": "#ef476f",
-    "safe": "#06d6a0",
+    "soft": "#334155",
+    "danger": "#c62828",
+    "safe": "#1b7f5a",
+    "quad_safe": "#e8f6f0",
+    "quad_probe": "#e8f1fb",
+    "quad_dual": "#fce8f1",
+    "quad_se": "#fff4e5",
 }
 
 
@@ -99,7 +104,7 @@ def _title(ax, text, y=96):
         va="top",
         fontsize=18,
         fontweight="bold",
-        color=C["white"],
+        color=C["text"],
     )
 
 
@@ -263,10 +268,10 @@ def render_cscf_regimes():
             zorder=1,
         )
     )
-    ax.add_patch(plt.Rectangle((12, 47), 38, 35, facecolor="#1b3a4b", alpha=0.85, zorder=1))
-    ax.add_patch(plt.Rectangle((50, 47), 38, 35, facecolor="#3a1c3a", alpha=0.9, zorder=1))
-    ax.add_patch(plt.Rectangle((12, 12), 38, 35, facecolor="#16352e", alpha=0.85, zorder=1))
-    ax.add_patch(plt.Rectangle((50, 12), 38, 35, facecolor="#3a2228", alpha=0.9, zorder=1))
+    ax.add_patch(plt.Rectangle((12, 47), 38, 35, facecolor=C["quad_probe"], alpha=1.0, zorder=1))
+    ax.add_patch(plt.Rectangle((50, 47), 38, 35, facecolor=C["quad_dual"], alpha=1.0, zorder=1))
+    ax.add_patch(plt.Rectangle((12, 12), 38, 35, facecolor=C["quad_safe"], alpha=1.0, zorder=1))
+    ax.add_patch(plt.Rectangle((50, 12), 38, 35, facecolor=C["quad_se"], alpha=1.0, zorder=1))
     ax.text(31, 72, "Deepfake probe", ha="center", fontsize=13, fontweight="bold", color=C["accent"], zorder=5)
     ax.text(31, 64, "High synth\nLow fraud language", ha="center", fontsize=9, color=C["soft"], zorder=5)
     ax.text(69, 72, "Dual threat", ha="center", fontsize=13, fontweight="bold", color=C["accent2"], zorder=5)
@@ -402,7 +407,7 @@ def render_package_map():
         label = f"shieldcall.{name}" if name not in ("pipeline.py", "config + demo") else name
         _box(ax, x - 12, y, 24, 8, label, C["panel"], col, fs=9)
         ax.text(x, y - 4, detail, ha="center", va="top", fontsize=8, color=C["muted"])
-    _box(ax, 38, 48, 24, 7, "ShieldCallPipeline", C["panel2"], C["white"], fs=10)
+    _box(ax, 38, 48, 24, 7, "ShieldCallPipeline", C["panel2"], C["accent4"], fs=10)
     fig.tight_layout(pad=0.6)
     path = OUT / "package_map.png"
     fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
