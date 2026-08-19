@@ -18,7 +18,7 @@ Used for operator UIs, audit logs, and user-facing warnings that name
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List
 
 import numpy as np
 

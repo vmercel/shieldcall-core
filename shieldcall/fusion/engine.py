@@ -29,8 +29,8 @@ import numpy as np
 
 from ..acoustic.scorer import AcousticScore
 from ..linguistic.scorer import LinguisticScore
-from .conformal import StreamingConformalCalibrator, ConformalVerdict
-from .explain import explain_risk, ThreatExplanation
+from .conformal import ConformalVerdict, StreamingConformalCalibrator
+from .explain import ThreatExplanation, explain_risk
 
 
 @dataclass

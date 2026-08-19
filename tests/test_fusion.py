@@ -1,10 +1,10 @@
 import numpy as np
 
 from shieldcall.acoustic.scorer import AcousticScore
-from shieldcall.linguistic.scorer import LinguisticScore
-from shieldcall.fusion.engine import FusionEngine
 from shieldcall.fusion.conformal import StreamingConformalCalibrator
-from shieldcall.fusion.explain import explain_risk, classify_regime
+from shieldcall.fusion.engine import FusionEngine
+from shieldcall.fusion.explain import classify_regime, explain_risk
+from shieldcall.linguistic.scorer import LinguisticScore
 
 
 def _ac(synth, conf=0.8, speech=True):

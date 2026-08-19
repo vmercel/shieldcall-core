@@ -68,7 +68,6 @@ def average_precision(labels: Sequence[int], scores: Sequence[float]) -> float:
     labels = labels[order]
     tp = 0
     precisions = []
-    n_pos = max(int(labels.sum()), 1)
     for i, y in enumerate(labels, start=1):
         if y == 1:
             tp += 1

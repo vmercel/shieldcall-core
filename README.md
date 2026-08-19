@@ -99,9 +99,13 @@ tests/ pytest suite
 
 ## Status
 
-**v0.2.0**: Full research-oriented implementation with interfaces, dual-stream science, channel twin evaluation, adaptation loop, conformal risk, counterfactuals, tests, configs, and rendered figures.
+**v0.3.0**: Research-oriented dual-stream implementation plus MVP governance foundations: consent-gated integration contracts, redacted audit metadata, reviewed adaptation intake, held-out calibration utilities, dataset manifests, security policy, privacy controls, and continuous-integration safeguards.
 
-Still ahead for production claims: large telephony-trained STRF or neural weights, production ASR wiring, and held-out multi-synthesizer corpora.
+Still ahead for production claims: a trained and externally benchmarked acoustic model, production ASR wiring, held-out multi-synthesizer and real-call corpora, calibrated release reports, and authorized pilot deployments.
+
+## MVP safety and supported integration boundary
+
+ShieldCall does not claim that it can analyze every native carrier call. The supported MVP path is authorized VoIP or enterprise-contact-center audio with a current fraud-risk-analysis consent record. Android call screening is supported only for caller identification and call-response workflows, not as a general audio-capture mechanism. See [docs/INTEGRATION_SCOPE.md](docs/INTEGRATION_SCOPE.md), [docs/PRIVACY_AND_DATA_GOVERNANCE.md](docs/PRIVACY_AND_DATA_GOVERNANCE.md), and [docs/MODEL_RELEASE_STANDARD.md](docs/MODEL_RELEASE_STANDARD.md).
 
 ## Relation to the consumer app
 

@@ -1,5 +1,5 @@
-from .hooks import AdaptationBuffer, AdaptationExample, ChallengeResponseProtocol
 from .coverage import CoverageDebtTracker, CoverageSnapshot, FamilyCompetence
+from .hooks import AdaptationBuffer, AdaptationExample, ChallengeResponseProtocol
 
 __all__ = [
     "AdaptationBuffer",

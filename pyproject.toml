@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=83.0.0", "wheel>=0.46.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["docs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_ignores = true
+check_untyped_defs = true
+ignore_missing_imports = true
+exclude = ["tests"]

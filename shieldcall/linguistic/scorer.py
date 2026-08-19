@@ -12,15 +12,14 @@ simple keyword filters used in call-center speech analytics.
 
 from __future__ import annotations
 
+import re
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Deque, Dict, List, Optional
-import re
+from typing import Deque, Dict, List
 
 import numpy as np
 
-from .discourse import ScamDiscourseGraph, DiscourseState
-
+from .discourse import DiscourseState, ScamDiscourseGraph
 
 PATTERN_GROUPS: Dict[str, Dict] = {
     "government_impersonation": {

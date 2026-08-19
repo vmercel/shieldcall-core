@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import numpy as np
 
-from shieldcall.pipeline import ShieldCallPipeline, PipelineConfig
 from shieldcall.audio.channel import ChannelConfig, CodecProfile
 from shieldcall.linguistic.asr_bridge import ScheduledTranscriptASR
+from shieldcall.pipeline import PipelineConfig, ShieldCallPipeline
 
 
 def make_tone(sr: int, duration: float, freq: float = 180.0, seed: int = 0) -> np.ndarray:

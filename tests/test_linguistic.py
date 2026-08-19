@@ -1,6 +1,6 @@
-from shieldcall.linguistic.scorer import LinguisticFraudScorer
-from shieldcall.linguistic.discourse import ScamDiscourseGraph, STAGES
 from shieldcall.linguistic.asr_bridge import ScheduledTranscriptASR
+from shieldcall.linguistic.discourse import STAGES, ScamDiscourseGraph
+from shieldcall.linguistic.scorer import LinguisticFraudScorer
 
 
 def test_benign_low_score():

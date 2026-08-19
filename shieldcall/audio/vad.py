@@ -8,8 +8,8 @@ acoustic residual analysis and transcript alignment.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from collections import deque
+from dataclasses import dataclass
 
 import numpy as np
 

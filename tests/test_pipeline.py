@@ -1,14 +1,14 @@
 import numpy as np
 
-from shieldcall import ShieldCallPipeline, PipelineConfig, __version__
-from shieldcall.audio.channel import ChannelConfig, CodecProfile
-from shieldcall.linguistic.asr_bridge import ScheduledTranscriptASR
+from shieldcall import PipelineConfig, ShieldCallPipeline, __version__
 from shieldcall.adaptation.hooks import ChallengeResponseProtocol
+from shieldcall.audio.channel import ChannelConfig, CodecProfile
 from shieldcall.config import load_config, pipeline_config_from_dict
+from shieldcall.linguistic.asr_bridge import ScheduledTranscriptASR
 
 
 def test_version():
-    assert __version__ == "0.2.0"
+    assert __version__ == "0.3.0"
 
 
 def test_end_to_end_pipeline():

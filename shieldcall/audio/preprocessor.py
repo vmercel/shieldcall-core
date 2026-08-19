@@ -14,8 +14,8 @@ from typing import Iterator, Optional
 import numpy as np
 from scipy import signal
 
+from .channel import ChannelConfig, TelephonyChannelTwin
 from .vad import StreamingVAD, VADDecision
-from .channel import TelephonyChannelTwin, ChannelConfig, CodecProfile
 
 
 @dataclass
