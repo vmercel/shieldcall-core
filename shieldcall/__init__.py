@@ -15,13 +15,14 @@ Novel subsystems
 - CTE:  Counterfactual Threat Explanations
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
-from .fusion.engine import FusionEngine, FusedRisk
 from .acoustic.scorer import AcousticDeepfakeScorer, AcousticScore
+from .audio.channel import ChannelConfig, CodecProfile, TelephonyChannelTwin
+from .fusion.engine import FusedRisk, FusionEngine
 from .linguistic.scorer import LinguisticFraudScorer, LinguisticScore
-from .pipeline import ShieldCallPipeline, PipelineConfig, PipelineEvent
-from .audio.channel import TelephonyChannelTwin, ChannelConfig, CodecProfile
+from .mvp_service import AnalysisOutcome, ShieldCallMVPService
+from .pipeline import PipelineConfig, PipelineEvent, ShieldCallPipeline
 
 __all__ = [
     "__version__",
@@ -37,4 +38,6 @@ __all__ = [
     "TelephonyChannelTwin",
     "ChannelConfig",
     "CodecProfile",
+    "AnalysisOutcome",
+    "ShieldCallMVPService",
 ]

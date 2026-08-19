@@ -13,14 +13,14 @@ from typing import Iterator, List, Optional
 
 import numpy as np
 
-from .audio.preprocessor import TelephonyPreprocessor, Frame
-from .audio.channel import ChannelConfig
 from .acoustic.scorer import AcousticDeepfakeScorer, AcousticScore
-from .linguistic.scorer import LinguisticFraudScorer, LinguisticScore
-from .linguistic.asr_bridge import ASRBridge, PassthroughASR, TranscriptFragment
-from .fusion.engine import FusionEngine, FusedRisk
-from .adaptation.hooks import AdaptationBuffer, AdaptationExample
 from .adaptation.coverage import CoverageDebtTracker
+from .adaptation.hooks import AdaptationBuffer, AdaptationExample
+from .audio.channel import ChannelConfig
+from .audio.preprocessor import Frame, TelephonyPreprocessor
+from .fusion.engine import FusedRisk, FusionEngine
+from .linguistic.asr_bridge import ASRBridge, PassthroughASR, TranscriptFragment
+from .linguistic.scorer import LinguisticFraudScorer, LinguisticScore
 
 
 @dataclass

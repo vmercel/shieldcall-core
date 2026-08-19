@@ -10,20 +10,24 @@ Measures:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Callable, Dict, List, Optional, Sequence
 import time
+from dataclasses import dataclass, field
+from typing import Callable, Dict, List, Sequence
 
 import numpy as np
 
-from .metrics import equal_error_rate, auc_roc, average_precision, brier_score, expected_calibration_error, summarize_scores
-from ..audio.channel import TelephonyChannelTwin, ChannelConfig, CodecProfile
-from ..audio.preprocessor import TelephonyPreprocessor
 from ..acoustic.scorer import AcousticDeepfakeScorer
-from ..linguistic.scorer import LinguisticFraudScorer
-from ..fusion.engine import FusionEngine
-from ..pipeline import ShieldCallPipeline, PipelineConfig
+from ..audio.channel import ChannelConfig, CodecProfile, TelephonyChannelTwin
+from ..audio.preprocessor import TelephonyPreprocessor
 from ..linguistic.asr_bridge import ScheduledTranscriptASR
+from ..pipeline import PipelineConfig, ShieldCallPipeline
+from .metrics import (
+    auc_roc,
+    average_precision,
+    brier_score,
+    equal_error_rate,
+    expected_calibration_error,
+)
 
 
 @dataclass

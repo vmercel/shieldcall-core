@@ -17,3 +17,32 @@ htmlcov/
 *.egg
 .Python
 pip-log.txt
+
+# Sensitive local configuration and call-derived data
+.env
+.env.*
+!.env.example
+secrets/
+data/raw/
+data/consented/
+data/private/
+audit/
+artifacts/
+models/
+*.pem
+*.key
+*.p12
+*.mobileprovision
+
+# Generated quality and security reports
+coverage.xml
+pytest.xml
+bandit-report.json
+pip-audit-report.json
+sbom.json
+.ruff_cache/
+
+# Local operating-system and editor files
+.idea/
+.vscode/
+*.swp

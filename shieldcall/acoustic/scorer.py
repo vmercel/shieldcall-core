@@ -18,9 +18,9 @@ from typing import Deque, List, Optional
 
 import numpy as np
 
-from .features import extract_frame_features, aggregate_temporal, FEATURE_DIM
-from .residual import extract_residual_fingerprint
 from ..audio.preprocessor import Frame
+from .features import FEATURE_DIM, aggregate_temporal, extract_frame_features
+from .residual import extract_residual_fingerprint
 
 
 @dataclass

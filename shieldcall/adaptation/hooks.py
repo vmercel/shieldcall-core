@@ -4,9 +4,9 @@ Adaptation interface  -  confirmed examples for online acoustic updates.
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from typing import List, Optional
-import time
 
 import numpy as np
 

@@ -1,8 +1,7 @@
 import numpy as np
-import pytest
 
+from shieldcall.audio.channel import ChannelConfig, CodecProfile, TelephonyChannelTwin
 from shieldcall.audio.preprocessor import TelephonyPreprocessor
-from shieldcall.audio.channel import TelephonyChannelTwin, ChannelConfig, CodecProfile
 from shieldcall.audio.vad import StreamingVAD
 
 

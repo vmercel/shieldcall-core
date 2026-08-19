@@ -1,9 +1,9 @@
 import numpy as np
 
-from shieldcall.acoustic.features import extract_frame_features, FEATURE_DIM
+from shieldcall.acoustic.features import FEATURE_DIM, extract_frame_features
 from shieldcall.acoustic.residual import extract_residual_fingerprint
 from shieldcall.acoustic.scorer import AcousticDeepfakeScorer, PrototypeMemory
-from shieldcall.audio.preprocessor import TelephonyPreprocessor, Frame
+from shieldcall.audio.preprocessor import Frame, TelephonyPreprocessor
 
 
 def _frame(sr=8000, f=150.0):

@@ -1,13 +1,12 @@
+from shieldcall.acoustic.features import extract_frame_features
+from shieldcall.audio.channel import CodecProfile
 from shieldcall.eval.harness import (
-    generate_synthetic_benchmark,
     evaluate_acoustic_channel,
     evaluate_adaptation_recovery,
+    generate_synthetic_benchmark,
     run_basic_latency_test,
 )
-from shieldcall.eval.metrics import equal_error_rate, auc_roc, summarize_scores
-from shieldcall.audio.channel import CodecProfile
-from shieldcall.acoustic.features import extract_frame_features
-import numpy as np
+from shieldcall.eval.metrics import auc_roc, equal_error_rate, summarize_scores
 
 
 def test_metrics_eer_auc():
