@@ -9,15 +9,18 @@ The detector is a **sensor**. A **belief-state defense agent** sits above it, sp
 ## Agent (v0.5)
 
 ```mermaid
-flowchart TB
-  Call[Telephone audio + ASR fragments] --> Pipe[ShieldCall pipeline]
-  Pipe -->|sufficient statistics only| Perc[Perception: synth, fraud, SAPC, gap, regime]
-  Perc --> Belief[Belief over 5 hypotheses]
-  Belief --> Plan[Info-gain planner minus cost minus delay risk]
-  Plan --> Tools[Tools: monitor / challenge / warn / escalate / adapt / abstain]
-  Tools --> Trace[Audit trace]
-  Tools -.->|"at most one challenge"| Call
+flowchart LR
+  Env[Environment: live call] -->|percepts| Sens[Sensors: fusion scores]
+  Sens --> Perc[1 Perceive]
+  Perc --> Upd[2 Update p of H]
+  Upd --> Dec[3 Decide: IG minus cost]
+  Dec --> Act[4 Act / tools]
+  Act -->|actions| Env
+  Act --> Trace[Audit]
+  Mem[Memory + budget] --> Dec
 ```
+
+The published figure is the closed cycle in `figures/agent_loop.png`: PEAS, sensors, four-step interior (perceive / update belief / decide / act), six actuators, hypotheses $H$, budget, human escalate, audit.
 
 Hypotheses: `benign`, `social_engineering`, `synthetic_full`, `handoff`, `unknown_family`.
 

@@ -24,6 +24,6 @@ See Highlights in `main.tex`. Negative results (LPC at chance, SAPC audio failur
 
 ## Elsevier extras (at submission)
 
-- Graphical abstract: `figures/graphical_abstract.png`
+- Graphical abstract: `figures/graphical_abstract.pdf` (PNG sibling for web)
 - Highlights: five bullets in the manuscript front matter
 - CRediT and competing-interest statements are in the `.tex`

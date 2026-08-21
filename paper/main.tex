@@ -29,7 +29,7 @@
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.95\textwidth]{figures/graphical_abstract.png}
+\includegraphics[width=0.95\textwidth]{figures/graphical_abstract.pdf}
 \caption{Graphical abstract. The pipeline emits sufficient statistics. A discrete-hypothesis agent chooses actions. The figure states what is measured, including the failed audio handoff test.}
 \label{fig:ga}
 \end{figure}
@@ -105,28 +105,28 @@ Fig.~\ref{fig:ga} and Fig.~\ref{fig:arch} summarise the architecture. Incoming a
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.98\textwidth]{figures/architecture_pipeline.png}
+\includegraphics[width=0.98\textwidth]{figures/architecture_pipeline.pdf}
 \caption{Sensor stack. Fusion outputs sufficient statistics. The bottom box is the defense agent, not a second classifier.}
 \label{fig:arch}
 \end{figure}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.98\textwidth]{figures/agent_loop.png}
-\caption{Agent loop. Challenge is informative when the voice may be vocoded. A live social engineer will pass a nonce; the policy therefore prefers warn or escalate on that hypothesis.}
+\includegraphics[width=0.98\textwidth]{figures/agent_loop.pdf}
+\caption{Call-defense agent as a closed perceive--act cycle. PEAS describes the task. Sensors emit scores only. The interior updates $p(H)$ and chooses an action by information gain minus interruption cost. Actuators close the loop on the live call. A social engineer is warned, not challenged.}
 \label{fig:agent}
 \end{figure}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.92\textwidth]{figures/cscf_regimes.png}
+\includegraphics[width=0.92\textwidth]{figures/cscf_regimes.pdf}
 \caption{Four disagreement regimes. The operational label is an OR over the two axes.}
 \label{fig:regimes}
 \end{figure}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.92\textwidth]{figures/sapc_timing.png}
+\includegraphics[width=0.92\textwidth]{figures/sapc_timing.pdf}
 \caption{SAPC construction. The vocoded duration is matched; only alignment to the harvest stage differs. The LibriSpeech splice test did not support the timing claim.}
 \label{fig:sapc}
 \end{figure}

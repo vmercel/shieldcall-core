@@ -1,623 +1,624 @@
 #!/usr/bin/env python3
-"""
-Render high-quality architecture and process diagrams as PNG figures.
+"""Publication figures at journal print size.
 
-Output directory: docs/figures/
+~7.16 in wide (Elsevier two-column span). Type is true print points.
+Nodes pair a line-icon with a short label. Line art is PDF + PNG @ 600 dpi.
+
+The defense-agent figure is a closed perceive-act cycle (PEAS, sensors,
+actuators, belief, utility, tools, budget, audit) — not a pipeline.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
+from PIL import Image
 import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+from matplotlib.offsetbox import AnnotationBbox, OffsetImage
+from matplotlib.patches import Ellipse, FancyArrowPatch, FancyBboxPatch, Rectangle
 
-OUT = Path(__file__).resolve().parents[1] / "docs" / "figures"
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "docs" / "figures"
+PAPER = ROOT / "paper" / "figures"
+ICON = OUT / "icons"
 
-# Light, print-friendly palette (docs, slides, patent exhibits)
-C = {
-    "bg": "#ffffff",
-    "panel": "#f7f9fc",
-    "panel2": "#eef3f9",
-    "border": "#8aa0b8",
-    "accent": "#0b6bcb",
-    "accent2": "#c6286a",
-    "accent3": "#5b2d8e",
-    "accent4": "#2f4fbf",
-    "green": "#0f7a66",
-    "amber": "#b36b00",
-    "text": "#1a2332",
-    "muted": "#5a6b7d",
-    "white": "#ffffff",
-    "soft": "#334155",
-    "danger": "#c62828",
-    "safe": "#1b7f5a",
-    "quad_safe": "#e8f6f0",
-    "quad_probe": "#e8f1fb",
-    "quad_dual": "#fce8f1",
-    "quad_se": "#fff4e5",
-}
+NAVY = "#1B365D"
+INK = "#1A1A1A"
+MUTED = "#3D4A5C"
+LINE = "#2C5282"
+FILL = "#F7FAFC"
+FILL2 = "#EDF2F7"
+SE = "#C05621"
+SAFE = "#007A5E"
+PROBE = "#0072B2"
+DUAL = "#9B2C2C"
+GOLD = "#B7791F"
+
+plt.rcParams.update(
+    {
+        "font.family": "sans-serif",
+        "font.sans-serif": ["Helvetica Neue", "Helvetica", "Arial", "DejaVu Sans"],
+        "font.size": 9,
+        "text.color": INK,
+        "pdf.fonttype": 42,
+        "ps.fonttype": 42,
+        "axes.unicode_minus": False,
+        "figure.facecolor": "white",
+        "savefig.facecolor": "white",
+    }
+)
+
+_ICON_ARR = {}
 
 
-def _setup(w=14, h=9, facecolor=None):
-    fig, ax = plt.subplots(figsize=(w, h), dpi=200)
-    facecolor = facecolor or C["bg"]
-    fig.patch.set_facecolor(facecolor)
-    ax.set_facecolor(facecolor)
+def _setup(w=7.16, h=5.2):
+    fig, ax = plt.subplots(figsize=(w, h), dpi=150)
+    fig.patch.set_facecolor("white")
+    ax.set_facecolor("white")
     ax.set_xlim(0, 100)
     ax.set_ylim(0, 100)
     ax.axis("off")
+    fig.subplots_adjust(left=0.025, right=0.975, top=0.97, bottom=0.03)
     return fig, ax
 
 
-def _box(ax, x, y, w, h, text, fc, ec=None, fs=10, radius=0.02, bold=True):
-    ec = ec or C["border"]
-    box = FancyBboxPatch(
+def _save(fig, name: str) -> Path:
+    OUT.mkdir(parents=True, exist_ok=True)
+    PAPER.mkdir(parents=True, exist_ok=True)
+    png = OUT / name
+    pdf = OUT / name.replace(".png", ".pdf")
+    fig.savefig(png, dpi=600, facecolor="white", pad_inches=0.12)
+    fig.savefig(pdf, facecolor="white", pad_inches=0.12)
+    for dest in (PAPER / name, PAPER / pdf.name):
+        dest.write_bytes((OUT / dest.name).read_bytes())
+    plt.close(fig)
+    return png
+
+
+def _box(ax, x, y, w, h, fc=FILL, ec=LINE, lw=1.15, r=0.7):
+    p = FancyBboxPatch(
         (x, y),
         w,
         h,
-        boxstyle=f"round,pad=0.02,rounding_size={radius * 40}",
+        boxstyle=f"round,pad=0.04,rounding_size={r}",
         facecolor=fc,
         edgecolor=ec,
-        linewidth=1.6,
-        mutation_aspect=1,
+        linewidth=lw,
         zorder=3,
     )
-    ax.add_patch(box)
-    weight = "bold" if bold else "normal"
+    ax.add_patch(p)
+    return p
+
+
+def _label(ax, x, y, text, size=9, weight="normal", color=INK, ha="center", va="center", z=7, **kw):
     ax.text(
-        x + w / 2,
-        y + h / 2,
-        text,
-        ha="center",
-        va="center",
-        fontsize=fs,
-        color=C["text"],
-        fontweight=weight,
-        zorder=4,
-        linespacing=1.35,
-    )
-    return box
-
-
-def _arrow(ax, x1, y1, x2, y2, color=None, lw=1.8, style="-|>", rad=0.0):
-    color = color or C["accent"]
-    arr = FancyArrowPatch(
-        (x1, y1),
-        (x2, y2),
-        arrowstyle=style,
-        mutation_scale=14,
-        linewidth=lw,
-        color=color,
-        connectionstyle=f"arc3,rad={rad}",
-        zorder=2,
-    )
-    ax.add_patch(arr)
-
-
-def _title(ax, text, y=96):
-    ax.text(
-        50,
-        y,
-        text,
-        ha="center",
-        va="top",
-        fontsize=18,
-        fontweight="bold",
-        color=C["text"],
+        x, y, text,
+        fontsize=size, fontweight=weight, color=color,
+        ha=ha, va=va, zorder=z, linespacing=1.28, **kw,
     )
 
 
-def _subtitle(ax, text, y=91):
-    ax.text(50, y, text, ha="center", va="top", fontsize=10, color=C["muted"])
-
-
-def render_architecture_pipeline():
-    fig, ax = _setup(14, 10)
-    _title(ax, "ShieldCall: sensor stack and defense agent")
-    _subtitle(
-        ax,
-        "Detectors emit sufficient statistics only. The agent never sees waveforms or transcripts.",
-    )
-
-    _box(
-        ax,
-        32,
-        80,
-        36,
-        7,
-        "Incoming audio stream\n(8 kHz / 16 kHz mono RTP or file)",
-        C["panel2"],
-        C["accent"],
-        fs=10,
-    )
-    _box(
-        ax,
-        28,
-        66,
-        44,
-        9,
-        "Telephony Preprocessor + Channel Twin (TCT)\nResample | Bandlimit | VAD | Framing | optional codec/PLC",
-        C["panel"],
-        C["green"],
-        fs=9.5,
-    )
-    _arrow(ax, 50, 80, 50, 75.2, C["green"])
-    _arrow(ax, 40, 66, 22, 58, C["accent4"])
-    _arrow(ax, 60, 66, 78, 58, C["accent2"])
-    _box(
-        ax,
-        6,
-        40,
-        32,
-        16,
-        "Acoustic stream\n\nSTRF residual fingerprint\nPrototype Memory (PMA)\nSynthetic-voice score",
-        C["panel"],
-        C["accent4"],
-        fs=9.5,
-    )
-    _box(
-        ax,
-        62,
-        40,
-        32,
-        16,
-        "Linguistic stream\n\nASR bridge fragments\nPattern groups + SDTG\nFraud-intent score",
-        C["panel"],
-        C["accent2"],
-        fs=9.5,
-    )
-    _arrow(ax, 22, 40, 40, 32, C["accent4"])
-    _arrow(ax, 78, 40, 60, 32, C["accent2"])
-    _box(
-        ax,
-        26,
-        18,
-        48,
-        13,
-        "Score fusion (disagreement regimes)\nSAPC timing statistic  |  ACI uncertainty\nSufficient statistics only",
-        C["panel"],
-        C["amber"],
-        fs=9.5,
-    )
-    _arrow(ax, 50, 18, 50, 12.5, C["amber"])
-    _box(
-        ax,
-        22,
-        4,
-        56,
-        8,
-        "Belief-state agent: monitor | challenge | warn | escalate | adapt | abstain",
-        C["panel2"],
-        C["accent"],
-        fs=10,
-    )
-    ax.text(8, 30, "Telephony-robust\nacoustic cues", fontsize=8, color=C["muted"], ha="left")
-    ax.text(92, 30, "Script structure\n+ intent", fontsize=8, color=C["muted"], ha="right")
-    fig.tight_layout(pad=0.6)
-    path = OUT / "architecture_pipeline.png"
-    fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
-    plt.close(fig)
-    return path
-
-
-def render_sdtg_stages():
-    fig, ax = _setup(14, 6.5)
-    _title(ax, "Scam Discourse Trajectory Graph (SDTG)")
-    _subtitle(
-        ax,
-        "Streaming stage machine: fraud as progressive script structure, not bag-of-words",
-    )
-    stages = [
-        ("GREETING", C["panel2"]),
-        ("AUTHORITY", C["accent4"]),
-        ("PROBLEM", C["accent"]),
-        ("URGENCY", C["amber"]),
-        ("HARVEST", C["accent3"]),
-        ("PAYMENT", C["accent2"]),
-        ("SECRECY", C["danger"]),
-        ("THREAT", C["danger"]),
-    ]
-    n = len(stages)
-    y = 48
-    w, h = 10.2, 14
-    gap = 1.8
-    total = n * w + (n - 1) * gap
-    x0 = (100 - total) / 2
-    for i, (name, color) in enumerate(stages):
-        x = x0 + i * (w + gap)
-        _box(ax, x, y, w, h, name, C["panel"], color, fs=8.5)
-        if i < n - 1:
-            _arrow(ax, x + w, y + h / 2, x + w + gap, y + h / 2, color, lw=1.5)
-    _box(ax, 40, 18, 20, 10, "BENIGN\n(non-scam path)", C["panel"], C["safe"], fs=9)
-    ax.annotate(
-        "",
-        xy=(50, 32),
-        xytext=(50, 42),
-        arrowprops=dict(arrowstyle="<->", color=C["muted"], lw=1.4),
-    )
-    ax.text(52, 36, "escape / reset", fontsize=8, color=C["muted"])
-    ax.text(
-        50,
-        8,
-        "Path log-likelihood and progression depth feed linguistic fraud probability",
-        ha="center",
-        fontsize=10,
-        color=C["soft"],
-    )
-    fig.tight_layout(pad=0.6)
-    path = OUT / "sdtg_stages.png"
-    fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
-    plt.close(fig)
-    return path
-
-
-def render_cscf_regimes():
-    fig, ax = _setup(12, 10)
-    _title(ax, "Fusion regimes (not causal inference)")
-    _subtitle(ax, "Operational threat is a disjunction: flag if either stream is hostile")
+def _arrow(ax, x1, y1, x2, y2, color=LINE, lw=1.2, rad=0.0, style="-|>", ms=12):
     ax.add_patch(
-        FancyBboxPatch(
-            (12, 12),
-            76,
-            70,
-            boxstyle="round,pad=0.02,rounding_size=2",
-            facecolor=C["panel"],
-            edgecolor=C["border"],
-            lw=1.5,
-            zorder=1,
+        FancyArrowPatch(
+            (x1, y1), (x2, y2),
+            arrowstyle=style, mutation_scale=ms, linewidth=lw, color=color,
+            connectionstyle=f"arc3,rad={rad}", zorder=4, shrinkA=0.5, shrinkB=0.5,
         )
     )
-    ax.add_patch(plt.Rectangle((12, 47), 38, 35, facecolor=C["quad_probe"], alpha=1.0, zorder=1))
-    ax.add_patch(plt.Rectangle((50, 47), 38, 35, facecolor=C["quad_dual"], alpha=1.0, zorder=1))
-    ax.add_patch(plt.Rectangle((12, 12), 38, 35, facecolor=C["quad_safe"], alpha=1.0, zorder=1))
-    ax.add_patch(plt.Rectangle((50, 12), 38, 35, facecolor=C["quad_se"], alpha=1.0, zorder=1))
-    ax.text(31, 72, "Deepfake probe", ha="center", fontsize=13, fontweight="bold", color=C["accent"], zorder=5)
-    ax.text(31, 64, "High synth\nLow fraud language", ha="center", fontsize=9, color=C["soft"], zorder=5)
-    ax.text(69, 72, "Dual threat", ha="center", fontsize=13, fontweight="bold", color=C["accent2"], zorder=5)
-    ax.text(69, 64, "High synth\nHigh fraud language", ha="center", fontsize=9, color=C["soft"], zorder=5)
-    ax.text(31, 30, "Agreement (safe)", ha="center", fontsize=13, fontweight="bold", color=C["safe"], zorder=5)
-    ax.text(31, 22, "Low synth\nLow fraud language", ha="center", fontsize=9, color=C["soft"], zorder=5)
-    ax.text(69, 30, "Social engineering", ha="center", fontsize=13, fontweight="bold", color=C["amber"], zorder=5)
-    ax.text(69, 22, "Low synth (human voice)\nHigh fraud script", ha="center", fontsize=9, color=C["soft"], zorder=5)
-    ax.text(50, 6, "Linguistic fraud probability (increasing right)", ha="center", fontsize=11, color=C["muted"])
-    ax.text(
-        5,
-        47,
-        "Acoustic synthetic\nprobability (up)",
-        ha="center",
-        va="center",
-        fontsize=10,
-        color=C["muted"],
-        rotation=90,
-    )
-    ax.plot([50, 50], [12, 82], color=C["border"], lw=1.2, zorder=2)
-    ax.plot([12, 88], [47, 47], color=C["border"], lw=1.2, zorder=2)
-    ax.text(
-        50,
-        2,
-        "A weighted sum can bury a vocoded probe under mild language, or a live vishing call under a human voice score",
-        ha="center",
-        fontsize=9,
-        color=C["muted"],
-    )
-    fig.tight_layout(pad=0.6)
-    path = OUT / "cscf_regimes.png"
-    fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
-    plt.close(fig)
-    return path
 
 
-def render_adaptation_loop():
-    fig, ax = _setup(13, 8.5)
-    _title(ax, "Prototype Memory Adaptation and Coverage Debt")
-    _subtitle(ax, "Closed loop: detect out-of-distribution synthesizers, enroll few-shot, measure recovery")
-    nodes = [
-        (50, 72, 28, 10, "Streaming acoustic\nembedding (STRF)", C["accent4"]),
-        (18, 42, 28, 12, "Coverage-gap score\n(distance to both\nhuman and synth manifolds)", C["amber"]),
-        (50, 42, 28, 12, "Prototype Memory\n(PMA)\nMahalanobis score", C["accent"]),
-        (82, 42, 28, 12, "Challenge-response\nor human review\nlabel", C["accent2"]),
-        (50, 14, 34, 10, "Debt index + recovery metric\n(gap before vs after k-shot)", C["green"]),
-    ]
-    for x, y, w, h, t, ec in nodes:
-        _box(ax, x - w / 2, y - h / 2, w, h, t, C["panel"], ec, fs=9)
-    _arrow(ax, 50, 67, 32, 49, C["amber"])
-    _arrow(ax, 50, 67, 50, 48.5, C["accent"])
-    _arrow(ax, 64, 42, 68, 42, C["accent2"])
-    _arrow(ax, 82, 36, 60, 19, C["green"], rad=0.15)
-    _arrow(ax, 32, 36, 40, 19, C["green"], rad=-0.1)
-    _arrow(ax, 50, 19, 50, 28, C["muted"], style="<|-")
-    ax.text(
-        50,
-        4,
-        "Few-shot updates reduce coverage debt without waiting for a full retrain cycle",
-        ha="center",
-        fontsize=10,
-        color=C["soft"],
-    )
-    fig.tight_layout(pad=0.6)
-    path = OUT / "adaptation_loop.png"
-    fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
-    plt.close(fig)
-    return path
+def _title(ax, text, y=98.4):
+    ax.text(50, y, text, ha="center", va="top", fontsize=11.5, fontweight="bold", color=INK, zorder=10)
 
 
-def render_patent_pathway():
-    fig, ax = _setup(14, 8)
-    _title(ax, "Patent Filing Pathway (U.S. and PCT)")
-    _subtitle(ax, "Official portals: USPTO Patent Center and WIPO ePCT")
-    steps = [
-        ("1. Prepare\ndisclosure", "Spec, drawings,\ninventors, prior art"),
-        ("2. File U.S.\nprovisional", "patentcenter.uspto.gov\nUtility Provisional"),
-        ("3. Patent\nPending", "12-month window\nrun experiments"),
-        ("4. Nonprovisional\n(+ optional PCT)", "Claims examined\nePCT if foreign"),
-        ("5. Prosecution\nand grants", "Office actions\nnational phases"),
-    ]
-    y = 52
-    w, h = 15, 22
-    gap = 3.5
-    total = len(steps) * w + (len(steps) - 1) * gap
-    x0 = (100 - total) / 2
-    colors = [C["accent4"], C["accent"], C["green"], C["amber"], C["accent2"]]
-    for i, ((title, detail), col) in enumerate(zip(steps, colors)):
-        x = x0 + i * (w + gap)
-        _box(ax, x, y, w, h * 0.55, title, C["panel"], col, fs=10)
-        _box(ax, x, y - 14, w, 12, detail, C["panel2"], C["border"], fs=8, bold=False)
-        if i < len(steps) - 1:
-            _arrow(ax, x + w, y + h * 0.28, x + w + gap, y + h * 0.28, col, lw=2)
-    ax.text(
-        50,
-        18,
-        "Primary filing entry: https://patentcenter.uspto.gov/\nInternational PCT: https://pct.wipo.int/ePCT/",
-        ha="center",
-        fontsize=11,
-        color=C["soft"],
-        linespacing=1.5,
-    )
-    ax.text(
-        50,
-        6,
-        "This diagram is procedural guidance, not legal advice. Use a registered patent attorney for claims.",
-        ha="center",
-        fontsize=9,
-        color=C["muted"],
-    )
-    fig.tight_layout(pad=0.6)
-    path = OUT / "patent_pathway.png"
-    fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
-    plt.close(fig)
-    return path
+def _disk(ax, x, y, r, fc, ec="white", lw=0.8, zorder=8):
+    """Visually circular disk, correcting for non-square axes."""
+    fig_w, fig_h = ax.figure.get_size_inches()
+    height = 2 * r
+    width = height * (fig_h / fig_w)
+    ax.add_patch(Ellipse((x, y), width, height, fc=fc, ec=ec, lw=lw, zorder=zorder))
 
 
-def render_package_map():
-    fig, ax = _setup(13, 9)
-    _title(ax, "ShieldCall Core Package Map")
-    _subtitle(ax, "Research-grade modules with stable public interfaces")
-    packages = [
-        (18, 68, "audio", "TCT channel twin\nVAD, preprocessor", C["green"]),
-        (50, 68, "acoustic", "STRF features\nresidual, PMA scorer", C["accent4"]),
-        (82, 68, "linguistic", "Patterns, SDTG\nASR bridge", C["accent2"]),
-        (18, 38, "fusion", "Regimes, SAPC\nACI", C["amber"]),
-        (50, 38, "agent", "Belief, planner\ntools, traces", C["accent3"]),
-        (82, 38, "eval", "Protocols, handoff\nspeech, scripts", C["accent"]),
-        (34, 12, "pipeline.py", "Sensor entrypoint", C["safe"]),
-        (66, 12, "adaptation", "Challenge, PMA, debt", C["border"]),
-    ]
-    for x, y, name, detail, col in packages:
-        label = f"shieldcall.{name}" if name not in ("pipeline.py", "config + demo") else name
-        _box(ax, x - 12, y, 24, 8, label, C["panel"], col, fs=9)
-        ax.text(x, y - 4, detail, ha="center", va="top", fontsize=8, color=C["muted"])
-    _box(ax, 38, 48, 24, 7, "ShieldCallPipeline", C["panel2"], C["accent4"], fs=10)
-    fig.tight_layout(pad=0.6)
-    path = OUT / "package_map.png"
-    fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
-    plt.close(fig)
-    return path
+def _badge(ax, x, y, n, color=NAVY, r=2.0):
+    _disk(ax, x, y, r, color, "white", 0.7, 8)
+    _label(ax, x, y, str(n), 8, "bold", "white", z=9)
 
 
-def render_tct_strf():
-    fig, ax = _setup(13, 8)
-    _title(ax, "Telephony Channel Twin and STRF Residual Path")
-    _subtitle(ax, "Channel is first-class: residual cues are evaluated under realistic phone distortion")
-    stages = [
-        (14, "Source\nwaveform"),
-        (32, "Bandlimit\n300-3400 Hz"),
-        (50, "G.711-like\nmu-law"),
-        (68, "Noise / SNR\n+ packet loss"),
-        (86, "PLC\nconcealment"),
-    ]
-    for i, (x, t) in enumerate(stages):
-        _box(ax, x - 8, 62, 16, 14, t, C["panel"], C["green"] if i else C["accent"], fs=8.5)
-        if i < len(stages) - 1:
-            _arrow(ax, x + 8, 69, stages[i + 1][0] - 8, 69, C["green"])
-    ax.text(50, 52, "Telephony Channel Twin (TCT)", ha="center", fontsize=11, color=C["green"], fontweight="bold")
-    _arrow(ax, 86, 62, 50, 42, C["accent4"], rad=0.2)
-    _box(
-        ax,
-        28,
-        22,
-        44,
-        18,
-        "STRF residual analysis\n\nHarmonic model  |  residual energy / flatness\nGrid artifact score  |  phase irregularity\n64-D streaming feature vector",
-        C["panel"],
-        C["accent4"],
-        fs=9,
-    )
-    _arrow(ax, 50, 22, 50, 12, C["amber"])
-    _box(ax, 30, 4, 40, 7, "Acoustic authenticity score (PMA + residual)", C["panel2"], C["amber"], fs=9.5)
-    fig.tight_layout(pad=0.6)
-    path = OUT / "tct_strf.png"
-    fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
-    plt.close(fig)
-    return path
+def _icon(ax, name: str, x: float, y: float, zoom: float = 0.046):
+    if name not in _ICON_ARR:
+        png = ICON / f"{name}.png"
+        jpg = ICON / f"{name}.jpg"
+        path = png if png.exists() else jpg
+        if not path.exists():
+            return
+        _ICON_ARR[name] = np.asarray(Image.open(path).convert("RGBA"))
+    im = OffsetImage(_ICON_ARR[name], zoom=zoom)
+    ab = AnnotationBbox(im, (x, y), frameon=False, zorder=6, pad=0.0)
+    ax.add_artist(ab)
 
 
-def render_claim_code_map():
-    fig, ax = _setup(13, 8.5)
-    _title(ax, "Claim to Code to Experiment Map")
-    _subtitle(ax, "Novelty is only asserted where implementation and measurement exist")
-    rows = [
-        ("TCT channel twin", "audio/channel.py", "channel ablations"),
-        ("STRF residual FP", "acoustic/residual.py", "acoustic EER / AUC"),
-        ("SDTG path score", "linguistic/discourse.py", "scam vs benign margin"),
-        ("Fusion regimes", "fusion/engine.py", "operational OR-label table"),
-        ("SAPC timing", "fusion/coupling.py", "synthetic yes; audio no"),
-        ("Belief agent", "agent/*.py", "scripted action traces"),
-    ]
-    headers = ["Research claim", "Primary code", "Evidence"]
-    xs = [10, 40, 72]
-    widths = [26, 28, 22]
-    y = 78
-    for x, w, htxt in zip(xs, widths, headers):
-        _box(ax, x, y, w, 7, htxt, C["panel2"], C["accent"], fs=10)
-    for i, (claim, code, evid) in enumerate(rows):
-        yy = 66 - i * 10
-        vals = [claim, code, evid]
-        ecs = [C["green"], C["accent4"], C["amber"]]
-        for x, w, t, ec in zip(xs, widths, vals, ecs):
-            _box(ax, x, yy, w, 8, t, C["panel"], ec, fs=8.5, bold=False)
-    ax.text(
-        50,
-        4,
-        "Run: pytest -q  |  python scripts/run_paper_experiments.py  |  python scripts/run_agent_demo.py",
-        ha="center",
-        fontsize=9,
-        color=C["muted"],
-    )
-    fig.tight_layout(pad=0.6)
-    path = OUT / "claim_code_map.png"
-    fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
-    plt.close(fig)
-    return path
+def _node(ax, x, y, w, h, icon, title, sub="", ec=LINE, fc=FILL, ts=9.2, ss=7.6, zoom=0.046):
+    _box(ax, x, y, w, h, fc, ec)
+    cx = x + w / 2
+    if sub:
+        _icon(ax, icon, cx, y + h * 0.70, zoom)
+        _label(ax, cx, y + h * 0.36, title, ts, "bold")
+        _label(ax, cx, y + h * 0.15, sub, ss, color=MUTED)
+    else:
+        _icon(ax, icon, cx, y + h * 0.64, zoom)
+        _label(ax, cx, y + h * 0.20, title, ts, "bold")
 
 
+def _chip(ax, x, y, w, h, text, ec, fc="white"):
+    _box(ax, x, y, w, h, fc, ec, lw=0.95, r=0.5)
+    _label(ax, x + w / 2, y + h / 2, text, 7.8, color=ec)
+
+
+# ---------------------------------------------------------------------------
+# Agent: PEAS + closed perceive-act cycle
+# ---------------------------------------------------------------------------
 def render_agent_loop():
-    fig, ax = _setup(14, 9)
-    _title(ax, "Belief-state call-defense agent")
-    _subtitle(ax, "Not an LLM. Detectors are sensors. Actions are experiments with an interruption budget.")
-    _box(ax, 6, 70, 28, 14, "Perception\n(synth, fraud, SAPC,\ngap, regime, ACI band)", C["panel"], C["accent4"], fs=9)
-    _box(ax, 36, 70, 28, 14, "Belief over five hypotheses\nbenign | social eng.\nsynthetic | handoff | unknown", C["panel"], C["accent"], fs=9)
-    _box(ax, 66, 70, 28, 14, "Planner\nIG − λ cost − delay risk\nmax 1 challenge / call", C["panel"], C["amber"], fs=9)
-    _arrow(ax, 34, 77, 36, 77, C["accent"])
-    _arrow(ax, 64, 77, 66, 77, C["amber"])
-    actions = [
-        (10, "monitor"),
-        (26, "challenge"),
-        (42, "warn"),
-        (58, "escalate"),
-        (74, "adapt / abstain"),
+    fig, ax = _setup(7.16, 8.15)
+    _title(ax, "Call-defense agent: perceive-act cycle", y=99.4)
+
+    # PEAS (Russell & Norvig). One strip, four cells, no overlapping boxes.
+    _box(ax, 1.6, 88.6, 96.8, 7.8, FILL2, NAVY, lw=1.05, r=0.5)
+    peas = [
+        (1.6, "P", "Performance", "1 challenge cap", GOLD),
+        (25.8, "E", "Environment", "live 8 kHz call", NAVY),
+        (50.0, "A", "Actuators", "six tools", SE),
+        (74.2, "S", "Sensors", "scores only", PROBE),
     ]
-    for x, name in actions:
-        _box(ax, x, 42, 14, 10, name, C["panel2"], C["green"], fs=8.5)
-    _arrow(ax, 80, 70, 80, 53, C["green"])
-    _box(
-        ax,
-        12,
-        12,
-        76,
-        22,
-        "Policy shape (heuristic likelihoods, not fitted Bayes)\n\n"
-        "Human social engineer  →  warn/escalate (a live speaker will pass a nonce)\n"
-        "Synthetic / unknown family  →  challenge is informative (TTS fails the acoustic gate)\n"
-        "Handoff mass high  →  treat as dual-stream timing threat, not a keyword hit\n"
-        "Benign mode  →  never interrupt",
-        C["panel"],
-        C["accent3"],
-        fs=9,
-        bold=False,
-    )
-    fig.tight_layout(pad=0.6)
-    path = OUT / "agent_loop.png"
-    fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
-    plt.close(fig)
-    return path
+    for i, (x, letter, name, sub, col) in enumerate(peas):
+        if i:
+            ax.plot([x, x], [89.2, 95.8], color="#C5D4E8", lw=0.9, zorder=4)
+        _disk(ax, x + 3.6, 92.5, 1.35, col, col, 0.0, 8)
+        _label(ax, x + 3.6, 92.5, letter, 8.0, "bold", "white", z=9)
+        _label(ax, x + 14.6, 93.4, name, 8.2, "bold")
+        _label(ax, x + 14.6, 90.6, sub, 7.8, color=MUTED)
 
+    # Environment
+    _box(ax, 35, 79.0, 30, 8.8, FILL2, NAVY, lw=1.35)
+    _icon(ax, "phone", 41.2, 83.4, 0.038)
+    _label(ax, 55.4, 84.2, "Environment", 9.5, "bold")
+    _label(ax, 55.4, 81.2, "live telephone call", 8.0, color=MUTED)
 
-def render_sapc_timing():
-    fig, ax = _setup(14, 8)
-    _title(ax, "Stage-aligned production change (SAPC)")
-    _subtitle(
-        ax,
-        "Same vocoded fraction; only timing relative to a harvest stage differs. Utterance-mean scores cannot separate these.",
+    # Sensors
+    _box(ax, 1.8, 46.5, 22.4, 26.0, FILL, PROBE, lw=1.2)
+    _icon(ax, "ear", 13.0, 67.4, 0.048)
+    _label(ax, 13.0, 59.4, "Sensors", 10.0, "bold")
+    _label(ax, 13.0, 52.6, "synth, fraud,\nSAPC, coverage gap", 7.6, color=MUTED)
+
+    # Actuators + tools
+    _box(ax, 75.8, 46.5, 22.4, 26.0, FILL, SE, lw=1.2)
+    _icon(ax, "shield", 87.0, 68.0, 0.040)
+    _label(ax, 87.0, 61.6, "Actuators", 10.0, "bold")
+    _label(ax, 87.0, 56.8, "monitor   warn", 8.0, color=SE)
+    _label(ax, 87.0, 53.2, "challenge  escalate", 8.0, color=SE)
+    _label(ax, 87.0, 49.6, "adapt   abstain", 8.0, color=SE)
+
+    # Agent interior
+    _box(ax, 26.6, 33.5, 46.8, 43.2, "#F8FBFE", NAVY, lw=1.45, r=1.0)
+    _label(ax, 50.0, 74.6, "Agent interior", 9.2, "bold", NAVY)
+
+    # Center belief
+    _disk(ax, 50.0, 54.2, 6.4, "white", "#C5D4E8", 1.05, 4)
+    _label(ax, 50.0, 56.0, "p(H)", 9.0, "bold", NAVY, z=7)
+    _label(ax, 50.0, 52.2, "belief", 7.4, color=MUTED, z=7)
+
+    # Four cycle stations (N E S W) — boxes do not sit on the arrows
+    #   1 Perceive (north)  2 Update (east)  3 Decide (south)  4 Act (west)
+    bw, bh = 13.8, 11.2
+    stations = [
+        (50.0, 67.0, "ear", "Perceive", PROBE, 1, 0.040),
+        (64.6, 54.2, "brain", "Update", GOLD, 2, 0.038),
+        (50.0, 41.4, "scale", "Decide", SAFE, 3, 0.038),
+        (35.4, 54.2, "shield", "Act", SE, 4, 0.034),
+    ]
+    for px, py, ic, title, col, n, z in stations:
+        _box(ax, px - bw / 2, py - bh / 2, bw, bh, "white", col, lw=1.25)
+        _icon(ax, ic, px, py + 1.8, z)
+        _label(ax, px, py - 3.35, title, 8.2, "bold")
+        if n == 1:
+            _badge(ax, px, py + bh / 2 + 0.2, n, col, 1.7)
+        elif n == 2:
+            _badge(ax, px + bw / 2 + 0.2, py, n, col, 1.7)
+        elif n == 3:
+            _badge(ax, px, py - bh / 2 - 0.2, n, col, 1.7)
+        else:
+            _badge(ax, px - bw / 2 - 0.2, py, n, col, 1.7)
+
+    # Cycle arrows in the corner gaps (not through boxes)
+    _arrow(ax, 57.0, 64.4, 57.8, 59.6, PROBE, lw=1.2, rad=-0.35)   # 1 -> 2
+    _arrow(ax, 61.4, 48.8, 56.8, 46.8, GOLD, lw=1.2, rad=-0.35)    # 2 -> 3
+    _arrow(ax, 43.0, 46.8, 38.6, 48.8, SAFE, lw=1.2, rad=-0.35)    # 3 -> 4
+    _arrow(ax, 42.2, 59.6, 43.0, 64.4, SE, lw=1.2, rad=-0.35)      # 4 -> 1
+
+    # Outer world loop
+    _arrow(ax, 42.0, 79.0, 16.0, 72.6, PROBE, lw=1.25, rad=-0.08)
+    _label(ax, 24.5, 77.6, "percepts", 7.6, color=PROBE)
+    _arrow(ax, 24.2, 58.0, 26.6, 58.0, PROBE, lw=1.15)
+    _arrow(ax, 73.4, 54.2, 75.8, 58.0, SE, lw=1.15)
+    _arrow(ax, 87.0, 72.5, 64.0, 79.0, SE, lw=1.25, rad=-0.08)
+    _label(ax, 79.8, 77.6, "actions", 7.6, color=SE)
+
+    # Outcome path sits in the 1.5-unit band under the agent box
+    _arrow(ax, 87.0, 46.5, 87.0, 31.6, MUTED, lw=1.05)
+    _arrow(ax, 87.0, 31.6, 50.0, 31.6, MUTED, lw=1.05)
+    _arrow(ax, 50.0, 31.6, 50.0, 33.5, MUTED, lw=1.05)
+    _label(ax, 68.8, 33.4, "outcome feeds next percept", 7.3, color=MUTED)
+
+    # Bottom row: memory, hypotheses, budget, human
+    _node(ax, 1.8, 14.8, 18.4, 14.8, "memory", "Memory", "prototypes", GOLD, FILL2, 8.4, 7.2, 0.036)
+
+    _box(ax, 21.6, 14.8, 34.0, 14.8, FILL2, NAVY, lw=1.05)
+    _label(ax, 38.6, 26.8, "Hypotheses H  (mutually exclusive)", 8.0, "bold")
+    hyps = [
+        (22.4, "benign", SAFE),
+        (28.9, "SE", SE),
+        (35.4, "synth", PROBE),
+        (41.9, "handoff", GOLD),
+        (48.4, "unk.", MUTED),
+    ]
+    for hx, name, col in hyps:
+        _chip(ax, hx, 16.6, 6.1, 6.6, name, col)
+
+    _node(ax, 57.0, 14.8, 19.0, 14.8, "loop", "Budget", "max 1 nonce", GOLD, FILL2, 8.4, 7.2, 0.034)
+    _node(ax, 77.4, 14.8, 20.8, 14.8, "operator", "Human", "on escalate", DUAL, FILL2, 8.4, 7.2, 0.034)
+
+    _box(ax, 1.8, 2.2, 18.4, 10.6, FILL2, MUTED, lw=1.0)
+    _icon(ax, "document", 6.6, 7.6, 0.030)
+    _label(ax, 14.4, 8.8, "Audit", 8.4, "bold")
+    _label(ax, 14.4, 5.4, "every Decision", 7.2, color=MUTED)
+
+    _label(
+        ax, 60.5, 9.8,
+        "Decide:  argmax   IG(a)  -  lam_c cost(a)  -  lam_d 1[passive]",
+        8.0, color=MUTED,
     )
-    # two timelines
-    ax.plot([8, 92], [62, 62], color=C["border"], lw=2)
-    ax.plot([8, 92], [32, 32], color=C["border"], lw=2)
-    ax.text(8, 70, "Aligned (hypothesis)", fontsize=11, fontweight="bold", color=C["accent"])
-    ax.text(8, 40, "Unaligned (matched mix)", fontsize=11, fontweight="bold", color=C["muted"])
-    # aligned vocode window
-    ax.add_patch(plt.Rectangle((48, 56), 28, 12, facecolor=C["quad_dual"], ec=C["accent2"], lw=1.5, zorder=3))
-    ax.text(62, 62, "vocoded", ha="center", va="center", fontsize=9, color=C["accent2"], zorder=4)
-    ax.plot([50, 50], [52, 72], color=C["amber"], lw=2, ls="--")
-    ax.text(50, 74, "harvest stage", ha="center", fontsize=8, color=C["amber"])
-    # unaligned
-    ax.add_patch(plt.Rectangle((10, 26), 28, 12, facecolor=C["quad_probe"], ec=C["accent"], lw=1.5, zorder=3))
-    ax.text(24, 32, "vocoded", ha="center", va="center", fontsize=9, color=C["accent"], zorder=4)
-    ax.plot([50, 50], [22, 42], color=C["amber"], lw=2, ls="--")
-    ax.text(
-        50,
-        8,
-        "Measured on Mini LibriSpeech splices: mix matched, ranking AUC 0.47. Claim not supported.\n"
-        "On synthetic point processes the same statistic ranks at AUC 1.00.",
-        ha="center",
-        fontsize=9,
-        color=C["soft"],
+    _label(
+        ax, 60.5, 5.4,
+        "Human social engineer  ->  warn (a nonce would pass).    Synthetic / unknown  ->  challenge.",
+        8.0, color=MUTED,
     )
-    fig.tight_layout(pad=0.6)
-    path = OUT / "sapc_timing.png"
-    fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
-    plt.close(fig)
-    return path
+    return _save(fig, "agent_loop.png")
 
 
 def render_graphical_abstract():
-    fig, ax = _setup(14, 8)
+    fig, ax = _setup(7.16, 4.65)
     _title(ax, "Graphical abstract")
-    _subtitle(ax, "ShieldCall: dual-stream telephony sensing plus a budgeted defense agent")
-    _box(ax, 4, 48, 22, 28, "Call\n\naudio + ASR\nfragments", C["panel2"], C["border"], fs=10)
-    _box(ax, 30, 55, 20, 14, "Acoustic\nresidual + PMA", C["panel"], C["accent4"], fs=9)
-    _box(ax, 30, 36, 20, 14, "Linguistic\nkeywords + stages", C["panel"], C["accent2"], fs=9)
-    _box(ax, 54, 42, 20, 24, "Fusion\nOR-label risk\nSAPC  |  ACI", C["panel"], C["amber"], fs=9)
-    _box(ax, 78, 42, 18, 24, "Agent\nbelief\naction\ntrace", C["panel"], C["accent3"], fs=9)
-    _arrow(ax, 26, 62, 30, 62, C["accent4"])
-    _arrow(ax, 26, 43, 30, 43, C["accent2"])
-    _arrow(ax, 50, 62, 54, 58, C["accent4"])
-    _arrow(ax, 50, 43, 54, 50, C["accent2"])
-    _arrow(ax, 74, 54, 78, 54, C["accent3"])
-    ax.text(
-        50,
-        12,
-        "What is measured: stage tracker beats keywords on paraphrases; disagreement fusion raises recall at a false-alarm cost;\n"
-        "the agent warns on human vishing and does not waste a nonce; SAPC fails on vocoded LibriSpeech splices.",
-        ha="center",
-        fontsize=9,
-        color=C["soft"],
+
+    _node(ax, 2.4, 46, 17.6, 38, "phone", "Call", "8 kHz audio", NAVY, FILL2, 10.0, 8.0, 0.048)
+    _node(ax, 26.4, 64, 20.2, 22, "wave", "Acoustic", "", PROBE, FILL, 9.6, 7.6, 0.042)
+    _node(ax, 26.4, 38, 20.2, 22, "document", "Linguistic", "", DUAL, FILL, 9.6, 7.6, 0.040)
+    _node(ax, 53.0, 46, 20.2, 38, "scale", "Fusion", "OR-label  |  SAPC", GOLD, FILL, 10.0, 8.0, 0.046)
+    _box(ax, 79.2, 46, 18.4, 38, FILL, SE, lw=1.25)
+    _icon(ax, "brain", 88.4, 74.8, 0.042)
+    _icon(ax, "loop", 88.4, 62.8, 0.038)
+    _label(ax, 88.4, 52.4, "Agent\nloop", 10.0, "bold")
+
+    _arrow(ax, 20.0, 72, 26.4, 75, PROBE)
+    _arrow(ax, 20.0, 56, 26.4, 49, DUAL)
+    _arrow(ax, 46.6, 75, 53.0, 70, PROBE)
+    _arrow(ax, 46.6, 49, 53.0, 56, DUAL)
+    _arrow(ax, 73.2, 65, 79.2, 65, SE)
+
+    _arrow(ax, 88.4, 46.0, 88.4, 24.5, SE, lw=1.2)
+    _arrow(ax, 88.4, 24.5, 11.2, 24.5, SE, lw=1.2)
+    _arrow(ax, 11.2, 24.5, 11.2, 46.0, SE, lw=1.2)
+    _label(ax, 50, 27.8, "actions close the loop on the live call", 8.2, color=SE)
+
+    _label(
+        ax, 50, 8.8,
+        "Measured: stages beat keywords on paraphrases; fusion raises recall at an FPR cost;\n"
+        "SAPC fails on vocoded LibriSpeech splices; the agent warns on human vishing.",
+        8.0, color=MUTED,
     )
-    fig.tight_layout(pad=0.6)
-    path = OUT / "graphical_abstract.png"
-    fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
+    return _save(fig, "graphical_abstract.png")
+
+
+def render_architecture_pipeline():
+    fig, ax = _setup(7.16, 6.2)
+    _title(ax, "Sensor stack  (feeds the agent)")
+
+    _box(ax, 24, 84.0, 52, 10.2, FILL2, NAVY, lw=1.25)
+    _icon(ax, "phone", 32.2, 89.2, 0.038)
+    _label(ax, 54.5, 89.2, "Incoming call  |  8 kHz", 10.0, "bold")
+
+    _box(ax, 18, 70.2, 64, 9.4, FILL, SAFE, lw=1.1)
+    _label(ax, 50, 74.9, "Preprocessor  |  telephone-band channel  |  VAD", 9.2, "bold")
+    _arrow(ax, 50, 84.0, 50, 79.7, SAFE)
+
+    _node(ax, 3.5, 40.5, 43, 24.5, "wave", "Acoustic stream",
+          "residual  |  prototypes  |  CUSUM", PROBE, FILL, 10.0, 8.0, 0.046)
+    _node(ax, 53.5, 40.5, 43, 24.5, "document", "Linguistic stream",
+          "keywords  |  stage tracker\n(no production ASR here)", DUAL, FILL, 10.0, 7.8, 0.042)
+
+    _arrow(ax, 36, 70.2, 25, 65.1, PROBE)
+    _arrow(ax, 64, 70.2, 75, 65.1, DUAL)
+
+    _box(ax, 16, 21.8, 68, 13.4, FILL, GOLD, lw=1.2)
+    _icon(ax, "scale", 25.0, 28.6, 0.038)
+    _label(ax, 56.5, 30.6, "Fusion  |  regimes  |  SAPC  |  ACI", 10.0, "bold")
+    _label(ax, 56.5, 25.2, "sufficient statistics only   (no waveform, no transcript)", 8.0, color=MUTED)
+    _arrow(ax, 25, 40.5, 38, 35.3, PROBE)
+    _arrow(ax, 75, 40.5, 62, 35.3, DUAL)
+    _arrow(ax, 50, 21.8, 50, 16.4, NAVY)
+
+    _box(ax, 16, 3.0, 68, 12.4, FILL2, SE, lw=1.35)
+    _icon(ax, "brain", 27.2, 9.3, 0.036)
+    _icon(ax, "loop", 36.2, 9.3, 0.032)
+    _label(ax, 58.8, 9.3, "Defense agent  (closed loop, Fig. 2)", 10.0, "bold")
+    return _save(fig, "architecture_pipeline.png")
+
+
+def render_cscf_regimes():
+    fig, ax = _setup(7.16, 5.7)
+    _title(ax, "Fusion regimes  (disjunction, not averaging)")
+
+    quads = [
+        (12, 51, "#EBF4FF", PROBE, "wave", "Spoof probe", "high synth  |  low fraud"),
+        (54, 51, "#FCE8EC", DUAL, "shield", "Dual threat", "high synth  |  high fraud"),
+        (12, 12, "#E6F4EA", SAFE, "phone", "Agreement", "low synth  |  low fraud"),
+        (54, 12, "#FEF3E8", SE, "megaphone", "Social engineering", "human voice  |  hostile script"),
+    ]
+    for x, y, fc, ec, ic, title, sub in quads:
+        ax.add_patch(Rectangle((x, y), 34, 33, facecolor=fc, edgecolor=ec, lw=1.25, zorder=2))
+        _icon(ax, ic, x + 7.0, y + 25.0, 0.040)
+        _label(ax, x + 21.2, y + 25.0, title, 10.2, "bold", ec)
+        _label(ax, x + 17.0, y + 12.5, sub, 8.5, color=MUTED)
+
+    ax.plot([50, 50], [12, 84], color="#CBD5E0", lw=1.05, zorder=3)
+    ax.plot([12, 88], [45.5, 45.5], color="#CBD5E0", lw=1.05, zorder=3)
+
+    _arrow(ax, 12, 5.8, 46, 5.8, MUTED, lw=1.05, ms=10)
+    _label(ax, 48, 5.8, "Linguistic fraud", 8.2, color=MUTED, ha="left")
+    _arrow(ax, 6.4, 12, 6.4, 82, MUTED, lw=1.05, ms=10)
+    _label(ax, 6.4, 86.6, "Acoustic\nsynthetic", 7.6, color=MUTED)
+    return _save(fig, "cscf_regimes.png")
+
+
+def render_sdtg_stages():
+    fig, ax = _setup(7.16, 3.7)
+    _title(ax, "Scam discourse as a stage path")
+    _icon(ax, "document", 8.0, 88.5, 0.036)
+
+    stages = [
+        ("Greeting", PROBE), ("Authority", PROBE), ("Problem", GOLD), ("Urgency", SE),
+        ("Harvest", DUAL), ("Payment", DUAL), ("Secrecy", DUAL), ("Threat", DUAL),
+    ]
+    n = len(stages)
+    bw, bh, gap = 9.2, 18.0, 2.6
+    total = n * bw + (n - 1) * gap
+    x0 = (100 - total) / 2
+    y = 42
+    for i, (name, col) in enumerate(stages):
+        x = x0 + i * (bw + gap)
+        _box(ax, x, y, bw, bh, FILL, col, lw=1.15)
+        _disk(ax, x + bw / 2, y + bh * 0.68, 2.15, col, col, 0.0, 8)
+        _label(ax, x + bw / 2, y + bh * 0.68, str(i + 1), 8.5, "bold", "white", z=9)
+        _label(ax, x + bw / 2, y + bh * 0.28, name, 7.8, "bold")
+        if i < n - 1:
+            _arrow(ax, x + bw, y + bh / 2, x + bw + gap, y + bh / 2, col, lw=1.05, ms=9)
+
+    _label(ax, 50, 16, "Path score uses progression, not a bag of keywords.", 8.6, color=MUTED)
+    return _save(fig, "sdtg_stages.png")
+
+
+def render_tct_strf():
+    fig, ax = _setup(7.16, 4.6)
+    _title(ax, "Telephone-band path and residual score")
+    steps = [
+        ("phone", "Source", NAVY),
+        ("wave", "Bandlimit", SAFE),
+        ("memory", "mu-law", SAFE),
+        ("ear", "Loss + PLC", SAFE),
+    ]
+    for i, (ic, name, col) in enumerate(steps):
+        x = 4.5 + i * 24.2
+        _node(ax, x, 58, 21.4, 26.5, ic, name, "", col, FILL, 9.6, 7.6, 0.042)
+        if i < 3:
+            _arrow(ax, x + 21.4, 71.2, x + 24.2, 71.2, SAFE, lw=1.15)
+
+    _box(ax, 16, 10, 68, 36, FILL, PROBE, lw=1.2)
+    _icon(ax, "wave", 27.5, 28.2, 0.048)
+    _label(ax, 56.5, 32.4, "Residual fingerprint + prototypes", 10.0, "bold")
+    _label(ax, 56.5, 22.4, "Evaluated under the channel, not on clean-lab audio.", 8.2, color=MUTED)
+    _arrow(ax, 88.5, 58.0, 72.0, 46.0, PROBE, rad=0.12)
+    return _save(fig, "tct_strf.png")
+
+
+def render_adaptation_loop():
+    fig, ax = _setup(7.16, 4.75)
+    _title(ax, "Few-shot memory and coverage gap")
+    _node(ax, 5, 42, 24.5, 34, "wave", "Embedding", "", PROBE, FILL, 10.0, 7.6, 0.048)
+    _node(ax, 37.75, 42, 24.5, 34, "brain", "Prototypes", "", GOLD, FILL, 10.0, 7.6, 0.046)
+    _node(ax, 70.5, 42, 24.5, 34, "shield", "Challenge\nlabel", "", SE, FILL, 9.4, 7.6, 0.044)
+    _arrow(ax, 29.5, 59, 37.75, 59, GOLD)
+    _arrow(ax, 62.25, 59, 70.5, 59, SE)
+    _box(ax, 16, 8, 68, 20.5, FILL2, SAFE, lw=1.15)
+    _label(ax, 50, 22.0, "Coverage gap before vs after k labelled shots", 9.0, "bold", SAFE)
+    _label(ax, 50, 13.8, "LPC recovery was small  (EER  0.50  ->  0.45)", 8.2, color=MUTED)
+    _arrow(ax, 82.5, 42.0, 66.0, 28.6, SAFE, rad=0.18)
+    return _save(fig, "adaptation_loop.png")
+
+
+def render_package_map():
+    fig, ax = _setup(7.16, 5.0)
+    _title(ax, "Package map")
+    pkgs = [
+        (4.5, 54, "wave", "audio", PROBE),
+        (28.0, 54, "wave", "acoustic", PROBE),
+        (51.5, 54, "document", "linguistic", DUAL),
+        (75.0, 54, "scale", "fusion", GOLD),
+        (4.5, 12, "brain", "agent", SE),
+        (28.0, 12, "shield", "adaptation", SE),
+        (51.5, 12, "ear", "eval", SAFE),
+        (75.0, 12, "loop", "pipeline", NAVY),
+    ]
+    for x, y, ic, name, col in pkgs:
+        _node(ax, x, y, 20.5, 32, ic, name, "", col, FILL, 10.5, 7.6, 0.046)
+    return _save(fig, "package_map.png")
+
+
+def render_sapc_timing():
+    fig, ax = _setup(7.16, 4.9)
+    _title(ax, "SAPC: same mix, different timing")
+
+    _label(ax, 6, 83.5, "Aligned", 10.0, "bold", PROBE, ha="left")
+    ax.plot([6, 94], [70.5, 70.5], color="#CBD5E0", lw=2.2, solid_capstyle="round")
+    ax.add_patch(Rectangle((48, 63.5), 32, 14, facecolor="#FCE8EC", ec=DUAL, lw=1.25, zorder=3))
+    _icon(ax, "wave", 54.2, 70.5, 0.028)
+    _label(ax, 70.5, 70.5, "vocoded window", 8.6, color=DUAL)
+    ax.plot([52, 52], [58, 85], color=GOLD, lw=1.45, ls="--")
+    _label(ax, 52, 87.0, "harvest", 8.2, color=GOLD)
+
+    _label(ax, 6, 49.0, "Unaligned  (matched duration)", 10.0, "bold", MUTED, ha="left")
+    ax.plot([6, 94], [34.5, 34.5], color="#CBD5E0", lw=2.2, solid_capstyle="round")
+    ax.add_patch(Rectangle((8, 27.5), 32, 14, facecolor="#EBF4FF", ec=PROBE, lw=1.25, zorder=3))
+    _icon(ax, "wave", 14.2, 34.5, 0.028)
+    _label(ax, 30.5, 34.5, "vocoded window", 8.6, color=PROBE)
+    ax.plot([52, 52], [24, 51], color=GOLD, lw=1.45, ls="--")
+
+    _label(
+        ax, 50, 11.0,
+        "Utterance-mean scores cannot separate these two.\n"
+        "On Mini LibriSpeech splices the ranking AUC was 0.47  -  claim not supported.",
+        8.4, color=MUTED,
+    )
+    return _save(fig, "sapc_timing.png")
+
+
+def render_claim_code_map():
+    fig, ax = _setup(7.16, 5.2)
+    _title(ax, "Claim  |  code  |  evidence")
+    rows = [
+        ("Stage tracker vs keywords", "linguistic/", "held-out AUC 0.88 vs 0.42"),
+        ("OR-label fusion", "fusion/engine.py", "recall 1.00 vs 0.30; FPR 0.40"),
+        ("Pulse-formant / LPC", "acoustic/ + eval/", "EER 0  /  AUC 0.49"),
+        ("SAPC timing", "fusion/coupling.py", "synthetic 1.00; audio 0.47"),
+        ("Defense agent", "agent/", "scripted traces, not EER"),
+    ]
+    for x, t in ((4, "Claim"), (36, "Code"), (68, "Evidence")):
+        _box(ax, x, 81.5, 28, 8.6, FILL2, NAVY)
+        _label(ax, x + 14, 85.8, t, 9.6, "bold")
+    for i, (a, b, c) in enumerate(rows):
+        y = 66.5 - i * 13.4
+        _box(ax, 4, y, 28, 11.2, FILL, PROBE)
+        _box(ax, 36, y, 28, 11.2, FILL, GOLD)
+        _box(ax, 68, y, 28, 11.2, FILL, SAFE)
+        _label(ax, 18, y + 5.6, a, 8.3)
+        _label(ax, 50, y + 5.6, b, 8.3)
+        _label(ax, 82, y + 5.6, c, 8.3)
+    return _save(fig, "claim_code_map.png")
+
+
+def render_patent_pathway():
+    fig, ax = _setup(7.16, 3.85)
+    _title(ax, "Filing path  (procedural, not legal advice)")
+    steps = ["Disclosure", "U.S.\nprovisional", "Pending", "Non-\nprovisional", "Prosecution"]
+    for i, name in enumerate(steps):
+        x = 3.2 + i * 19.4
+        col = PROBE if i < 2 else GOLD
+        _box(ax, x, 28, 16.8, 44, FILL, col, lw=1.15)
+        _disk(ax, x + 8.4, 64.2, 2.7, col, "white", 0.6, 8)
+        _label(ax, x + 8.4, 64.2, str(i + 1), 10, "bold", "white", z=9)
+        _label(ax, x + 8.4, 44.0, name, 8.6, "bold")
+        if i < 4:
+            _arrow(ax, x + 16.8, 50, x + 19.4, 50, MUTED, lw=1.1, ms=10)
+    _label(ax, 50, 12.5, "patentcenter.uspto.gov      pct.wipo.int/ePCT", 8.2, color=MUTED)
+    return _save(fig, "patent_pathway.png")
+
+
+def render_linguistic_auc():
+    fig, ax = plt.subplots(figsize=(5.5, 3.4), dpi=150)
+    fig.patch.set_facecolor("white")
+    labels = ["Keywords\n(train)", "Keywords+stages\n(train)", "Keywords\n(held-out)", "Keywords+stages\n(held-out)"]
+    vals = [0.929, 1.000, 0.417, 0.883]
+    colors = ["#94A3B8", PROBE, "#94A3B8", PROBE]
+    bars = ax.bar(labels, vals, color=colors, width=0.62, edgecolor=INK, linewidth=0.4, zorder=3)
+    for b, v in zip(bars, vals):
+        ax.text(b.get_x() + b.get_width() / 2, v + 0.03, f"{v:.2f}",
+                ha="center", va="bottom", fontsize=9.5, fontweight="bold")
+    ax.axhline(0.5, color="#94A3B8", ls="--", lw=0.9, zorder=2)
+    ax.set_ylim(0, 1.18)
+    ax.set_ylabel("AUC", fontsize=10.5)
+    ax.set_title("Linguistic detection on author-written scripts", fontsize=11, pad=8)
+    ax.tick_params(labelsize=8.8)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.yaxis.grid(True, ls=":", color="#E2E8F0", zorder=0)
+    ax.set_axisbelow(True)
+    fig.tight_layout()
+    name = "linguistic_auc.png"
+    OUT.mkdir(parents=True, exist_ok=True)
+    PAPER.mkdir(parents=True, exist_ok=True)
+    fig.savefig(OUT / name, dpi=600, facecolor="white")
+    fig.savefig(OUT / "linguistic_auc.pdf", facecolor="white")
+    for dest in (PAPER / name, PAPER / "linguistic_auc.pdf"):
+        dest.write_bytes((OUT / dest.name).read_bytes())
     plt.close(fig)
-    return path
+    return OUT / name
+
+
+def render_fusion_operational():
+    fig, ax = plt.subplots(figsize=(6.5, 3.6), dpi=150)
+    fig.patch.set_facecolor("white")
+    methods = ["Acoustic", "Linguistic", "Naive sum", "Logistic", "CSCF"]
+    auc = [0.833, 0.827, 0.973, 0.993, 1.000]
+    rec = [0.90, 0.05, 0.30, 1.00, 1.00]
+    fpr = [0.80, 0.00, 0.00, 0.50, 0.40]
+    x = np.arange(len(methods))
+    w = 0.26
+    ax.bar(x - w, auc, w, label="AUC", color=PROBE, edgecolor=INK, lw=0.35, zorder=3)
+    ax.bar(x, rec, w, label="Disagreement recall @ 0.5", color="#E69F00", edgecolor=INK, lw=0.35, zorder=3)
+    ax.bar(x + w, fpr, w, label="Safe-cell FPR @ 0.5", color="#CC79A7", edgecolor=INK, lw=0.35, zorder=3)
+    ax.set_xticks(x)
+    ax.set_xticklabels(methods, fontsize=9.2)
+    ax.set_ylim(0, 1.22)
+    ax.set_ylabel("Score", fontsize=10.5)
+    ax.set_title("Operational fusion  (threat = scam language or vocoded voice)", fontsize=10.5, pad=8)
+    ax.legend(frameon=False, fontsize=8.2, loc="upper left")
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.yaxis.grid(True, ls=":", color="#E2E8F0", zorder=0)
+    ax.set_axisbelow(True)
+    ax.tick_params(labelsize=8.8)
+    fig.tight_layout()
+    name = "fusion_operational.png"
+    fig.savefig(OUT / name, dpi=600, facecolor="white")
+    fig.savefig(OUT / "fusion_operational.pdf", facecolor="white")
+    for dest in (PAPER / name, PAPER / "fusion_operational.pdf"):
+        dest.write_bytes((OUT / dest.name).read_bytes())
+    plt.close(fig)
+    return OUT / name
 
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    if not (ICON / "phone.png").exists() and not (ICON / "phone.jpg").exists():
+        raise SystemExit(f"Missing icons in {ICON}")
     paths = [
         render_graphical_abstract(),
         render_architecture_pipeline(),
-        render_sdtg_stages(),
-        render_cscf_regimes(),
-        render_adaptation_loop(),
-        render_patent_pathway(),
-        render_package_map(),
-        render_tct_strf(),
-        render_claim_code_map(),
         render_agent_loop(),
+        render_cscf_regimes(),
+        render_sdtg_stages(),
+        render_tct_strf(),
+        render_adaptation_loop(),
+        render_package_map(),
         render_sapc_timing(),
+        render_claim_code_map(),
+        render_patent_pathway(),
+        render_linguistic_auc(),
+        render_fusion_operational(),
     ]
-    print("Rendered figures:")
+    print("Rendered at journal width (vector PDF + 600 dpi PNG):")
     for p in paths:
-        print(f"  {p}  ({p.stat().st_size // 1024} KB)")
+        pdf = p.with_suffix(".pdf")
+        print(f"  {p.name:28s}  png {p.stat().st_size // 1024:4d} KB   pdf {pdf.stat().st_size // 1024:3d} KB")
 
 
 if __name__ == "__main__":
