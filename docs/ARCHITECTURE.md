@@ -4,6 +4,25 @@
 
 Real-time joint detection of **voice synthesis** and **linguistic fraud intent** on telephone audio, under the channel conditions that actually exist (narrowband, G.711, packet loss), with **measurable adaptation** when new synthesizers appear.
 
+The detector is a **sensor**. A **belief-state defense agent** sits above it, spends an interruption budget, and never sees raw audio.
+
+## Agent (v0.5)
+
+```mermaid
+flowchart TB
+  Call[Telephone audio + ASR fragments] --> Pipe[ShieldCall pipeline]
+  Pipe -->|sufficient statistics only| Perc[Perception: synth, fraud, SAPC, gap, regime]
+  Perc --> Belief[Belief over 5 hypotheses]
+  Belief --> Plan[Info-gain planner minus cost minus delay risk]
+  Plan --> Tools[Tools: monitor / challenge / warn / escalate / adapt / abstain]
+  Tools --> Trace[Audit trace]
+  Tools -.->|"at most one challenge"| Call
+```
+
+Hypotheses: `benign`, `social_engineering`, `synthetic_full`, `handoff`, `unknown_family`.
+
+The planner is not an LLM. Likelihoods are hand-set (ADR-002). We do not claim optimal Bayes on live calls. We do claim: different attacks produce different *action traces*.
+
 ## System data flow
 
 ![Dual-stream pipeline architecture](figures/architecture_pipeline.png)
@@ -46,14 +65,13 @@ Prototype Memory accepts few-shot labeled embeddings. Coverage gap measures dist
 ```
 shieldcall/
  audio/ preprocessor, VAD, channel twin
- acoustic/ STRF features, residual, prototype scorer
+ acoustic/ residual features, prototype scorer, CUSUM
  linguistic/ patterns, discourse graph, ASR bridge
- fusion/ CSCF engine, conformal, explain
+ fusion/ score fusion, SAPC coupling, ACI
+ agent/ belief, planner, tools, traces   ← decision maker
  adaptation/ buffers, challenge-response, coverage debt
- eval/ metrics, harness, synthetic benchmark
- demo/ streaming demo
- pipeline.py single entrypoint
- config.py YAML profiles
+ eval/ protocols, handoff, speech
+ pipeline.py sensor entrypoint
 ```
 
 ## Latency budget (target)
@@ -69,7 +87,7 @@ shieldcall/
 
 ## Version
 
-0.3.0: real-speech vocoder protocol, held-out vishing scripts, operational fusion labels, arXiv draft in `paper/`. Pulse-formant is an easy acoustic condition; LPC under bandlimiting is a reported failure. ASVspoof remains the next measurement.
+0.5.0: belief-state defense agent on top of the v0.4 sensors. SAPC audio handoff remains a reported failure. Agent quality is measured by action traces on scripted percepts, not by ASVspoof EER.
 
 ## Regenerating figures
 

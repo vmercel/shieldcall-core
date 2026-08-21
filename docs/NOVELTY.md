@@ -4,6 +4,10 @@ Read with `RESEARCH.md` (claim → code → test) and `paper/main.pdf`.
 
 A claim is **in scope** only if it is implemented, has a number in `docs/results/`, and is differentiated from the cited literature. Everything else is roadmap.
 
+## v0.5 agent
+
+A **belief-state defense agent** treats detectors as instruments and actions as experiments (ADR-002). Five hypotheses, info-gain planner, one-challenge budget, audit traces. **Not an LLM.** Verified by scripted-percept tests (`tests/test_agent.py`), not by a reduction in EER. Do not claim the agent detects vocoders better than the sensors.
+
 ## v0.4 methods (SAPC, ACI)
 
 **Stage-aligned production change** asks whether a production change-point is closer to a harvest-class stage than a circular-shift null. Code: `acoustic/changepoint.py`, `fusion/coupling.py`. On **synthetic point processes** the statistic ranks aligned vs unaligned at AUC 1.0. On **pulse-formant splices into Mini LibriSpeech** it does not (AUC 0.47, 6 pairs, mix matched). That audio claim is **not** made.
