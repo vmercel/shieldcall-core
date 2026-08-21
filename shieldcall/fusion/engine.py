@@ -54,6 +54,9 @@ class FusedRisk:
     discourse_stage: str = ""
     progression_depth: int = 0
     threat_explanation: Optional[ThreatExplanation] = None
+    handoff_statistic: float = 0.0
+    handoff_pvalue: float = 1.0
+    handoff_score: float = 0.0
 
 
 class FusionEngine:

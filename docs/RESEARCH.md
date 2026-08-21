@@ -15,6 +15,9 @@
 | Challenge+voice check | `adaptation/hooks.py` | unit tests | Transcript plus synth cap |
 | Production ASR | `asr_bridge.py` | — | Interface only |
 | ASVspoof numbers | `eval/asvspoof.py` | set `SHIELDCALL_ASVSPOOF_ROOT` | Loader only |
+| Production change-point | `acoustic/changepoint.py` | unit tests | Implemented (CUSUM + mean-shift) |
+| Stage-aligned coupling | `fusion/coupling.py` | synthetic AUC 1.0; LibriSpeech splices **fail** | Method yes; audio claim **no** |
+| Gibbs–Candès ACI | `fusion/aci.py` | coverage 0.885 vs 0.90 | Implemented |
 
 ## What “works” means here
 

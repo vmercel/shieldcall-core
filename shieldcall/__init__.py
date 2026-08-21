@@ -14,7 +14,7 @@ Components (descriptive names; acronyms are shorthand only)
 - Input-space counterfactuals (CTE)
 """
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 from .fusion.engine import FusionEngine, FusedRisk
 from .acoustic.scorer import AcousticDeepfakeScorer, AcousticScore

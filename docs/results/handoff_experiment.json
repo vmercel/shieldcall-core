@@ -1,0 +1,26 @@
+{
+  "aci": {
+    "aci_coverage": 0.885,
+    "aci_target": 0.9,
+    "frozen_quantile_coverage": 0.9305555555555556,
+    "n": 400
+  },
+  "handoff": {
+    "n_pairs": 6.0,
+    "pair_win_rate": 0.5,
+    "auc_coupling_score": 0.4722222222222222,
+    "auc_coupling_stat": 0.5,
+    "auc_mean_synth": 0.5277777777777778,
+    "mean_synth_aligned": 0.5799560108599177,
+    "mean_synth_unaligned": 0.5710545638227299,
+    "mean_stat_aligned": 0.02477923969497747,
+    "mean_stat_unaligned": 0.18558144620821512,
+    "mean_p_aligned": 0.6149999999999999,
+    "mean_p_unaligned": 0.455
+  },
+  "gates": {
+    "matched_mix": true,
+    "coupling_beats_mean": false,
+    "pair_win": false
+  }
+}

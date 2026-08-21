@@ -40,10 +40,30 @@ Andreas Stolcke, Klaus Ries, Noah Coccaro, Elizabeth Shriberg, Rebecca Bates, Da
 \newblock Dialogue act modeling for automatic tagging and recognition of conversational speech.
 \newblock {\em Computational Linguistics}, 26(3):339--373, 2000.
 
+\bibitem{zhang2021partial}
+Lin Zhang, Xin Wang, Erica Cooper, Junichi Yamagishi, Jose Patino, and Nicholas Evans.
+\newblock An initial investigation for detecting partially spoofed audio.
+\newblock In {\em Proc. Interspeech}, 2021.
+
+\bibitem{zhang2023partialspoof}
+Lin Zhang, Xin Wang, Erica Cooper, Nicholas Evans, and Junichi Yamagishi.
+\newblock The {PartialSpoof} database and countermeasures for the detection of short fake speech segments embedded in an utterance.
+\newblock {\em {IEEE/ACM} Trans. Audio, Speech, Lang. Process.}, 31:813--825, 2023.
+
 \bibitem{angelopoulos2023gentle}
 Anastasios~N. Angelopoulos and Stephen Bates.
 \newblock A gentle introduction to conformal prediction and distribution-free uncertainty quantification.
 \newblock {\em Foundations and Trends in Machine Learning}, 2023.
+
+\bibitem{gibbs2021aci}
+Isaac Gibbs and Emmanuel Cand{\`e}s.
+\newblock Adaptive conformal inference under distribution shift.
+\newblock In {\em Advances in Neural Information Processing Systems}, 2021.
+
+\bibitem{page1954cusum}
+E.~S. Page.
+\newblock Continuous inspection schemes.
+\newblock {\em Biometrika}, 41(1/2):100--115, 1954.
 
 \bibitem{panayotov2015librispeech}
 Vassil Panayotov, Guoguo Chen, Daniel Povey, and Sanjeev Khudanpur.

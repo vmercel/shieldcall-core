@@ -19,6 +19,8 @@ from .acoustic.scorer import AcousticDeepfakeScorer, AcousticScore
 from .linguistic.scorer import LinguisticFraudScorer, LinguisticScore
 from .linguistic.asr_bridge import ASRBridge, PassthroughASR, TranscriptFragment
 from .fusion.engine import FusionEngine, FusedRisk
+from .fusion.coupling import StageAlignedCoupling
+from .acoustic.changepoint import StreamingCUSUM
 from .adaptation.hooks import AdaptationBuffer, AdaptationExample
 from .adaptation.coverage import CoverageDebtTracker
 
@@ -73,6 +75,8 @@ class ShieldCallPipeline:
         self.asr: ASRBridge = asr or PassthroughASR()
         self.adaptation_buffer = AdaptationBuffer()
         self.coverage = CoverageDebtTracker()
+        self.cusum = StreamingCUSUM()
+        self.sapc = StageAlignedCoupling()
         self._last_risk: Optional[FusedRisk] = None
 
     def reset(self) -> None:
@@ -82,6 +86,8 @@ class ShieldCallPipeline:
         self.fusion.reset()
         self.asr.reset()
         self.coverage.reset()
+        self.cusum.reset()
+        self.sapc.reset()
         self._last_risk = None
 
     def push_audio(self, samples: np.ndarray, sample_rate: int) -> List[PipelineEvent]:
@@ -97,9 +103,28 @@ class ShieldCallPipeline:
         self.fusion.update_linguistic(score)
         return score
 
+    def _attach_handoff(self, risk: FusedRisk) -> FusedRisk:
+        coup = self.sapc.evaluate()
+        risk.handoff_statistic = coup.statistic
+        risk.handoff_pvalue = coup.p_value
+        risk.handoff_score = coup.score
+        # Timing evidence is extra, not a replacement for CSCF.
+        # Only raise risk when the permutation test is in the tail.
+        if coup.p_value < 0.15 and coup.statistic >= 0.35:
+            risk.risk_score = max(risk.risk_score, coup.score)
+            if risk.risk_score >= self.config.high_risk_threshold:
+                risk.tier = "HIGH_RISK"
+            elif risk.risk_score >= self.config.suspicious_threshold and risk.tier == "SAFE":
+                risk.tier = "SUSPICIOUS"
+        return risk
+
     def _process_frame(self, frame: Frame) -> PipelineEvent:
         ac = self.acoustic.score_frame(frame)
         self.fusion.update_acoustic(ac)
+        if ac.is_speech:
+            alarm = self.cusum.update(ac.synthetic_prob, frame.timestamp_sec)
+            if alarm is not None:
+                self.sapc.observe_alarm(alarm.timestamp_sec)
 
         if ac.embedding is not None and ac.is_speech:
             gap = self.acoustic.memory.coverage_gap(ac.embedding)
@@ -110,10 +135,11 @@ class ShieldCallPipeline:
         for frag in transcripts:
             li_score = self.linguistic.update(frag.text, frag.timestamp_sec)
             self.fusion.update_linguistic(li_score)
+            self.sapc.observe_stage(li_score.discourse_stage, frag.timestamp_sec)
 
         risk: Optional[FusedRisk] = None
         if frame.frame_index % self.config.fuse_every_n_frames == 0:
-            risk = self.fusion.fuse(frame.timestamp_sec)
+            risk = self._attach_handoff(self.fusion.fuse(frame.timestamp_sec))
             self._last_risk = risk
 
         return PipelineEvent(

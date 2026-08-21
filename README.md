@@ -2,7 +2,7 @@
 
 Streaming detector for **vishing language** and **vocoded speech** on telephone-bandwidth audio.
 
-This is a research prototype (v0.3), not a certified product and not a state-of-the-art ASVspoof system. The measured claims, and the things we explicitly do not claim, are in `docs/NOVELTY.md` and the paper in `paper/`.
+This is a research prototype (v0.4), not a certified product and not a state-of-the-art ASVspoof system. The measured claims, and the things we explicitly do not claim, are in `docs/NOVELTY.md` and the paper in `paper/`.
 
 **Paper (arXiv draft):** `paper/main.pdf`  
 **Reproduce:** `python scripts/run_paper_experiments.py`
@@ -29,6 +29,9 @@ From `docs/results/ablation_latest.txt` / `scripts/run_paper_experiments.py`:
 | LPC vocoder vs LibriSpeech after bandlimiting | AUC **0.49** (at chance; negative result) |
 | Operational fusion, threat = scam **or** vocoded | CSCF disagreement recall **1.00** vs naive sum **0.30**; CSCF safe-cell FPR **0.40** vs naive **0.00** |
 | ASVspoof | **Not run** |
+| SAPC on synthetic point processes | AUC **1.00** (formula check, not speech) |
+| SAPC aligned vs unaligned vocoded splices | AUC **0.47** — **not supported** |
+| ACI coverage vs target 0.90 | **0.885** (synthetic labeled stream) |
 
 Sine-wave unit tests still exist. They are not evidence.
 

@@ -4,6 +4,14 @@ Read with `RESEARCH.md` (claim → code → test) and `paper/main.pdf`.
 
 A claim is **in scope** only if it is implemented, has a number in `docs/results/`, and is differentiated from the cited literature. Everything else is roadmap.
 
+## v0.4 methods (SAPC, ACI)
+
+**Stage-aligned production change** asks whether a production change-point is closer to a harvest-class stage than a circular-shift null. Code: `acoustic/changepoint.py`, `fusion/coupling.py`. On **synthetic point processes** the statistic ranks aligned vs unaligned at AUC 1.0. On **pulse-formant splices into Mini LibriSpeech** it does not (AUC 0.47, 6 pairs, mix matched). That audio claim is **not** made.
+
+**ACI** (Gibbs & Candès 2021) is implemented as published: `fusion/aci.py`. Empirical coverage 0.885 vs target 0.90 on a synthetic prevalence-shift stream. A frozen quantile was 0.931 on the same stream; we do not claim ACI won.
+
+ADR: `docs/ADR-001-stage-aligned-production-change.md`.
+
 ## Supported by current data
 
 1. **Stage tracker vs keywords on paraphrases.** Held-out author-written scripts: keyword AUC 0.42, keywords+stages AUC 0.88. Code: `linguistic/discourse.py`, `eval/corpora/vishing_scripts.py`.

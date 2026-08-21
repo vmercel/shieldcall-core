@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="shieldcall-core",
-    version="0.3.0",
+    version="0.4.0",
     description="Streaming dual-stream fraud + vocoder-artifact detection for telephone conditions",
     packages=find_packages(),
     install_requires=[
