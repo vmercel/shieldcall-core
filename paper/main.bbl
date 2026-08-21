@@ -15,11 +15,6 @@ Massimiliano Todisco, Xin Wang, Ville Vestman, Md~Sahidullah, H{\'e}ctor Delgado
 \newblock {ASVspoof} 2019: Future horizons in spoofed and fake audio detection.
 \newblock In {\em Proc. Interspeech}, pages 1008--1012, 2019.
 
-\bibitem{snell2017prototypical}
-Jake Snell, Kevin Swersky, and Richard Zemel.
-\newblock Prototypical networks for few-shot learning.
-\newblock In {\em NeurIPS}, 2017.
-
 \bibitem{wang2020asvspoof}
 Xin Wang, Junichi Yamagishi, Massimiliano Todisco, H{\'e}ctor Delgado, Andreas Nautsch, Nicholas Evans, Md~Sahidullah, Ville Vestman, Tomi Kinnunen, Kong~Aik Lee, et~al.
 \newblock {ASVspoof} 2019: A large-scale public database of synthesized, converted and replayed speech.
@@ -35,11 +30,6 @@ Hemlata Tak, Jose Patino, Massimiliano Todisco, Andreas Nautsch, Nicholas Evans,
 \newblock End-to-end anti-spoofing with {RawNet2}.
 \newblock In {\em ICASSP}, 2021.
 
-\bibitem{stolcke2000dialogue}
-Andreas Stolcke, Klaus Ries, Noah Coccaro, Elizabeth Shriberg, Rebecca Bates, Daniel Jurafsky, Paul Taylor, Rachel Martin, Carol Van Ess-Dykema, and Marie Meteer.
-\newblock Dialogue act modeling for automatic tagging and recognition of conversational speech.
-\newblock {\em Computational Linguistics}, 26(3):339--373, 2000.
-
 \bibitem{zhang2021partial}
 Lin Zhang, Xin Wang, Erica Cooper, Junichi Yamagishi, Jose Patino, and Nicholas Evans.
 \newblock An initial investigation for detecting partially spoofed audio.
@@ -49,6 +39,11 @@ Lin Zhang, Xin Wang, Erica Cooper, Junichi Yamagishi, Jose Patino, and Nicholas 
 Lin Zhang, Xin Wang, Erica Cooper, Nicholas Evans, and Junichi Yamagishi.
 \newblock The {PartialSpoof} database and countermeasures for the detection of short fake speech segments embedded in an utterance.
 \newblock {\em {IEEE/ACM} Trans. Audio, Speech, Lang. Process.}, 31:813--825, 2023.
+
+\bibitem{stolcke2000dialogue}
+Andreas Stolcke, Klaus Ries, Noah Coccaro, Elizabeth Shriberg, Rebecca Bates, Daniel Jurafsky, Paul Taylor, Rachel Martin, Carol Van Ess-Dykema, and Marie Meteer.
+\newblock Dialogue act modeling for automatic tagging and recognition of conversational speech.
+\newblock {\em Computational Linguistics}, 26(3):339--373, 2000.
 
 \bibitem{angelopoulos2023gentle}
 Anastasios~N. Angelopoulos and Stephen Bates.
@@ -60,10 +55,25 @@ Isaac Gibbs and Emmanuel Cand{\`e}s.
 \newblock Adaptive conformal inference under distribution shift.
 \newblock In {\em Advances in Neural Information Processing Systems}, 2021.
 
+\bibitem{russell2010aima}
+Stuart Russell and Peter Norvig.
+\newblock {\em Artificial Intelligence: A Modern Approach}.
+\newblock Prentice Hall, 3 edition, 2010.
+
 \bibitem{page1954cusum}
 E.~S. Page.
 \newblock Continuous inspection schemes.
 \newblock {\em Biometrika}, 41(1/2):100--115, 1954.
+
+\bibitem{snell2017prototypical}
+Jake Snell, Kevin Swersky, and Richard Zemel.
+\newblock Prototypical networks for few-shot learning.
+\newblock In {\em NeurIPS}, 2017.
+
+\bibitem{griffin1984signal}
+Daniel Griffin and Jae Lim.
+\newblock Signal estimation from modified short-time {Fourier} transform.
+\newblock {\em IEEE Trans. Acoust., Speech, Signal Process.}, 32(2):236--243, 1984.
 
 \bibitem{panayotov2015librispeech}
 Vassil Panayotov, Guoguo Chen, Daniel Povey, and Sanjeev Khudanpur.

@@ -27,7 +27,7 @@ The planner is not an LLM. Likelihoods are hand-set (ADR-002). We do not claim o
 
 ![Dual-stream pipeline architecture](figures/architecture_pipeline.png)
 
-Incoming audio is prepared by the telephony preprocessor (optionally through the Channel Twin). Frames feed the acoustic stream (STRF and prototype memory) and, via an ASR bridge, the linguistic stream (patterns and SDTG). Cross-Stream Causal Fusion produces risk, tier, regime, conformal bands, and counterfactual explanations, along with a coverage-debt signal.
+Incoming audio is prepared by the telephony preprocessor (optionally through the Channel Twin). Frames feed the acoustic stream (STRF and prototype memory) and, via an ASR bridge, the linguistic stream (patterns and SDTG). Score fusion produces risk, tier, regime, SAPC fields, and an uncertainty interval, along with a coverage-debt signal. A belief-state agent consumes those sufficient statistics and acts.
 
 ## Telephony and residual acoustics
 

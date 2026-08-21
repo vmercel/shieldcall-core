@@ -6,7 +6,7 @@ This is a research prototype (v0.5), not a certified product and not a state-of-
 
 **v0.5 agent:** the pipeline is a sensor. `shieldcall.agent.DefenseAgent` holds a belief over five call hypotheses and chooses monitor / challenge / warn / escalate / adapt / abstain by information gain minus interruption cost. It never sees raw audio. It is not an LLM. Demo: `python scripts/run_agent_demo.py`. ADR: `docs/ADR-002-belief-state-defense-agent.md`.
 
-**Paper (arXiv draft):** `paper/main.pdf`  
+**Journal manuscript** (Computers \& Security target, 13 pages): `paper/main.pdf`  
 **Reproduce:** `python scripts/run_paper_experiments.py`
 
 ## What it does

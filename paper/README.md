@@ -1,11 +1,12 @@
-# arXiv draft
+# Journal manuscript
 
-Source: `main.tex`, `references.bib`, `figures/`.  
-Compiled PDF: `main.pdf` (4 pages).
+**Intended venue:** Computers \& Security (Elsevier), Q1. Alternative: Information Fusion.
+
+This is **not** an arXiv-first note. The manuscript states measured claims only. Do not add ASVspoof SOTA language.
+
+Source: `main.tex`, `references.bib`, `figures/`. Compiled: `main.pdf`.
 
 ## Compile
-
-Needs a TeX install with `natbib`, `booktabs`, `geometry`, `hyperref`, `amsmath`:
 
 ```bash
 cd paper
@@ -15,12 +16,14 @@ pdflatex main
 pdflatex main
 ```
 
-## Submit
+Needs `natbib`, `booktabs`, `geometry`, `hyperref`, `amsmath`, `setspace`.
 
-1. Create an arXiv account: https://arxiv.org/user/register
-2. Category: **cs.SD** (primary), cross-list **eess.AS** and **cs.CR**
-3. Upload `main.tex`, `references.bib`, `main.bbl` (after bibtex), and `figures/`
-4. License: arXiv perpetual non-exclusive or CC BY 4.0
-5. After announcement, put the arXiv id in the repository README
+## What the paper claims
 
-Do not claim ASVspoof SOTA in the abstract on arXiv. The current abstract already forbids that.
+See Highlights in `main.tex`. Negative results (LPC at chance, SAPC audio failure) are part of the contribution. Removing them would make the paper less true and less journal-grade.
+
+## Elsevier extras (at submission)
+
+- Graphical abstract: `figures/graphical_abstract.png`
+- Highlights: five bullets in the manuscript front matter
+- CRediT and competing-interest statements are in the `.tex`

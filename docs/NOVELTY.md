@@ -1,6 +1,6 @@
 # Novelty: what is measured
 
-Read with `RESEARCH.md` (claim → code → test) and `paper/main.pdf`.
+Read with `RESEARCH.md` (claim → code → test) and the journal manuscript `paper/main.pdf` (Computers \& Security target). Not an arXiv note.
 
 A claim is **in scope** only if it is implemented, has a number in `docs/results/`, and is differentiated from the cited literature. Everything else is roadmap.
 

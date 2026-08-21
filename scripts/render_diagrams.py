@@ -114,10 +114,10 @@ def _subtitle(ax, text, y=91):
 
 def render_architecture_pipeline():
     fig, ax = _setup(14, 10)
-    _title(ax, "ShieldCall Core: Dual-Stream Detection Architecture")
+    _title(ax, "ShieldCall: sensor stack and defense agent")
     _subtitle(
         ax,
-        "Streaming joint linguistic fraud-intent and acoustic synthesis analysis under telephone conditions",
+        "Detectors emit sufficient statistics only. The agent never sees waveforms or transcripts.",
     )
 
     _box(
@@ -175,7 +175,7 @@ def render_architecture_pipeline():
         18,
         48,
         13,
-        "Cross-Stream Causal Fusion (CSCF)\nCo-activation | Regimes | Trajectory\nConformal risk (CSR) | Counterfactuals (CTE)",
+        "Score fusion (disagreement regimes)\nSAPC timing statistic  |  ACI uncertainty\nSufficient statistics only",
         C["panel"],
         C["amber"],
         fs=9.5,
@@ -187,7 +187,7 @@ def render_architecture_pipeline():
         4,
         56,
         8,
-        "Fused risk | tier | regime | coverage-debt signal | explanations",
+        "Belief-state agent: monitor | challenge | warn | escalate | adapt | abstain",
         C["panel2"],
         C["accent"],
         fs=10,
@@ -254,8 +254,8 @@ def render_sdtg_stages():
 
 def render_cscf_regimes():
     fig, ax = _setup(12, 10)
-    _title(ax, "Cross-Stream Causal Fusion (CSCF) Regimes")
-    _subtitle(ax, "Disagreement structure is first-class: not only weighted average fusion")
+    _title(ax, "Fusion regimes (not causal inference)")
+    _subtitle(ax, "Operational threat is a disjunction: flag if either stream is hostile")
     ax.add_patch(
         FancyBboxPatch(
             (12, 12),
@@ -296,7 +296,7 @@ def render_cscf_regimes():
     ax.text(
         50,
         2,
-        "Co-activation inside a causal window super-adds risk when both streams elevate together",
+        "A weighted sum can bury a vocoded probe under mild language, or a live vishing call under a human voice score",
         ha="center",
         fontsize=9,
         color=C["muted"],
@@ -397,11 +397,11 @@ def render_package_map():
         (18, 68, "audio", "TCT channel twin\nVAD, preprocessor", C["green"]),
         (50, 68, "acoustic", "STRF features\nresidual, PMA scorer", C["accent4"]),
         (82, 68, "linguistic", "Patterns, SDTG\nASR bridge", C["accent2"]),
-        (18, 38, "fusion", "CSCF engine\nCSR, CTE", C["amber"]),
-        (50, 38, "adaptation", "Buffers, challenge\ncoverage debt", C["accent3"]),
-        (82, 38, "eval", "Metrics, harness\nchannel bench", C["accent"]),
-        (34, 12, "pipeline.py", "Unified streaming entrypoint", C["safe"]),
-        (66, 12, "config + demo", "YAML profiles, stream demo", C["border"]),
+        (18, 38, "fusion", "Regimes, SAPC\nACI", C["amber"]),
+        (50, 38, "agent", "Belief, planner\ntools, traces", C["accent3"]),
+        (82, 38, "eval", "Protocols, handoff\nspeech, scripts", C["accent"]),
+        (34, 12, "pipeline.py", "Sensor entrypoint", C["safe"]),
+        (66, 12, "adaptation", "Challenge, PMA, debt", C["border"]),
     ]
     for x, y, name, detail, col in packages:
         label = f"shieldcall.{name}" if name not in ("pipeline.py", "config + demo") else name
@@ -460,9 +460,9 @@ def render_claim_code_map():
         ("TCT channel twin", "audio/channel.py", "channel ablations"),
         ("STRF residual FP", "acoustic/residual.py", "acoustic EER / AUC"),
         ("SDTG path score", "linguistic/discourse.py", "scam vs benign margin"),
-        ("CSCF regimes", "fusion/engine.py", "disagreement cases"),
-        ("PMA + debt", "adaptation/*", "gap reduction k-shot"),
-        ("CSR + CTE", "fusion/conformal.py\nfusion/explain.py", "unit + demo checks"),
+        ("Fusion regimes", "fusion/engine.py", "operational OR-label table"),
+        ("SAPC timing", "fusion/coupling.py", "synthetic yes; audio no"),
+        ("Belief agent", "agent/*.py", "scripted action traces"),
     ]
     headers = ["Research claim", "Primary code", "Evidence"]
     xs = [10, 40, 72]
@@ -479,7 +479,7 @@ def render_claim_code_map():
     ax.text(
         50,
         4,
-        "Run: pytest -q  |  python scripts/run_ablation.py  |  python scripts/run_benchmark.py",
+        "Run: pytest -q  |  python scripts/run_paper_experiments.py  |  python scripts/run_agent_demo.py",
         ha="center",
         fontsize=9,
         color=C["muted"],
@@ -491,9 +491,119 @@ def render_claim_code_map():
     return path
 
 
+def render_agent_loop():
+    fig, ax = _setup(14, 9)
+    _title(ax, "Belief-state call-defense agent")
+    _subtitle(ax, "Not an LLM. Detectors are sensors. Actions are experiments with an interruption budget.")
+    _box(ax, 6, 70, 28, 14, "Perception\n(synth, fraud, SAPC,\ngap, regime, ACI band)", C["panel"], C["accent4"], fs=9)
+    _box(ax, 36, 70, 28, 14, "Belief over five hypotheses\nbenign | social eng.\nsynthetic | handoff | unknown", C["panel"], C["accent"], fs=9)
+    _box(ax, 66, 70, 28, 14, "Planner\nIG − λ cost − delay risk\nmax 1 challenge / call", C["panel"], C["amber"], fs=9)
+    _arrow(ax, 34, 77, 36, 77, C["accent"])
+    _arrow(ax, 64, 77, 66, 77, C["amber"])
+    actions = [
+        (10, "monitor"),
+        (26, "challenge"),
+        (42, "warn"),
+        (58, "escalate"),
+        (74, "adapt / abstain"),
+    ]
+    for x, name in actions:
+        _box(ax, x, 42, 14, 10, name, C["panel2"], C["green"], fs=8.5)
+    _arrow(ax, 80, 70, 80, 53, C["green"])
+    _box(
+        ax,
+        12,
+        12,
+        76,
+        22,
+        "Policy shape (heuristic likelihoods, not fitted Bayes)\n\n"
+        "Human social engineer  →  warn/escalate (a live speaker will pass a nonce)\n"
+        "Synthetic / unknown family  →  challenge is informative (TTS fails the acoustic gate)\n"
+        "Handoff mass high  →  treat as dual-stream timing threat, not a keyword hit\n"
+        "Benign mode  →  never interrupt",
+        C["panel"],
+        C["accent3"],
+        fs=9,
+        bold=False,
+    )
+    fig.tight_layout(pad=0.6)
+    path = OUT / "agent_loop.png"
+    fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
+    plt.close(fig)
+    return path
+
+
+def render_sapc_timing():
+    fig, ax = _setup(14, 8)
+    _title(ax, "Stage-aligned production change (SAPC)")
+    _subtitle(
+        ax,
+        "Same vocoded fraction; only timing relative to a harvest stage differs. Utterance-mean scores cannot separate these.",
+    )
+    # two timelines
+    ax.plot([8, 92], [62, 62], color=C["border"], lw=2)
+    ax.plot([8, 92], [32, 32], color=C["border"], lw=2)
+    ax.text(8, 70, "Aligned (hypothesis)", fontsize=11, fontweight="bold", color=C["accent"])
+    ax.text(8, 40, "Unaligned (matched mix)", fontsize=11, fontweight="bold", color=C["muted"])
+    # aligned vocode window
+    ax.add_patch(plt.Rectangle((48, 56), 28, 12, facecolor=C["quad_dual"], ec=C["accent2"], lw=1.5, zorder=3))
+    ax.text(62, 62, "vocoded", ha="center", va="center", fontsize=9, color=C["accent2"], zorder=4)
+    ax.plot([50, 50], [52, 72], color=C["amber"], lw=2, ls="--")
+    ax.text(50, 74, "harvest stage", ha="center", fontsize=8, color=C["amber"])
+    # unaligned
+    ax.add_patch(plt.Rectangle((10, 26), 28, 12, facecolor=C["quad_probe"], ec=C["accent"], lw=1.5, zorder=3))
+    ax.text(24, 32, "vocoded", ha="center", va="center", fontsize=9, color=C["accent"], zorder=4)
+    ax.plot([50, 50], [22, 42], color=C["amber"], lw=2, ls="--")
+    ax.text(
+        50,
+        8,
+        "Measured on Mini LibriSpeech splices: mix matched, ranking AUC 0.47. Claim not supported.\n"
+        "On synthetic point processes the same statistic ranks at AUC 1.00.",
+        ha="center",
+        fontsize=9,
+        color=C["soft"],
+    )
+    fig.tight_layout(pad=0.6)
+    path = OUT / "sapc_timing.png"
+    fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
+    plt.close(fig)
+    return path
+
+
+def render_graphical_abstract():
+    fig, ax = _setup(14, 8)
+    _title(ax, "Graphical abstract")
+    _subtitle(ax, "ShieldCall: dual-stream telephony sensing plus a budgeted defense agent")
+    _box(ax, 4, 48, 22, 28, "Call\n\naudio + ASR\nfragments", C["panel2"], C["border"], fs=10)
+    _box(ax, 30, 55, 20, 14, "Acoustic\nresidual + PMA", C["panel"], C["accent4"], fs=9)
+    _box(ax, 30, 36, 20, 14, "Linguistic\nkeywords + stages", C["panel"], C["accent2"], fs=9)
+    _box(ax, 54, 42, 20, 24, "Fusion\nOR-label risk\nSAPC  |  ACI", C["panel"], C["amber"], fs=9)
+    _box(ax, 78, 42, 18, 24, "Agent\nbelief\naction\ntrace", C["panel"], C["accent3"], fs=9)
+    _arrow(ax, 26, 62, 30, 62, C["accent4"])
+    _arrow(ax, 26, 43, 30, 43, C["accent2"])
+    _arrow(ax, 50, 62, 54, 58, C["accent4"])
+    _arrow(ax, 50, 43, 54, 50, C["accent2"])
+    _arrow(ax, 74, 54, 78, 54, C["accent3"])
+    ax.text(
+        50,
+        12,
+        "What is measured: stage tracker beats keywords on paraphrases; disagreement fusion raises recall at a false-alarm cost;\n"
+        "the agent warns on human vishing and does not waste a nonce; SAPC fails on vocoded LibriSpeech splices.",
+        ha="center",
+        fontsize=9,
+        color=C["soft"],
+    )
+    fig.tight_layout(pad=0.6)
+    path = OUT / "graphical_abstract.png"
+    fig.savefig(path, dpi=220, facecolor=fig.get_facecolor(), bbox_inches="tight")
+    plt.close(fig)
+    return path
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     paths = [
+        render_graphical_abstract(),
         render_architecture_pipeline(),
         render_sdtg_stages(),
         render_cscf_regimes(),
@@ -502,6 +612,8 @@ def main():
         render_package_map(),
         render_tct_strf(),
         render_claim_code_map(),
+        render_agent_loop(),
+        render_sapc_timing(),
     ]
     print("Rendered figures:")
     for p in paths:
