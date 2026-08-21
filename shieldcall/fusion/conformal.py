@@ -1,14 +1,12 @@
 """
-Conformal Streaming Risk (CSR)
-==============================
+Streaming uncertainty band around a risk score.
 
-Distribution-free uncertainty quantification for high-stakes call
-screening. Maintains a calibration buffer of nonconformity scores and
-emits prediction sets / abstention when the model is not confident
-enough under the user-chosen error rate.
+This is **not** split conformal prediction and does not provide a
+finite-sample coverage guarantee. Without labels, the interval width is
+the (1-alpha) quantile of |score - EMA(score)| on a sliding window.
+With labels, residuals are |score - label|.
 
-Unlike fixed thresholds, conformal bands adapt to the operating
-distribution  -  critical when new synthesizers shift acoustic scores.
+Use it as an abstention heuristic, not as a theorem.
 """
 
 from __future__ import annotations
@@ -32,13 +30,7 @@ class ConformalVerdict:
 
 
 class StreamingConformalCalibrator:
-    """
-    Sliding-window conformal calibrator for continuous risk scores.
-
-    Nonconformity = |score - label| when labels available; when only
-    scores flow, we use a self-calibrating residual against a slow EMA
-    to produce interval width (conservative under covariate shift).
-    """
+    """Sliding-window residual band for continuous risk scores."""
 
     def __init__(
         self,

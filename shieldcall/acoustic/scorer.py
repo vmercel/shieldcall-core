@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from typing import Deque, List, Optional
+from typing import Deque, List, Optional, Sequence
 
 import numpy as np
 
@@ -58,11 +58,21 @@ class PrototypeMemory:
         self._synth_var: Optional[np.ndarray] = None
         self._bootstrap()
 
+    def fit(self, embeddings: Sequence[np.ndarray], is_synthetic: Sequence[bool]) -> None:
+        """Replace bootstrap priors with labeled embeddings from real data."""
+        self.human = []
+        self.synthetic = []
+        self._human_mean = None
+        self._synth_mean = None
+        for emb, y in zip(embeddings, is_synthetic):
+            self.add(np.asarray(emb, dtype=np.float32), bool(y))
+        if not self.human or not self.synthetic:
+            self._bootstrap()
+
     def _bootstrap(self) -> None:
         """
-        Seed weak priors so the system is usable before any labeled data.
-        Human: moderate residual energy, higher kurtosis-like dims.
-        Synthetic: flatter residual, grid-like peaks.
+        Weak random priors so the scorer is callable before any labeled data.
+        These are not speech. Call ``fit`` before reporting acoustic metrics.
         """
         for _ in range(12):
             h = self._rng.randn(self.dim).astype(np.float32) * 0.15
@@ -247,6 +257,11 @@ class AcousticDeepfakeScorer:
             prototype_cue=prototype_cue,
             embedding=agg,
         )
+
+    def fit(self, embeddings: Sequence[np.ndarray], is_synthetic: Sequence[bool]) -> None:
+        """Fit prototype memory on labeled frame embeddings."""
+        self.memory.fit(embeddings, is_synthetic)
+        self._is_fitted = True
 
     def adapt(self, features: np.ndarray, is_synthetic: bool) -> None:
         """Online few-shot update into prototype memory."""

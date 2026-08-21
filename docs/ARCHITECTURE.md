@@ -69,7 +69,7 @@ shieldcall/
 
 ## Version
 
-0.2.0: full research skeleton with runnable science, tests, channel-aware evaluation, and rendered figures. Neural weight files and large telephony corpora remain the next training milestone.
+0.3.0: real-speech vocoder protocol, held-out vishing scripts, operational fusion labels, arXiv draft in `paper/`. Pulse-formant is an easy acoustic condition; LPC under bandlimiting is a reported failure. ASVspoof remains the next measurement.
 
 ## Regenerating figures
 

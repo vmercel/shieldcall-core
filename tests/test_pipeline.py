@@ -8,7 +8,7 @@ from shieldcall.config import load_config, pipeline_config_from_dict
 
 
 def test_version():
-    assert __version__ == "0.2.0"
+    assert __version__ == "0.3.0"
 
 
 def test_end_to_end_pipeline():
@@ -52,12 +52,18 @@ def test_challenge_response():
     ch = cr.issue()
     assert "prompt" in ch
     assert "nonce" in ch
-    # Fresh challenge  -  nonce match must pass
     ch = cr.issue()
     assert cr.verify_transcript(f"the code is {ch['nonce']}") is True
-    # After consume, a new challenge is required
     ch2 = cr.issue()
     assert cr.verify_transcript("unrelated filler text xyz") is False or str(ch2["nonce"]) in "unrelated filler text xyz"
+
+
+def test_challenge_rejects_synthetic_voice():
+    cr = ChallengeResponseProtocol(seed=2)
+    ch = cr.issue()
+    assert cr.verify(f"the code is {ch['nonce']}", acoustic_synth_prob=0.9) is False
+    ch = cr.issue()
+    assert cr.verify(f"the code is {ch['nonce']}", acoustic_synth_prob=0.1) is True
 
 
 def test_config_load():

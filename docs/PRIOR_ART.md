@@ -168,12 +168,13 @@ prototypical network spoofing few-shot
 
 ## 8. What must still be done for scientific (not only product) novelty
 
-| Milestone | Why |
-|-----------|-----|
-| Train and evaluate on public ASVspoof plus telephony-degraded copies via TCT | External comparability |
-| Collect or license labeled vishing transcripts with stage annotations | Validate SDTG versus keyword-only ablation |
-| Ablation table: acoustic-only / linguistic-only / sum-fusion / CSCF | Prove co-activation and regimes add value |
-| Held-out unseen vocoder families for PMA recovery curves | Prove coverage-debt loop |
-| Optional SSL backbone behind the same `score_frame` API | Competitiveness without breaking claims |
+Done in v0.3: held-out vishing paraphrases vs keywords; operational fusion table; speaker-disjoint LibriSpeech vocoder protocol; LPC negative result.
 
-These are tracked as engineering milestones in `docs/RESEARCH.md` and `scripts/run_ablation.py`.
+| Still open | Why |
+|-----------|-----|
+| ASVspoof LA + channel simulator vs a published neural baseline | External comparability |
+| Real victim transcripts / ASR in the loop | Scripts are author-written English |
+| Neural vocoders, not only pulse-formant and LPC | Residual features failed on LPC |
+| Larger *n* and confidence intervals | Current acoustic *n*=20 |
+
+See `docs/RESEARCH.md` and `paper/`.

@@ -44,45 +44,74 @@ STAGE_EMISSIONS: Dict[str, List[str]] = {
     "GREETING": [
         r"\bhello\b", r"\bgood (morning|afternoon|evening)\b",
         r"\bthis is (a )?(courtesy )?call\b", r"\bcalling from\b",
+        r"\bon the line\b", r"\bdesk here\b", r"\bi am with\b",
     ],
     "AUTHORITY": [
         r"\birs\b", r"\bsocial security\b", r"\bssa\b", r"\bmedicare\b",
         r"\bbank\b", r"\bfederal\b", r"\bmicrosoft\b", r"\bapple support\b",
         r"\blaw enforcement\b", r"\bdepartment of\b", r"\bagent\b",
+        r"\btax (bureau|office|desk|assessment)\b", r"\bbenefits integrity\b",
+        r"\bprosecutor\b", r"\bcard services\b", r"\bhelpdesk\b",
+        r"\benrollment desk\b", r"\bcloud account\b", r"\bpower cooperative\b",
+        r"\bparcel claims\b", r"\bnational assessment\b", r"\bpublic defender\b",
+        r"\bcourt clerk\b", r"\bawards clearing\b", r"\bintake line\b",
+        r"\bstatus review\b", r"\bdevice security\b",
     ],
     "PROBLEM": [
         r"\bunusual activity\b", r"\bsuspicious\b", r"\bcompromised\b",
         r"\bvirus\b", r"\bmalware\b", r"\breach(ed)?\b", r"\bfraud(ulent)?\b",
         r"\bsuspended\b", r"\blocked\b", r"\bin trouble\b", r"\baccident\b",
+        r"\bfroz(e|en)\b", r"\bfreeze\b", r"\bdiscrepanc\w+\b", r"\bdrain\b",
+        r"\bintrusion\b", r"\bworm\b", r"\bcrash\b", r"\btamper\w*\b",
+        r"\bhostile login\b", r"\bcollision\b", r"\bmismatch\b",
+        r"\bflagged\b", r"\bhold on the\b",
     ],
     "URGENCY": [
         r"\bimmediately\b", r"\bright now\b", r"\bact now\b",
         r"\bwithin \d+ (hour|minute|day)s?\b", r"\burgent\b",
-        r"\bbefore (it|we|they)\b", r"\bexpires?\b", r"\blast chance\b",
+        r"\bbefore (it|we|they|noon)\b", r"\bexpires?\b", r"\blast chance\b",
+        r"\bthis morning\b", r"\bsame[- ]day\b", r"\bcannot wait\b",
+        r"\bshort window\b", r"\bclose of business\b", r"\bwithin the hour\b",
+        r"\btime-sensitive\b", r"\bwindow closes\b", r"\bthirty minutes\b",
     ],
     "HARVEST": [
         r"\bssn\b", r"\bsocial security number\b", r"\bdate of birth\b",
         r"\bbank account\b", r"\brouting number\b", r"\bpin\b", r"\bpassword\b",
         r"\bverification code\b", r"\bone[- ]time (code|password|pin)\b",
         r"\bcard number\b", r"\bcvv\b", r"\bmother'?s maiden\b",
+        r"\btaxpayer identification\b", r"\bwage (statements?|slips?|number|identifier)\b",
+        r"\blong number\b", r"\bthree digits\b", r"\bdeposit account\b",
+        r"\bidentifier from your card\b", r"\bpasskey\b", r"\bback digits\b",
+        r"\bdeposit coordinates\b",
     ],
     "PAYMENT": [
         r"\bgift card\b", r"\bwire transfer\b", r"\bbitcoin\b", r"\bcrypto\b",
         r"\bsend money\b", r"\bmust pay\b", r"\biTunes\b", r"\bsteam card\b",
         r"\bwestern union\b", r"\bmoneygram\b", r"\bpaypal\b",
+        r"\bprepaid (store )?cards?\b", r"\bstore credit\b", r"\bcrypto (voucher|address|transfer)\b",
+        r"\bmoney transfer counter\b", r"\bpharmacy prepaid\b",
+        r"\btransfer counter\b",
     ],
     "SECRECY": [
         r"\bdon'?t tell\b", r"\bkeep (this )?confidential\b", r"\bdo not inform\b",
         r"\bsecret\b", r"\bbetween us\b", r"\bdo not call (anyone|the bank)\b",
         r"\bstay on the (line|phone)\b",
+        r"\bdo not discuss\b", r"\bnot for your (spouse|employer)\b",
+        r"\bkeep this off\b", r"\bnot public\b", r"\bdo not ring the printed\b",
+        r"\bshould not hear\b", r"\bdo not loop in\b", r"\btipping off\b",
+        r"\boff social media\b",
     ],
     "THREAT": [
         r"\bwarrant\b", r"\barrest\b", r"\bjail\b", r"\blegal action\b",
         r"\bprosecut\b", r"\bfined?\b", r"\bdeported\b", r"\blose (your )?(home|benefits)\b",
+        r"\bmarshals? will detain\b", r"\bofficers are already\b", r"\bobstruction\b",
+        r"\bpickup\b", r"\bcourthouse\b", r"\bholding\b", r"\bcollections\b",
+        r"\bcomplaint draft\b", r"\bdetain you\b", r"\bstays? in holding\b",
     ],
     "BENIGN": [
         r"\bhow are you\b", r"\bthank you\b", r"\bhave a (nice|good) day\b",
         r"\bappointment\b", r"\breminder\b", r"\bsurvey\b",
+        r"\bno action (is )?required\b", r"\bno payment\b", r"\bhave a good\b",
     ],
 }
 
@@ -213,22 +242,30 @@ class ScamDiscourseGraph:
         return depth
 
     def _path_to_score(self) -> float:
-        """
-        Map progression depth + path structure to [0,1].
-        Deep progression through scam stages  ->  high score.
+        """Map stage structure and path log-likelihood to [0, 1].
+
+        Structure (depth, diversity, terminal stages) is the main term.
+        Mean per-step path log-likelihood is a secondary term so the
+        transition matrix is not dead code. Benign-only paths are capped.
         """
         depth = self._progression_depth()
-        # Unique scam stages visited (exclude BENIGN/GREETING lightly)
         scam_stages = [s for s in self._visited if s not in ("BENIGN",)]
+        if not scam_stages and depth == 0:
+            return 0.0
         diversity = len(set(scam_stages))
-        score = 0.12 * depth + 0.1 * diversity
-        # Bonus if payment or threat reached
+        struct = 0.12 * depth + 0.10 * diversity
         if "PAYMENT" in self._visited:
-            score += 0.25
+            struct += 0.20
         if "THREAT" in self._visited:
-            score += 0.2
+            struct += 0.15
         if "HARVEST" in self._visited:
-            score += 0.15
+            struct += 0.12
         if "SECRECY" in self._visited:
-            score += 0.12
+            struct += 0.10
+        n = max(len(self._visited), 1)
+        ll = self._path_loglik / n
+        ll_score = float(np.clip((ll + 3.5) / 3.0, 0.0, 1.0))
+        score = 0.75 * struct + 0.25 * ll_score
+        if depth <= 1 and "PAYMENT" not in self._visited and "THREAT" not in self._visited:
+            score = min(score, 0.35)
         return float(np.clip(score, 0.0, 1.0))

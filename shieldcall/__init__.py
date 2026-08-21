@@ -1,21 +1,20 @@
 """
-ShieldCall Core  -  Streaming dual-stream detection engine.
+ShieldCall Core — streaming dual-stream detection engine.
 
-Joint linguistic fraud-intent and acoustic synthesis-artifact analysis
-designed for real telephone conditions and rapid adaptation to new synthesizers.
+Joint scoring of (1) linguistic fraud-intent on transcripts and
+(2) residual/vocoder artifacts on telephone-bandwidth audio.
 
-Novel subsystems
-----------------
-- STRF: Spectral-Temporal Residual Fingerprinting
-- SDTG: Scam Discourse Trajectory Graph
-- CSCF: Cross-Stream Causal Fusion
-- PMA:  Prototype Memory Adaptation + Coverage-Debt tracking
-- TCT:  Telephony Channel Twin
-- CSR:  Conformal Streaming Risk
-- CTE:  Counterfactual Threat Explanations
+Components (descriptive names; acronyms are shorthand only)
+------------------------------------------------------------
+- Telephone channel simulator (TCT)
+- Residual fingerprint + prototype memory (STRF, PMA)
+- Scam-script stage tracker (SDTG)
+- Rule-based cross-stream fusion (CSCF)
+- Heuristic uncertainty band (CSR)
+- Input-space counterfactuals (CTE)
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from .fusion.engine import FusionEngine, FusedRisk
 from .acoustic.scorer import AcousticDeepfakeScorer, AcousticScore

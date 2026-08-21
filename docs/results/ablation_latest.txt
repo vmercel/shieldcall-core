@@ -1,76 +1,38 @@
-ShieldCall Core , Research Ablations
-========================================================================
+ShieldCall Core — measured results (v0.3)
+Source: python scripts/run_paper_experiments.py
+Sine-wave proxies are not used for these numbers.
 
-1. Linguistic / SDTG
+1. Linguistic (author-written scripts; not real victim calls)
 ------------------------------------------------------------------------
- linguistic_scam_full fraud_prob 0.8637 patterns+SDTG
- linguistic_scam_patterns_only fraud_prob 0.7522 patterns only
- linguistic_benign_full fraud_prob 0.0000 patterns+SDTG
- linguistic_benign_patterns_only fraud_prob 0.0000 patterns only
- linguistic_margin_full scam-benign 0.8637 higher is better separation
- linguistic_margin_patterns scam-benign 0.7522 baseline without SDTG weight
- sdtg_scam_path_score path_score 1.0000 depth=8
- sdtg_benign_path_score path_score 0.0000 depth=0
- (0.0s)
+ train keywords                 n=48  EER=0.104  AUC=0.929
+ train keywords+stages          n=48  EER=0.000  AUC=1.000
+ held-out keywords              n=38  EER=0.583  AUC=0.417
+ held-out keywords+stages       n=38  EER=0.106  AUC=0.883
+ held-out isolated-keyword benign mean fraud_prob=0.234
 
-2. Channel acoustic
+2. Acoustic, speaker-disjoint Mini LibriSpeech
 ------------------------------------------------------------------------
- acoustic_clean EER 0.0000 AUC=1.000
- acoustic_clean AUC 1.0000 lat_ms=6.96
- acoustic_narrowband EER 0.0000 AUC=1.000
- acoustic_narrowband AUC 1.0000 lat_ms=8.04
- acoustic_harsh_voip EER 0.0000 AUC=1.000
- acoustic_harsh_voip AUC 1.0000 lat_ms=8.06
- (71.9s)
+ pulse-formant vocoder, clean 8 kHz     n=20  EER=0.000  AUC=1.000  (easy condition)
+ pulse-formant vocoder, narrowband      n=20  EER=0.000  AUC=1.000  (easy condition)
+ LPC vocoder, clean 8 kHz               n=20  EER=0.400  AUC=0.640  (hard; residual features weak)
+ LPC vocoder, narrowband                n=20  EER=0.450  AUC=0.490  (at chance)
+ ASVspoof LA                            not run (corpus not present)
 
-3. Fusion CSCF vs baselines
+3. Operational fusion (threat = scam language OR vocoded voice)
+   pulse-formant spoof + held-out scripts, n=40
 ------------------------------------------------------------------------
- fusion_cscf EER 0.1250 
- fusion_cscf AUC 0.9688 
- fusion_naive_sum EER 0.0000 
- fusion_naive_sum AUC 1.0000 
- fusion_acoustic_only EER 0.2500 
- fusion_acoustic_only AUC 0.8125 
- fusion_linguistic_only EER 0.0000 
- fusion_linguistic_only AUC 1.0000 
- (86.7s)
+ CSCF        EER=0.000  AUC=1.000  disagreement_recall@0.5=1.00  safe_FPR@0.5=0.40
+ naive sum   EER=0.100  AUC=0.973  disagreement_recall@0.5=0.30  safe_FPR@0.5=0.00
+ logistic    EER=0.083  AUC=0.993  disagreement_recall@0.5=1.00  safe_FPR@0.5=0.50
+ linguistic  EER=0.233  AUC=0.827  disagreement_recall@0.5=0.05  safe_FPR@0.5=0.00
+ acoustic    EER=0.267  AUC=0.833  disagreement_recall@0.5=0.90  safe_FPR@0.5=0.80
 
-4. Disagreement regimes (hard cases)
+4. Adaptation
 ------------------------------------------------------------------------
- regime_cscf EER 0.0000 
- regime_cscf AUC 1.0000 
- regime_naive_sum EER 0.1667 
- regime_naive_sum AUC 0.8333 
- regime_acoustic_only EER 0.0000 
- regime_acoustic_only AUC 1.0000 
- regime_linguistic_only EER 0.1667 
- regime_linguistic_only AUC 0.8333 
- cscf_flags_social_engineering risk 1.0000 must be high even if voice looks human
- cscf_flags_deepfake_probe risk 0.6331 must be elevated even if language is mild
- cscf_safe_on_benign_human risk 0.1113 must stay low
- acoustic_only_on_social_eng risk 0.2277 often low , shows why fusion is needed
- regime_tag_social_eng match 1.0000 
- regime_tag_deepfake_probe match 1.0000 
- regime_tag_dual match 1.0000 
- (32.1s)
+ pulse-formant memory, unseen LPC EER 0.500 -> 0.450 after 5 shots (small)
 
-5. PMA coverage debt
-------------------------------------------------------------------------
- pma_gap_before gap 1.0000 
- pma_gap_after_5shot gap 0.5106 
- pma_gap_reduction delta 0.4894 positive = adaptation helps
- (0.0s)
-
-========================================================================
-Falsification gates (must pass for claim language):
- [PASS] SDTG scam margin >= patterns-only margin (approx)
- [PASS] Scam path_score > benign path_score
- [PASS] CSCF AUC >= naive_sum AUC - 0.05
- [PASS] CSCF flags social engineering (human voice + scam script) risk>=0.55
- [PASS] CSCF flags deepfake probe (synth voice + mild language) risk>=0.40
- [PASS] CSCF stays low on benign human risk<=0.35
- [PASS] Regime tags social_engineering / deepfake_probe / dual
- [PASS] PMA gap reduces after shots
- [PASS] Acoustic AUC under narrowband > 0.5 (better than chance)
-========================================================================
-All gates passed on current synthetic suite.
+Gates
+ [PASS] held-out stage tracker AUC >= keyword-only
+ [PASS] CSCF disagreement recall >= naive sum
+ [PASS] pulse-formant acoustic AUC > 0.65
+ LPC-under-telephony is a negative result and is reported as such.

@@ -1,0 +1,451 @@
+{
+  "asvspoof": false,
+  "linguistic": {
+    "ling_train_patterns": {
+      "eer": 0.10357142857142856,
+      "auc": 0.9285714285714286,
+      "n": 48,
+      "notes": "linguistic train patterns",
+      "extras": {}
+    },
+    "ling_train_patterns_sdtg": {
+      "eer": 0.0,
+      "auc": 1.0,
+      "n": 48,
+      "notes": "linguistic train patterns_sdtg",
+      "extras": {}
+    },
+    "ling_train_trap_mean": {
+      "eer": 0.303140097113939,
+      "auc": 0.0,
+      "n": 8,
+      "notes": "mean fraud_prob on isolated-keyword benign (lower is better)",
+      "extras": {}
+    },
+    "ling_heldout_patterns": {
+      "eer": 0.5833333333333334,
+      "auc": 0.4166666666666667,
+      "n": 38,
+      "notes": "linguistic heldout patterns",
+      "extras": {}
+    },
+    "ling_heldout_patterns_sdtg": {
+      "eer": 0.10555555555555556,
+      "auc": 0.8833333333333334,
+      "n": 38,
+      "notes": "linguistic heldout patterns_sdtg",
+      "extras": {}
+    },
+    "ling_heldout_trap_mean": {
+      "eer": 0.23432277317180772,
+      "auc": 0.0,
+      "n": 8,
+      "notes": "mean fraud_prob on isolated-keyword benign (lower is better)",
+      "extras": {}
+    }
+  },
+  "acoustic": {
+    "ac_pulse_formant_clean": {
+      "eer": 0.0,
+      "auc": 1.0,
+      "n": 20,
+      "notes": "speaker-disjoint bona fide vs vocoded"
+    },
+    "ac_pulse_formant_narrowband": {
+      "eer": 0.0,
+      "auc": 1.0,
+      "n": 20,
+      "notes": "speaker-disjoint bona fide vs vocoded"
+    }
+  },
+  "operational": {
+    "op_cscf": {
+      "eer": 0.0,
+      "auc": 1.0,
+      "n": 40,
+      "extras": {
+        "disagreement_recall@0.5": 1.0,
+        "safe_fpr@0.5": 0.4
+      }
+    },
+    "op_naive": {
+      "eer": 0.1,
+      "auc": 0.9733333333333333,
+      "n": 40,
+      "extras": {
+        "disagreement_recall@0.5": 0.3,
+        "safe_fpr@0.5": 0.0
+      }
+    },
+    "op_acoustic": {
+      "eer": 0.26666666666666666,
+      "auc": 0.8333333333333333,
+      "n": 40,
+      "extras": {
+        "disagreement_recall@0.5": 0.9,
+        "safe_fpr@0.5": 0.8
+      }
+    },
+    "op_linguistic": {
+      "eer": 0.23333333333333334,
+      "auc": 0.8266666666666667,
+      "n": 40,
+      "extras": {
+        "disagreement_recall@0.5": 0.05,
+        "safe_fpr@0.5": 0.0
+      }
+    },
+    "op_logreg": {
+      "eer": 0.08333333333333334,
+      "auc": 0.9933333333333333,
+      "n": 40,
+      "extras": {
+        "disagreement_recall@0.5": 1.0,
+        "safe_fpr@0.5": 0.5
+      }
+    }
+  },
+  "operational_cells": [
+    {
+      "cell": "safe",
+      "y": 0,
+      "synth": 0.7076176418139236,
+      "fraud": 0.07425000000000001,
+      "cscf": 0.5720341134511391,
+      "naive": 0.3275970567255695
+    },
+    {
+      "cell": "social_engineering",
+      "y": 1,
+      "synth": 0.7076176418139236,
+      "fraud": 0.45,
+      "cscf": 0.6563993348167955,
+      "naive": 0.5530470567255694
+    },
+    {
+      "cell": "spoof_probe",
+      "y": 1,
+      "synth": 0.997347383264677,
+      "fraud": 0.07425000000000001,
+      "cscf": 0.8038179066117417,
+      "naive": 0.4434889533058708
+    },
+    {
+      "cell": "dual",
+      "y": 1,
+      "synth": 0.9973473832664663,
+      "fraud": 0.45,
+      "cscf": 0.8129185331481025,
+      "naive": 0.6689389533065866
+    },
+    {
+      "cell": "safe",
+      "y": 0,
+      "synth": 0.6924172271207655,
+      "fraud": 0.0,
+      "cscf": 0.5539337816966124,
+      "naive": 0.2769668908483062
+    },
+    {
+      "cell": "social_engineering",
+      "y": 1,
+      "synth": 0.6924172271207655,
+      "fraud": 0.45,
+      "cscf": 0.6483083062427373,
+      "naive": 0.5469668908483063
+    },
+    {
+      "cell": "spoof_probe",
+      "y": 1,
+      "synth": 0.9985273011318732,
+      "fraud": 0.0,
+      "cscf": 0.7988218409054986,
+      "naive": 0.3994109204527493
+    },
+    {
+      "cell": "dual",
+      "y": 1,
+      "synth": 0.9985273011318732,
+      "fraud": 0.45,
+      "cscf": 0.8135647910216901,
+      "naive": 0.6694109204527493
+    },
+    {
+      "cell": "safe",
+      "y": 0,
+      "synth": 0.5181374233902665,
+      "fraud": 0.0,
+      "cscf": 0.21740031497260232,
+      "naive": 0.2072549693561066
+    },
+    {
+      "cell": "social_engineering",
+      "y": 1,
+      "synth": 0.518137423338167,
+      "fraud": 0.45,
+      "cscf": 0.88,
+      "naive": 0.47725496933526684
+    },
+    {
+      "cell": "spoof_probe",
+      "y": 1,
+      "synth": 0.8501534820031813,
+      "fraud": 0.0,
+      "cscf": 0.6801227856025451,
+      "naive": 0.34006139280127257
+    },
+    {
+      "cell": "dual",
+      "y": 1,
+      "synth": 0.8501534820031813,
+      "fraud": 0.45,
+      "cscf": 0.7328570587919528,
+      "naive": 0.6100613928012726
+    },
+    {
+      "cell": "safe",
+      "y": 0,
+      "synth": 0.4427011541251554,
+      "fraud": 0.408375,
+      "cscf": 0.42145162568311073,
+      "naive": 0.4221054616500622
+    },
+    {
+      "cell": "social_engineering",
+      "y": 1,
+      "synth": 0.4427011541251554,
+      "fraud": 0.45,
+      "cscf": 0.88,
+      "naive": 0.4470804616500622
+    },
+    {
+      "cell": "spoof_probe",
+      "y": 1,
+      "synth": 0.8556247028036217,
+      "fraud": 0.408375,
+      "cscf": 0.6984945655218225,
+      "naive": 0.5872748811214488
+    },
+    {
+      "cell": "dual",
+      "y": 1,
+      "synth": 0.8556247028036217,
+      "fraud": 0.45,
+      "cscf": 0.7358129748864851,
+      "naive": 0.6122498811214487
+    },
+    {
+      "cell": "safe",
+      "y": 0,
+      "synth": 0.5949892362196512,
+      "fraud": 0.0,
+      "cscf": 0.47599138897572096,
+      "naive": 0.23799569448786048
+    },
+    {
+      "cell": "social_engineering",
+      "y": 1,
+      "synth": 0.5949892362425909,
+      "fraud": 0.5174148793042409,
+      "cscf": 0.8208094335213606,
+      "naive": 0.5484446220795809
+    },
+    {
+      "cell": "spoof_probe",
+      "y": 1,
+      "synth": 0.8410049505050571,
+      "fraud": 0.0,
+      "cscf": 0.6728039604040458,
+      "naive": 0.33640198020202283
+    },
+    {
+      "cell": "dual",
+      "y": 1,
+      "synth": 0.8410049505050571,
+      "fraud": 0.5174148793042409,
+      "cscf": 0.9909852944677953,
+      "naive": 0.6468509077845674
+    },
+    {
+      "cell": "safe",
+      "y": 0,
+      "synth": 0.4243503219299144,
+      "fraud": 0.0,
+      "cscf": 0.1780490840492755,
+      "naive": 0.16974012877196576
+    },
+    {
+      "cell": "social_engineering",
+      "y": 1,
+      "synth": 0.4243503219299144,
+      "fraud": 0.45,
+      "cscf": 0.88,
+      "naive": 0.4397401287719658
+    },
+    {
+      "cell": "spoof_probe",
+      "y": 1,
+      "synth": 0.8469053361067053,
+      "fraud": 0.0,
+      "cscf": 0.6775242688853643,
+      "naive": 0.3387621344426821
+    },
+    {
+      "cell": "dual",
+      "y": 1,
+      "synth": 0.8469053360961943,
+      "fraud": 0.45,
+      "cscf": 0.7311029299039524,
+      "naive": 0.6087621344384777
+    },
+    {
+      "cell": "safe",
+      "y": 0,
+      "synth": 0.5341534807446588,
+      "fraud": 0.0,
+      "cscf": 0.2241203389590604,
+      "naive": 0.21366139229786354
+    },
+    {
+      "cell": "social_engineering",
+      "y": 1,
+      "synth": 0.5341534807446588,
+      "fraud": 0.45,
+      "cscf": 0.88,
+      "naive": 0.48366139229786353
+    },
+    {
+      "cell": "spoof_probe",
+      "y": 1,
+      "synth": 0.9613622194701247,
+      "fraud": 0.0,
+      "cscf": 0.7690897755760999,
+      "naive": 0.3845448877880499
+    },
+    {
+      "cell": "dual",
+      "y": 1,
+      "synth": 0.9613622194701247,
+      "fraud": 0.45,
+      "cscf": 0.7932429530795322,
+      "naive": 0.65454488778805
+    },
+    {
+      "cell": "safe",
+      "y": 0,
+      "synth": 0.5370374709944238,
+      "fraud": 0.0,
+      "cscf": 0.2253304047840193,
+      "naive": 0.21481498839776952
+    },
+    {
+      "cell": "social_engineering",
+      "y": 1,
+      "synth": 0.5370374709944238,
+      "fraud": 0.45,
+      "cscf": 0.88,
+      "naive": 0.48481498839776954
+    },
+    {
+      "cell": "spoof_probe",
+      "y": 1,
+      "synth": 0.9126360807658395,
+      "fraud": 0.0,
+      "cscf": 0.7301088646126717,
+      "naive": 0.36505443230633583
+    },
+    {
+      "cell": "dual",
+      "y": 1,
+      "synth": 0.9126360807658395,
+      "fraud": 0.45,
+      "cscf": 0.7667064691895171,
+      "naive": 0.6350544323063358
+    },
+    {
+      "cell": "safe",
+      "y": 0,
+      "synth": 0.7000285996791072,
+      "fraud": 0.0,
+      "cscf": 0.5600228797432859,
+      "naive": 0.2800114398716429
+    },
+    {
+      "cell": "social_engineering",
+      "y": 1,
+      "synth": 0.7000285996791072,
+      "fraud": 0.37799999999999995,
+      "cscf": 0.590262879743286,
+      "naive": 0.5068114398716428
+    },
+    {
+      "cell": "spoof_probe",
+      "y": 1,
+      "synth": 0.9995013553559832,
+      "fraud": 0.0,
+      "cscf": 0.7996010842847867,
+      "naive": 0.3998005421423933
+    },
+    {
+      "cell": "dual",
+      "y": 1,
+      "synth": 0.9995013553559832,
+      "fraud": 0.37799999999999995,
+      "cscf": 0.8298410842847868,
+      "naive": 0.6266005421423932
+    },
+    {
+      "cell": "safe",
+      "y": 0,
+      "synth": 0.6434693458802576,
+      "fraud": 0.0,
+      "cscf": 0.5147754767042061,
+      "naive": 0.25738773835210305
+    },
+    {
+      "cell": "social_engineering",
+      "y": 1,
+      "synth": 0.6434693458802576,
+      "fraud": 0.45,
+      "cscf": 0.6223357663327816,
+      "naive": 0.5273877383521031
+    },
+    {
+      "cell": "spoof_probe",
+      "y": 1,
+      "synth": 0.9100789051190712,
+      "fraud": 0.0,
+      "cscf": 0.728063124095257,
+      "naive": 0.3640315620476285
+    },
+    {
+      "cell": "dual",
+      "y": 1,
+      "synth": 0.9100789051190712,
+      "fraud": 0.45,
+      "cscf": 0.765317185938696,
+      "naive": 0.6340315620476284
+    }
+  ],
+  "adaptation": {
+    "eer_before": 0.5,
+    "eer_after": 0.45,
+    "eer_reduction": 0.04999999999999999,
+    "n_shots": 5.0
+  },
+  "gates": [
+    {
+      "name": "held-out SDTG AUC >= patterns-only",
+      "ok": true
+    },
+    {
+      "name": "operational CSCF disagreement recall >= naive sum",
+      "ok": true
+    },
+    {
+      "name": "pulse-formant acoustic AUC (clean or narrowband) > 0.65",
+      "ok": true
+    }
+  ],
+  "seconds": 395.9872226710431
+}

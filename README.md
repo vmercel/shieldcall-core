@@ -1,112 +1,73 @@
 # ShieldCall Core
 
-Research-grade streaming dual-stream detection engine for real-time joint **linguistic fraud-intent** and **acoustic synthesis-artifact** analysis under **telephone conditions**.
+Streaming detector for **vishing language** and **vocoded speech** on telephone-bandwidth audio.
 
-This repository is the technical core for a differentiated national-interest research and engineering agenda. It is deliberately separate from the consumer Expo application so detection science can be developed, evaluated, and claimed independently.
+This is a research prototype (v0.3), not a certified product and not a state-of-the-art ASVspoof system. The measured claims, and the things we explicitly do not claim, are in `docs/NOVELTY.md` and the paper in `paper/`.
 
-## Research stack (v0.2): implemented, measured, prior-art grounded
+**Paper (arXiv draft):** `paper/main.pdf`  
+**Reproduce:** `python scripts/run_paper_experiments.py`
 
-| Acronym | Subsystem | Role |
-|---------|-----------|------|
-| **TCT** | Telephony Channel Twin | Stochastic phone-path simulation (mu-law, bandlimit, PLC, SNR) |
-| **STRF** | Spectral-Temporal Residual Fingerprinting | Vocoder residual cues that survive narrowband |
-| **SDTG** | Scam Discourse Trajectory Graph | Streaming scam-script stage machine |
-| **CSCF** | Cross-Stream Causal Fusion | Co-activation, regimes, joint trajectory |
-| **PMA** | Prototype Memory Adaptation | Few-shot online acoustic updates |
-| **CSR** | Conformal Streaming Risk | Uncertainty bands and abstention |
-| **CTE** | Counterfactual Threat Explanations | Minimal interventions that drop risk |
+## What it does
 
-**Evidence, not slogans:**
+On a shared 8 kHz timeline it:
 
-- [docs/PRIOR_ART.md](docs/PRIOR_ART.md): landscape vs this system
-- [docs/RESEARCH.md](docs/RESEARCH.md): claim to code to experiment map
-- [docs/NOVELTY.md](docs/NOVELTY.md): what is and is not claimed
-- [docs/PATENT_PATHWAY.md](docs/PATENT_PATHWAY.md): official USPTO and WIPO filing links
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): system design with rendered figures
+1. Simulates telephone-channel distortion (bandlimit, µ-law, packet loss) when asked.
+2. Scores residual / harmonic artifacts on speech frames, with optional prototype memory fit on labeled clips.
+3. Scores transcript fragments with a keyword layer plus a scam-script stage tracker.
+4. Fuses the two streams with disagreement rules (human voice + scam script vs vocoded voice + mild language).
 
-```bash
-pytest -q
-python scripts/run_benchmark.py
-python scripts/run_ablation.py # falsification gates for novelty claims
-python scripts/render_diagrams.py # regenerate docs/figures/*.png
-```
+There is no production ASR in this repository. Linguistic experiments inject text. Acoustic experiments use Mini LibriSpeech plus vocoders, not ASVspoof, unless you point `SHIELDCALL_ASVSPOOF_ROOT` at a licensed copy.
 
-## Architecture
+## Results (what is actually measured)
 
-![Dual-stream detection architecture](docs/figures/architecture_pipeline.png)
+From `docs/results/ablation_latest.txt` / `scripts/run_paper_experiments.py`:
 
-## Getting started
+| Test | Result |
+|------|--------|
+| Held-out paraphrased scam scripts | Keyword AUC **0.42**; keywords+stages AUC **0.88** |
+| Pulse-formant vocoder vs LibriSpeech (speaker-disjoint, 8 kHz / narrowband) | EER **0.00**, AUC **1.00** (easy condition) |
+| LPC vocoder vs LibriSpeech after bandlimiting | AUC **0.49** (at chance; negative result) |
+| Operational fusion, threat = scam **or** vocoded | CSCF disagreement recall **1.00** vs naive sum **0.30**; CSCF safe-cell FPR **0.40** vs naive **0.00** |
+| ASVspoof | **Not run** |
+
+Sine-wave unit tests still exist. They are not evidence.
+
+## Setup
 
 ```bash
-cd shieldcall-core
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-# or: pip install -r requirements.txt && pip install -e .
-
-python -m shieldcall.demo.stream_demo
-python scripts/run_benchmark.py
+python scripts/download_speech.py          # Mini LibriSpeech into ./data
+python scripts/run_paper_experiments.py    # official numbers
 pytest -q
+python -m shieldcall.demo.stream_demo
 ```
 
-### Config profiles
+Configs: `configs/default.yaml`, `configs/telephony_harsh.yaml`, `configs/research_sensitive.yaml`.
 
-- `configs/default.yaml`: balanced telephony
-- `configs/telephony_harsh.yaml`: VoIP / degraded PSTN stress
-- `configs/research_sensitive.yaml`: high-sensitivity research
-
-```python
-from shieldcall.config import load_config, pipeline_config_from_dict
-from shieldcall import ShieldCallPipeline
-
-cfg = pipeline_config_from_dict(load_config("configs/default.yaml"))
-pipe = ShieldCallPipeline(config=cfg)
-```
-
-### Programmatic API
-
-```python
-import numpy as np
-from shieldcall import ShieldCallPipeline, PipelineConfig
-from shieldcall.linguistic.asr_bridge import ScheduledTranscriptASR
-
-asr = ScheduledTranscriptASR([(0.5, "Verify your SSN and buy gift cards immediately")])
-pipe = ShieldCallPipeline(asr=asr)
-audio = np.random.randn(8000).astype(np.float32) * 0.01 # replace with real audio
-for ev in pipe.stream(audio, 8000):
- if ev.risk:
- print(ev.risk.tier, ev.risk.risk_score, ev.risk.explanation)
-```
-
-## Package layout
-
-![Package map](docs/figures/package_map.png)
+## Layout
 
 ```
-shieldcall/
- audio/ TCT, VAD, preprocessor
- acoustic/ STRF features, residual, prototype scorer
- linguistic/ patterns, SDTG, ASR bridge
- fusion/ CSCF, conformal CSR, CTE explanations
- adaptation/ PMA buffers, challenge-response, coverage debt
- eval/ metrics and channel-aware harness
- demo/ streaming demo
- pipeline.py unified streaming entrypoint
-configs/ YAML operating profiles
-docs/figures/ rendered architecture diagrams (PNG)
-tests/ pytest suite
+shieldcall/     engine
+scripts/        download, paper experiments, demo
+tests/          unit tests (including synthetic sanity checks)
+docs/           architecture notes, honest novelty, results
+paper/          arXiv draft (LaTeX + PDF)
+data/           Mini LibriSpeech (gitignored; download script)
 ```
 
-## Status
+## Proposed endeavor (plain language)
 
-**v0.2.0**: Full research-oriented implementation with interfaces, dual-stream science, channel twin evaluation, adaptation loop, conformal risk, counterfactuals, tests, configs, and rendered figures.
+Build and evaluate a **U.S.-deployable telephony detector** that flags (a) scam-script progression on call transcripts and (b) vocoded/synthetic speech after telephone distortion, with disagreement-aware fusion so a human vishing call is not suppressed by a “human-sounding” voice score. Current evidence is a reproducible prototype and a preprint, not a production deployment.
 
-Still ahead for production claims: large telephony-trained STRF or neural weights, production ASR wiring, and held-out multi-synthesizer corpora.
+## What this is not
 
-## Relation to the consumer app
-
-The Expo/React Native application can later call this core (local service, ONNX Runtime, or FFI) for threat scores. Ghost Mode, AI Dialer, and other product features remain outside this research core.
+- Not ASVspoof SOTA.
+- Not a filed patent.
+- Not a carrier integration, user study, or legal/compliance certification.
+- Not twelve months of public iteration (the git log is short; that is a fact).
 
 ## License
 
-Proprietary / All rights reserved for the time being.
+Proprietary / all rights reserved for the time being.

@@ -1,0 +1,144 @@
+\documentclass[10pt,twocolumn]{article}
+\usepackage[margin=0.75in]{geometry}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+\hyphenation{Shield-Call vo-coder tele-phony}
+
+\begin{document}
+
+\title{\vspace{-1.2em}ShieldCall: Streaming Detection of Vishing Scripts and Vocoded Speech under Telephone Channels\vspace{-0.6em}}
+\author{Vubangsi Mercel\\
+{\small Independent researcher \quad\texttt{vmercel@gmail.com}}}
+\date{}
+\maketitle
+
+\begin{abstract}
+Telephone fraud combines social-engineering language with increasingly accessible synthetic or vocoded speech. Most published countermeasures treat the two problems separately, and many acoustic systems are evaluated on clean or lightly augmented audio rather than on the narrowband, quantized, packet-loss conditions of live calls. This paper describes ShieldCall, a streaming software stack that scores linguistic fraud-intent and acoustic production artifacts on a shared 8\,kHz timeline and fuses them with explicit disagreement rules. We do not claim state-of-the-art equal error rate on ASVspoof. On a held-out set of author-written call scripts, a stage tracker that models vishing as a progression of discourse stages reaches AUC~$0.88$, while a high-precision keyword baseline falls to AUC~$0.42$. On speaker-disjoint Mini LibriSpeech, a pulse-formant vocoder is separated from bona fide speech at 8\,kHz after bandlimiting, whereas a low-order LPC vocoder is not: residual features are at chance under narrowband (AUC~$0.49$). When a call is labeled as a threat if it is either a scam script or vocoded, rule-based fusion raises disagreement-cell recall at a $0.5$ threshold from $0.30$ (naive sum) to $1.00$, at the cost of a higher false-positive rate on safe calls. The code, scripts, and this evaluation protocol are released for reproduction.
+\end{abstract}
+
+\noindent\textit{Keywords:} vishing, voice spoofing, telephone channel, streaming detection, score fusion.
+
+\section{Introduction}
+
+Impersonation and payment-harvesting calls remain a large consumer-protection problem in the United States~\cite{ftc2024sentinel}. Two technical facts make the problem harder than keyword spotting on a clean recording. First, the incriminating evidence is often the \emph{script}: a human speaker can walk a victim through authority, urgency, credential harvest, and prepaid-card payment without ever using a neural vocoder. Second, when a voice is synthetic, the cues that laboratory anti-spoofing systems rely on are distorted by $\mu$-law quantization, $300$--$3400$\,Hz bandlimiting, and packet-loss concealment~\cite{zhang2021channel,todisco2019asvspoof}.
+
+ShieldCall is a software system for the joint, streaming case. Audio is framed at a $10$\,ms hop. An acoustic path estimates how synthetic the current speech sounds using residual statistics after a light harmonic model, optionally adapted with class-conditional prototypes~\cite{snell2017prototypical}. A linguistic path scores transcript fragments with a high-precision keyword layer and a stage machine over a vishing script. A fusion layer produces a single risk score, a coarse regime label (safe, social engineering, spoof probe, dual threat), a heuristic uncertainty band, and input-space counterfactuals obtained by re-running the same scoring function.
+
+The contribution is not a new deep encoder. It is an evaluated, reproducible protocol for a telephony-oriented dual-stream detector, with negative results reported alongside positive ones. In particular, we show that a stage tracker helps on paraphrased scam scripts that a keyword list misses, that lightweight residual features detect a robotic pulse-formant vocoder and fail on LPC resynthesis after bandlimiting, and that disagreement-aware fusion trades false alarms for recall relative to a weighted sum.
+
+\section{Related work}
+
+The ASVspoof series is the standard public protocol for logical-access synthetic speech and physical-access replay~\cite{todisco2019asvspoof,wang2020asvspoof}. Competitive systems use self-supervised front ends and graph-attention or raw-waveform backends~\cite{jung2022aasist,tak2021end}. Those systems are the right comparison for neural TTS detection; we do not replace them. Channel mismatch is a documented failure mode~\cite{zhang2021channel}.
+
+Vishing detectors in the applied literature often classify transcripts, or average an audio score with a text score. Dialogue-act tagging is a long-standing NLP task~\cite{stolcke2000dialogue}; what is uncommon in telephony products is treating scam-script \emph{progression} as a first-class streaming feature and fusing it with an acoustic authenticity score under an explicit telephone channel model.
+
+Conformal prediction gives finite-sample coverage when a labeled calibration set is exchangeable~\cite{angelopoulos2023gentle}. The interval used in ShieldCall is a sliding residual band around an exponential moving average and is \emph{not} a coverage guarantee. We keep the implementation because abstention is operationally useful, and we name it honestly.
+
+\section{Method}
+
+\subsection{Channel simulation}
+Incoming waveforms are resampled to $8$\,kHz. An optional telephone-channel simulator applies a $300$--$3400$\,Hz Butterworth bandlimit, $\mu$-law compression with $8$-bit quantization, additive noise, and packet drops with simple concealment. This is a classical DSP chain, not a learned generative model of the public switched telephone network. We use it as a stress test and, optionally, as online data augmentation.
+
+\subsection{Acoustic path}
+Each $25$\,ms speech frame is decomposed with a least-squares harmonic model. The residual is summarized by energy ratio, spectral flatness, excess kurtosis, Hilbert-envelope modulation, harmonic-to-noise ratio, phase-derivative irregularity, and an upper-band peak-to-median ratio intended to capture periodic grid energy. A $64$-dimensional vector concatenates these statistics with coarse spectral descriptors.
+
+Prototype memory maintains running means of bona fide and synthetic embeddings and scores a frame by a softmax over RMS Mahalanobis distances. The memory can be fit on labeled clips and updated with a few confirmed examples. Bootstrap Gaussians exist only so the scorer is callable before any speech is seen; they are not used in the numbers below.
+
+\subsection{Linguistic path}
+Transcript fragments---from an external automatic speech recognizer, or from a scheduled text source in this paper---are scored in two ways. The keyword layer is a weighted union of high-precision English patterns (gift cards, Social Security numbers, warrants). The stage tracker is a small hidden Markov model whose emissions are a broader lexicon of vishing stages (greeting, authority, problem, urgency, harvest, payment, secrecy, threat) and whose transitions prefer forward progression. The path score mixes stage depth with mean per-step log-likelihood. Isolated sensitive words in otherwise benign calls are expected to fire the keyword layer more than the stage tracker.
+
+There is no production ASR in the experiments. The linguistic numbers therefore isolate language modeling, not recognition error.
+
+\subsection{Fusion}
+Let $s$ be the acoustic synthetic probability and $f$ the linguistic fraud probability. A naive baseline is $0.4s+0.6f$. ShieldCall instead uses a confidence-weighted blend, a small bonus when both streams have recently been high, a social-engineering floor when $f$ is high and $s$ is not, and a spoof-probe floor when $s$ is high and $f$ is not. Counterfactual explanations zero $f$ or $s$ (or flatten escalation) and re-evaluate the same function. This is rule-based fusion, not causal identification.
+
+\section{Experiments}
+
+All numbers in this section come from \texttt{python scripts/run\_paper\_experiments.py} in the accompanying repository. Sine-wave proxies are used only in unit tests and are not reported as scientific results. Mini LibriSpeech \texttt{dev-clean-2}~\cite{panayotov2015librispeech} was downloaded from OpenSLR. ASVspoof was not present; the loader is implemented but unused.
+
+\subsection{Linguistic scripts}
+We wrote $86$ English call scripts ($48$ train, $38$ held-out) spanning impersonation of tax, benefits, banks, helpdesks, relatives, and utilities, plus benign reminders and \emph{traps}: benign calls that mention a bank, a password reset, or a gift-card promotion without a vishing trajectory. Held-out scam lines are paraphrases that avoid many of the high-precision keywords.
+
+\begin{table}[t]
+\centering
+\caption{Linguistic detection. Isolated-keyword traps report mean fraud probability (lower is better).}
+\label{tab:ling}
+\begin{tabular}{lccc}
+\toprule
+Condition & $n$ & EER & AUC \\
+\midrule
+Train, keywords & 48 & 0.104 & 0.929 \\
+Train, keywords+stages & 48 & 0.000 & 1.000 \\
+Held-out, keywords & 38 & 0.583 & 0.417 \\
+Held-out, keywords+stages & 38 & 0.106 & 0.883 \\
+Held-out traps (mean score) & 8 & --- & $0.234$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:ling} and Fig.~\ref{fig:ling} show the intended pattern. On canonical training language the keyword list is already strong. On held-out paraphrases it falls below chance (AUC~$0.42$), while adding the stage tracker recovers AUC~$0.88$. Mean score on held-out traps is $0.23$. These scripts are not a sample of real victims; they test whether the stage machine does anything the keyword list does not.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/linguistic_auc.pdf}
+\caption{Linguistic AUC. The stage tracker is redundant on canonical training lines and necessary on held-out paraphrases.}
+\label{fig:ling}
+\end{figure}
+
+\subsection{Acoustic conditions}
+Bona fide audio is speaker-disjoint Mini LibriSpeech downsampled to $8$\,kHz ($5$ train speakers, $5$ test speakers, two utterances each). Spoof audio is the same utterance passed through a vocoder. Prototype memory is fit on the training speakers only.
+
+A pulse-formant vocoder (impulse train at estimated $F_0$ through three analog-style formants) is an easy condition: EER~$0.00$ and AUC~$1.00$ both clean and after $300$--$3400$\,Hz bandlimiting, on $n{=}20$ clips. That result shows the residual front end can fire on robotic excitation after telephone filtering. It does \emph{not} show neural-TTS detection.
+
+A low-order LPC vocoder on the same protocol is a hard condition. In a prior run of the same code, clean LPC yielded EER~$0.40$ / AUC~$0.64$, and narrowband LPC was at chance (EER~$0.45$ / AUC~$0.49$). Few-shot adaptation of a pulse-formant memory toward LPC reduced unseen LPC EER only from $0.50$ to $0.45$ after five shots. Lightweight residual features, as implemented here, are not a substitute for ASVspoof-trained neural countermeasures~\cite{jung2022aasist}.
+
+\subsection{Operational fusion}
+A call is labeled positive if it is a scam script \emph{or} pulse-formant vocoded, and negative only if it is bona fide speech with a benign script. That is the operational question (should an operator look?) rather than the acoustic question (is the voice synthetic?). We compare acoustic-only, linguistic-only, naive weighted sum, logistic regression on $(s,f)$, and ShieldCall fusion. Logistic regression is fit on a grid of synthetic probabilities crossed with training-script fraud scores, not on test audio.
+
+\begin{table}[t]
+\centering
+\caption{Operational fusion, $n{=}40$. Disagreement recall and safe-cell FPR use a fixed threshold of $0.5$.}
+\label{tab:fuse}
+\begin{tabular}{lcccc}
+\toprule
+System & EER & AUC & Disc.\ rec. & Safe FPR \\
+\midrule
+Acoustic only & 0.267 & 0.833 & 0.90 & 0.80 \\
+Linguistic only & 0.233 & 0.827 & 0.05 & 0.00 \\
+Naive sum & 0.100 & 0.973 & 0.30 & 0.00 \\
+Logistic & 0.083 & 0.993 & 1.00 & 0.50 \\
+ShieldCall fusion & 0.000 & 1.000 & 1.00 & 0.40 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fusion_operational.pdf}
+\caption{Fusion on operational threat labels. ShieldCall and logistic regression recover disagreement cells that a naive sum misses, and both pay in false positives on safe calls at the $0.5$ threshold.}
+\label{fig:fuse}
+\end{figure}
+
+Table~\ref{tab:fuse} and Fig.~\ref{fig:fuse} are the fusion result. Linguistic-only almost never catches a vocoded call that uses mild language (disagreement recall $0.05$). Naive sum improves overall AUC but still misses most disagreement cells at $0.5$ (recall $0.30$). ShieldCall fusion and logistic regression both reach disagreement recall $1.00$. ShieldCall has perfect ranking AUC on this small set and a safe-cell false-positive rate of $0.40$ at the same threshold, versus $0.00$ for the naive sum. The disagreement rules buy recall; they are not free.
+
+\section{Limitations}
+
+The linguistic corpus is author-written English. It does not estimate prevalence, ASR robustness, or non-English vishing. The pulse-formant condition is easy by construction. LPC and, by extension, modern neural vocoders under telephony remain unsolved for this front end. Sample sizes are small ($n{\le}48$ linguistic, $n{=}20$ acoustic, $n{=}40$ fusion). There is no user study of the explanations, no carrier deployment, and no ASVspoof number in this paper. The uncertainty band is not conformal coverage. Anyone citing this work as ``SOTA deepfake detection'' would be misquoting it.
+
+\section{Conclusion}
+
+ShieldCall is a streaming dual-stream detector for telephone-bandwidth audio and call transcripts. The result that is worth reproducing is not a leaderboard EER. It is that a scam-stage tracker still works when a keyword list is paraphrased away, that residual acoustics can detect a robotic vocoder after bandlimiting and fail on LPC, and that disagreement-aware fusion changes the recall/false-alarm tradeoff in the direction an operator would expect. The next measurement that would change the claim is ASVspoof Logical Access passed through the same channel simulator, with a published neural baseline in the same table.
+
+\section*{Reproducibility}
+Code, configs, scripts, and the Mini LibriSpeech downloader are in the companion repository. The experiment command is \texttt{python scripts/run\_paper\_experiments.py}. Set \texttt{SHIELDCALL\_ASVSPOOF\_ROOT} to enable the unused ASVspoof loader.
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
+\typeout{get arXiv to do 4 passes}

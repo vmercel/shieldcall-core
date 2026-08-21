@@ -77,3 +77,25 @@ def test_conformal_bounds():
         cal.observe(float(s))
     v = cal.calibrate(0.5)
     assert v.lower <= v.risk_score <= v.upper
+
+
+def test_cscf_beats_naive_on_disagreement():
+    fe = FusionEngine(use_conformal=False)
+    se = fe.combine_streams(synth=0.20, fraud=0.85, ac_conf=0.8, li_conf=0.8, depth=4, coact=0.2, apply_trajectory=False)
+    probe = fe.combine_streams(synth=0.80, fraud=0.10, ac_conf=0.8, li_conf=0.5, depth=0, coact=0.2, apply_trajectory=False)
+    safe = fe.combine_streams(synth=0.15, fraud=0.08, ac_conf=0.8, li_conf=0.5, depth=0, coact=0.1, apply_trajectory=False)
+    naive_se = FusionEngine.naive_sum(0.20, 0.85)
+    naive_probe = FusionEngine.naive_sum(0.80, 0.10)
+    assert se >= naive_se - 1e-9
+    assert probe >= naive_probe + 0.05
+    assert safe < 0.35
+
+
+def test_counterfactual_uses_fusion_function():
+    fe = FusionEngine(use_conformal=False)
+    fe.update_acoustic(_ac(0.2))
+    fe.update_linguistic(_li(0.9, esc=1.4, groups=["payment_urgency"]))
+    r = fe.fuse(1.0)
+    assert r.threat_explanation is not None
+    assert r.threat_explanation.counterfactuals
+    assert any(c.action == "neutralize_language" for c in r.threat_explanation.counterfactuals)

@@ -85,6 +85,20 @@ class ChallengeResponseProtocol:
         }
         return dict(self._pending)
 
+    def verify(
+        self,
+        transcript: str,
+        acoustic_synth_prob: Optional[float] = None,
+        synth_max: float = 0.55,
+        timeout_sec: float = 30.0,
+    ) -> bool:
+        """Pass only if the nonce/phrase matches *and* the voice is not synthetic."""
+        if not self.verify_transcript(transcript, timeout_sec=timeout_sec):
+            return False
+        if acoustic_synth_prob is not None and acoustic_synth_prob >= synth_max:
+            return False
+        return True
+
     def verify_transcript(self, transcript: str, timeout_sec: float = 30.0) -> bool:
         if not self._pending:
             return False

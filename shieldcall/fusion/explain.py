@@ -1,24 +1,16 @@
 """
-Counterfactual Threat Explanations (CTE)
-========================================
+Threat explanations and input-space counterfactuals.
 
-Given a fused risk decision, compute minimal interventions that would
-drop the call into a safer tier. These are not post-hoc LLM stories  - 
-they are gradient-free, exact counterfactuals over the fusion inputs:
-
-  - Reduce linguistic fraud probability
-  - Reduce acoustic synthetic probability
-  - Break co-activation
-  - Flatten escalation trajectory
-
-Used for operator UIs, audit logs, and user-facing warnings that name
-*what would need to change* for the call to look legitimate.
+Given a fused risk decision, re-run the *same* scoring function with
+intervened inputs (zero fraud, zero synth, no escalation, no coactivation).
+That is a finite difference on the fusion function, not an LLM narrative
+and not a search for a minimal perturbation.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 import numpy as np
 
@@ -69,6 +61,9 @@ def explain_risk(
     high_risk_threshold: float = 0.62,
     acoustic_weight: float = 0.40,
     linguistic_weight: float = 0.60,
+    score_fn: Optional[Callable[..., float]] = None,
+    ac_conf: float = 0.8,
+    li_conf: float = 0.8,
 ) -> ThreatExplanation:
     regime = classify_regime(synth, fraud)
     drivers: List[str] = []
@@ -101,16 +96,27 @@ def explain_risk(
     if drivers and drivers[0] != "no strong indicators":
         summary += " Drivers: " + "; ".join(drivers) + "."
 
-    # Counterfactuals: what minimal change drops below high_risk / suspicious
     cfs: List[CounterfactualAction] = []
     target = suspicious_threshold - 0.02 if tier == "SUSPICIOUS" else high_risk_threshold - 0.02
-    if risk_score > target:
-        # Approximate risk ≈ clip((aw*synth + lw*fraud) * esc * (1+coact_bonus))
-        base = acoustic_weight * synth + linguistic_weight * fraud
-        esc = max(escalation, 1.0)
 
-        # CF1: drop fraud to 0
-        r1 = float(np.clip(acoustic_weight * synth * esc, 0, 1))
+    def _score(s: float, f: float, esc: float, c: float) -> float:
+        if score_fn is not None:
+            return float(
+                score_fn(
+                    synth=s,
+                    fraud=f,
+                    ac_conf=ac_conf,
+                    li_conf=li_conf,
+                    escalation=esc,
+                    depth=progression_depth,
+                    coact=c,
+                    apply_trajectory=False,
+                )
+            )
+        return float(np.clip(acoustic_weight * s + linguistic_weight * f, 0, 1))
+
+    if risk_score > target:
+        r1 = _score(synth, 0.0, 1.0, 0.0)
         if r1 < risk_score - 0.05:
             cfs.append(
                 CounterfactualAction(
@@ -119,8 +125,7 @@ def explain_risk(
                     delta_risk=risk_score - r1,
                 )
             )
-        # CF2: drop synth to 0
-        r2 = float(np.clip(linguistic_weight * fraud * esc, 0, 1))
+        r2 = _score(0.0, fraud, escalation, 0.0)
         if r2 < risk_score - 0.05:
             cfs.append(
                 CounterfactualAction(
@@ -129,8 +134,7 @@ def explain_risk(
                     delta_risk=risk_score - r2,
                 )
             )
-        # CF3: flatten escalation
-        r3 = float(np.clip(base, 0, 1))
+        r3 = _score(synth, fraud, 1.0, coactivation)
         if r3 < risk_score - 0.05:
             cfs.append(
                 CounterfactualAction(
@@ -139,13 +143,13 @@ def explain_risk(
                     delta_risk=risk_score - r3,
                 )
             )
-        # CF4: break coactivation
         if coactivation > 0.2:
+            r4 = _score(synth, fraud, escalation, 0.0)
             cfs.append(
                 CounterfactualAction(
                     action="break_coactivation",
-                    detail="Desynchronizing voice and language anomalies would reduce joint confidence.",
-                    delta_risk=0.1 * coactivation,
+                    detail="Removing joint elevation would move risk to ~{:.2f}".format(r4),
+                    delta_risk=max(risk_score - r4, 0.0),
                 )
             )
 
