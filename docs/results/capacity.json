@@ -1,0 +1,21 @@
+{
+  "slo_hop_ms": 10.0,
+  "slo_frame_budget_ms": 8.0,
+  "within_budget": true,
+  "measurement": {
+    "audio_seconds": 2.0,
+    "frames": 198,
+    "wall_seconds": 1.2177,
+    "ms_per_frame": 6.15,
+    "realtime_x": 1.642
+  },
+  "plan_1000_concurrent": {
+    "calls_per_core": 1.138,
+    "cores": 879,
+    "n_plus_1_cores": 966,
+    "bytes_per_call_sec": 16000,
+    "monthly_usd_illustrative": 28207.0,
+    "usd_per_vcpu_hour_parameter": 0.04,
+    "notes": "Illustrative CPU cost only (no ASR, no GPU). usd_per_vcpu_hour is a parameter, not a vendor quote. Channel-twin simulation is eval-only and must be off in live workers."
+  }
+}

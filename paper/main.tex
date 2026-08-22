@@ -131,6 +131,25 @@ Fig.~\ref{fig:ga} and Fig.~\ref{fig:arch} summarise the architecture. Incoming a
 \label{fig:sapc}
 \end{figure}
 
+\subsection{Operational architecture}
+The library is not a telephone switch. Fig.~\ref{fig:deploy} is the designed placement: a session-border controller keeps SIP and RTP on the media path and forks an eight-kilohertz copy to a ShieldCall worker. One in-memory session holds one pipeline and one agent for the life of a \texttt{call\_id}. Workers scale horizontally by call identity. If a worker is at capacity it \emph{sheds}: it spends no CPU and emits only \texttt{monitor}, so the call continues. If the worker dies, in-call belief is lost and RTP is unaffected. Automatic speech recognition sits behind a circuit breaker; the acoustic path continues. These contracts live in \texttt{shieldcall.runtime} and are unit-tested. They are not a carrier deployment.
+
+On the evaluation host a frame costs about $6.2$\,ms against a $10$\,ms hop (realtime factor $\approx 1.6$). At seventy percent utilisation that is on the order of one full-rate call per core. Capacity is $N_{\mathrm{call}}/N_{\mathrm{core}}=(t_{\mathrm{hop}}/t_{\mathrm{frame}})\rho$. Cost is vCPU, not GPU. Neural vocoder detectors would change that bill; we do not run one.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.98\textwidth]{figures/deployment_sidecar.pdf}
+\caption{Sidecar placement. The call is the scale unit. Media does not hairpin through the detector.}
+\label{fig:deploy}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{figures/reliability_failopen.pdf}
+\caption{Failure policy. Call availability is owned by the SBC. Detector unavailability must not drop the call; actuation fails closed.}
+\label{fig:rel}
+\end{figure}
+
 \section{Methods}
 
 \subsection{Acoustic scoring}
@@ -262,7 +281,7 @@ Handoff-like & handoff & monitor, challenge, warn $\times 2$ & 1 & Probe while u
 The residual front end, the HMM stage tracker, CUSUM, prototypical memory, and ACI are not new algorithms. Journal novelty, if the manuscript has any, is the \emph{problem} and the \emph{measured policy}, not a new encoder. Specifically: operational threat as a disjunction; a paraphrase test that a keyword list fails and a stage tracker does not; a fusion comparison that reports the false-alarm bill; a timing statistic that is allowed to fail in public; and an agent that refuses to waste a liveness challenge on a human scammer. Reviewers who require a new neural architecture or an ASVspoof leaderboard number will correctly reject the paper on those grounds. Reviewers who require that negative results be suppressed will also reject it. Both reactions are more honest than inflating residual features into a discovery.
 
 \subsection{Threats to validity}
-Scripts are author-written and English-only. Audio is Mini LibriSpeech, not telephone speech and not ASVspoof. Pulse-formant is easy by construction. Fusion $n{=}40$ and SAPC $n{=}6$ are small. Agent likelihoods are not learned. There is no ASR in the loop, no user study, and no carrier deployment. Perfect fusion AUC on a small synthetic OR-task will not survive a larger, noisier set.
+Scripts are author-written and English-only. Audio is Mini LibriSpeech, not telephone speech and not ASVspoof. Pulse-formant is easy by construction. Fusion $n{=}40$ and SAPC $n{=}6$ are small. Agent likelihoods are not learned. There is no ASR in the loop, no user study, and no carrier deployment. The sidecar runtime is an in-process contract, not a measured Kubernetes service. Perfect fusion AUC on a small synthetic OR-task will not survive a larger, noisier set.
 
 \subsection{What would change the claim}
 ASVspoof logical access through the same channel simulator, with AASIST or RawNet2 in the same table, would change RQ3. PartialSpoof-style splices with real transcripts would give RQ4 a second chance to fail or succeed. A labeled live-call corpus would test RQ1 and RQ5 outside author-written English. Until then the claims remain as scoped above.
@@ -278,7 +297,7 @@ Vubangsi Mercel: conceptualization, software, experiments, writing.
 The author declares no competing interests.
 
 \section*{Data availability}
-Mini LibriSpeech is obtained from OpenSLR~31. Scripts, code, and tabulated results are in the companion repository. ASVspoof is not redistributed; set \texttt{SHIELDCALL\_ASVSPOOF\_ROOT} to enable the unused loader. Reproduce with \texttt{pytest -q}, \texttt{python scripts/run\_paper\_experiments.py}, \texttt{python scripts/run\_handoff\_experiment.py}, and \texttt{python scripts/run\_agent\_demo.py}.
+Mini LibriSpeech is obtained from OpenSLR~31. Scripts, code, and tabulated results are in the companion repository. ASVspoof is not redistributed; set \texttt{SHIELDCALL\_ASVSPOOF\_ROOT} to enable the unused loader. Reproduce with \texttt{pytest -q}, \texttt{python scripts/run\_paper\_experiments.py}, \texttt{python scripts/run\_handoff\_experiment.py}, \texttt{python scripts/run\_agent\_demo.py}, and \texttt{python scripts/run\_capacity.py}.
 
 \bibliographystyle{unsrt}
 \bibliography{references}

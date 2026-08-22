@@ -8,7 +8,7 @@ from shieldcall.config import load_config, pipeline_config_from_dict
 
 
 def test_version():
-    assert __version__ == "0.5.0"
+    assert __version__ == "0.6.0"
 
 
 def test_end_to_end_pipeline():

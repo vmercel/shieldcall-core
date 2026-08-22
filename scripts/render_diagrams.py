@@ -446,20 +446,21 @@ def render_adaptation_loop():
 
 
 def render_package_map():
-    fig, ax = _setup(7.16, 5.0)
+    fig, ax = _setup(7.16, 5.6)
     _title(ax, "Package map")
     pkgs = [
-        (4.5, 54, "wave", "audio", PROBE),
-        (28.0, 54, "wave", "acoustic", PROBE),
-        (51.5, 54, "document", "linguistic", DUAL),
-        (75.0, 54, "scale", "fusion", GOLD),
-        (4.5, 12, "brain", "agent", SE),
-        (28.0, 12, "shield", "adaptation", SE),
-        (51.5, 12, "ear", "eval", SAFE),
-        (75.0, 12, "loop", "pipeline", NAVY),
+        (4.0, 64, "wave", "audio", PROBE),
+        (28.0, 64, "wave", "acoustic", PROBE),
+        (52.0, 64, "document", "linguistic", DUAL),
+        (76.0, 64, "scale", "fusion", GOLD),
+        (4.0, 34, "brain", "agent", SE),
+        (28.0, 34, "loop", "runtime", NAVY),
+        (52.0, 34, "shield", "adaptation", SE),
+        (76.0, 34, "ear", "eval", SAFE),
+        (40.0, 4, "loop", "pipeline", NAVY),
     ]
     for x, y, ic, name, col in pkgs:
-        _node(ax, x, y, 20.5, 32, ic, name, "", col, FILL, 10.5, 7.6, 0.046)
+        _node(ax, x, y, 20.0, 26, ic, name, "", col, FILL, 10.0, 7.6, 0.040)
     return _save(fig, "package_map.png")
 
 
@@ -492,7 +493,7 @@ def render_sapc_timing():
 
 
 def render_claim_code_map():
-    fig, ax = _setup(7.16, 5.2)
+    fig, ax = _setup(7.16, 5.7)
     _title(ax, "Claim  |  code  |  evidence")
     rows = [
         ("Stage tracker vs keywords", "linguistic/", "held-out AUC 0.88 vs 0.42"),
@@ -500,18 +501,19 @@ def render_claim_code_map():
         ("Pulse-formant / LPC", "acoustic/ + eval/", "EER 0  /  AUC 0.49"),
         ("SAPC timing", "fusion/coupling.py", "synthetic 1.00; audio 0.47"),
         ("Defense agent", "agent/", "scripted traces, not EER"),
+        ("Sidecar runtime", "runtime/", "isolation + shed tests"),
     ]
     for x, t in ((4, "Claim"), (36, "Code"), (68, "Evidence")):
         _box(ax, x, 81.5, 28, 8.6, FILL2, NAVY)
         _label(ax, x + 14, 85.8, t, 9.6, "bold")
     for i, (a, b, c) in enumerate(rows):
-        y = 66.5 - i * 13.4
-        _box(ax, 4, y, 28, 11.2, FILL, PROBE)
-        _box(ax, 36, y, 28, 11.2, FILL, GOLD)
-        _box(ax, 68, y, 28, 11.2, FILL, SAFE)
-        _label(ax, 18, y + 5.6, a, 8.3)
-        _label(ax, 50, y + 5.6, b, 8.3)
-        _label(ax, 82, y + 5.6, c, 8.3)
+        y = 67.5 - i * 11.0
+        _box(ax, 4, y, 28, 10.2, FILL, PROBE)
+        _box(ax, 36, y, 28, 10.2, FILL, GOLD)
+        _box(ax, 68, y, 28, 10.2, FILL, SAFE)
+        _label(ax, 18, y + 5.1, a, 8.2)
+        _label(ax, 50, y + 5.1, b, 8.2)
+        _label(ax, 82, y + 5.1, c, 8.2)
     return _save(fig, "claim_code_map.png")
 
 
@@ -530,6 +532,110 @@ def render_patent_pathway():
             _arrow(ax, x + 16.8, 50, x + 19.4, 50, MUTED, lw=1.1, ms=10)
     _label(ax, 50, 12.5, "patentcenter.uspto.gov      pct.wipo.int/ePCT", 8.2, color=MUTED)
     return _save(fig, "patent_pathway.png")
+
+
+def render_deployment_sidecar():
+    fig, ax = _setup(7.16, 6.05)
+    _title(ax, "Sidecar deployment  (data plane vs control plane)")
+
+    # Media path (always on)
+    _node(ax, 3, 78, 18, 16, "phone", "Caller", "", NAVY, FILL2, 9.2, 7.6, 0.036)
+    _box(ax, 28, 78, 44, 16, FILL, SAFE, lw=1.25)
+    _icon(ax, "loop", 36, 88.5, 0.032)
+    _label(ax, 54, 88.8, "SBC  /  CPaaS", 10.0, "bold")
+    _label(ax, 54, 83.2, "SIP + RTP   |   media continues here", 8.0, color=MUTED)
+    _node(ax, 79, 78, 18, 16, "phone", "Callee", "", NAVY, FILL2, 9.2, 7.6, 0.036)
+    _arrow(ax, 21, 86, 28, 86, SAFE, lw=1.2)
+    _arrow(ax, 72, 86, 79, 86, SAFE, lw=1.2)
+
+    # Fork (label to the right so it does not sit on the media-path caption)
+    _arrow(ax, 50, 78, 50, 70.5, PROBE, lw=1.25)
+    _label(ax, 28, 74.2, "media path stays on the SBC", 7.8, color=SAFE)
+    _label(ax, 72, 74.2, "fork 8 kHz PCM copy", 7.8, color=PROBE)
+
+    _box(ax, 28, 58, 44, 12, FILL, PROBE, lw=1.15)
+    _label(ax, 50, 66.4, "Call-affinity ingress", 9.6, "bold")
+    _label(ax, 50, 61.4, "pin call_id to one worker for the life of the call", 7.8, color=MUTED)
+
+    # Workers
+    for i, x in enumerate((8, 36, 64)):
+        _box(ax, x, 34, 24, 20, FILL2, NAVY, lw=1.15)
+        _icon(ax, "brain", x + 6.5, 48.5, 0.030)
+        _icon(ax, "shield", x + 17.5, 48.5, 0.028)
+        _label(ax, x + 12, 41.6, f"Worker {i + 1}", 9.0, "bold")
+        _label(ax, x + 12, 37.2, "session = pipeline + agent", 7.4, color=MUTED)
+    _arrow(ax, 42, 58, 20, 54, PROBE, lw=1.05)
+    _arrow(ax, 50, 58, 48, 54, PROBE, lw=1.05)
+    _arrow(ax, 58, 58, 76, 54, PROBE, lw=1.05)
+
+    # Control plane
+    _node(ax, 8, 8, 38, 20, "memory", "Control plane", "prototypes  |  config  |  SLO", GOLD, FILL, 9.4, 7.6, 0.038)
+    _node(ax, 54, 8, 38, 20, "operator", "Audit + human", "append-only traces  |  escalate", DUAL, FILL, 9.4, 7.6, 0.036)
+    _label(ax, 50, 3.2, "Not a carrier deployment. shieldcall.runtime implements the worker contracts.", 7.8, color=MUTED)
+    return _save(fig, "deployment_sidecar.png")
+
+
+def render_reliability_failopen():
+    fig, ax = _setup(7.16, 5.55)
+    _title(ax, "Availability: fail-open media, fail-closed actuation")
+
+    rows = [
+        (72, PROBE, "shield", "Worker at capacity",
+         "Shed the new call_id. Return MONITOR. Spend no CPU."),
+        (52, SE, "loop", "Worker crash",
+         "In-call belief is lost (ephemeral). RTP still flows on the SBC."),
+        (32, GOLD, "ear", "ASR circuit open",
+         "Linguistic freezes. Acoustic + agent keep running."),
+        (12, DUAL, "scale", "Frame time > SLO",
+         "Ready=false. Load balancer drains. Live calls finish."),
+    ]
+    for y, col, ic, title, body in rows:
+        _box(ax, 6, y, 88, 17.5, FILL, col, lw=1.15)
+        _icon(ax, ic, 16, y + 9.0, 0.042)
+        _label(ax, 28, y + 12.2, title, 10.0, "bold", col, ha="left")
+        _label(ax, 28, y + 6.0, body, 8.4, color=MUTED, ha="left")
+    _label(
+        ax, 50, 5.5,
+        "Call availability is owned by the SBC. Detector unavailability is not a dropped call.",
+        8.2, color=MUTED,
+    )
+    return _save(fig, "reliability_failopen.png")
+
+
+def render_capacity_cost():
+    fig, ax = _setup(7.16, 5.35)
+    _title(ax, "Capacity and cost  (CPU, no GPU)")
+
+    _box(ax, 4, 62, 28, 28, FILL, PROBE, lw=1.2)
+    _label(ax, 18, 84, "Measure", 10.0, "bold", PROBE)
+    _label(ax, 18, 74, "ms / frame\non this host", 8.6, color=MUTED)
+    _label(ax, 18, 66.5, "hop = 10 ms", 8.2, color=MUTED)
+
+    _box(ax, 36, 62, 28, 28, FILL, GOLD, lw=1.2)
+    _label(ax, 50, 84, "Scale unit", 10.0, "bold", GOLD)
+    _label(ax, 50, 74, "calls / core  =\n(hop / ms) x util", 8.6, color=MUTED)
+    _label(ax, 50, 66.5, "util = 0.70", 8.2, color=MUTED)
+
+    _box(ax, 68, 62, 28, 28, FILL, SE, lw=1.2)
+    _label(ax, 82, 84, "Cost", 10.0, "bold", SE)
+    _label(ax, 82, 74, "vCPU-hours\nx N+1 spare", 8.6, color=MUTED)
+    _label(ax, 82, 66.5, "no GPU bill", 8.2, color=MUTED)
+
+    _arrow(ax, 32, 76, 36, 76, MUTED)
+    _arrow(ax, 64, 76, 68, 76, MUTED)
+
+    _box(ax, 8, 12, 84, 42, FILL2, NAVY, lw=1.15)
+    _label(ax, 50, 47.5, "Worked example  (evaluation host, not a vendor quote)", 9.2, "bold")
+    _label(
+        ax, 50, 34.5,
+        "Measured  ~6.2 ms/frame  against a 10 ms hop  (realtime x  ~1.6).\n"
+        "At 70% utilization that is  ~1.1 concurrent full-rate calls per core.\n"
+        "1 000 concurrent calls  =>  ~900 cores + 10% spare.\n"
+        "At USD 0.04 per vCPU-hour this is an illustrative  ~29k USD / month of CPU,\n"
+        "before ASR. VAD skip and fuse-every-n cut that; a GPU encoder would raise it.",
+        8.2, color=MUTED,
+    )
+    return _save(fig, "capacity_cost.png")
 
 
 def render_linguistic_auc():
@@ -609,6 +715,9 @@ def main():
         render_tct_strf(),
         render_adaptation_loop(),
         render_package_map(),
+        render_deployment_sidecar(),
+        render_reliability_failopen(),
+        render_capacity_cost(),
         render_sapc_timing(),
         render_claim_code_map(),
         render_patent_pathway(),

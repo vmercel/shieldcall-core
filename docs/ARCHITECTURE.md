@@ -77,6 +77,16 @@ shieldcall/
  pipeline.py sensor entrypoint
 ```
 
+## Operational system design
+
+The sensor/agent diagrams above are the *algorithm*. Placement, scale, failure, and cost are in [`SYSTEM_DESIGN.md`](SYSTEM_DESIGN.md) and ADR-003.
+
+- Sidecar, not a media hairpin: [`figures/deployment_sidecar.png`](figures/deployment_sidecar.png)
+- Fail-open on the call, fail-closed on actuation: [`figures/reliability_failopen.png`](figures/reliability_failopen.png)
+- Capacity from measured ms/frame: [`figures/capacity_cost.png`](figures/capacity_cost.png)
+
+`shieldcall.runtime.SidecarRuntime` is the in-process worker. It is not Kubernetes and not a carrier trial.
+
 ## Latency budget (target)
 
 | Stage | Budget |
@@ -90,7 +100,7 @@ shieldcall/
 
 ## Version
 
-0.5.0: belief-state defense agent on top of the v0.4 sensors. SAPC audio handoff remains a reported failure. Agent quality is measured by action traces on scripted percepts, not by ASVspoof EER.
+0.6.0: sidecar runtime (session isolation, shed, ASR breaker, capacity math) on top of the v0.5 agent. SAPC audio handoff remains a reported failure. Agent quality is measured by action traces on scripted percepts, not by ASVspoof EER. Runtime quality is measured by contract tests, not by a production SLO.
 
 ## Regenerating figures
 

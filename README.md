@@ -2,7 +2,9 @@
 
 Streaming detector for **vishing language** and **vocoded speech** on telephone-bandwidth audio.
 
-This is a research prototype (v0.5), not a certified product and not a state-of-the-art ASVspoof system. The measured claims, and the things we explicitly do not claim, are in `docs/NOVELTY.md` and the paper in `paper/`.
+This is a research prototype (v0.6), not a certified product and not a state-of-the-art ASVspoof system. The measured claims, and the things we explicitly do not claim, are in `docs/NOVELTY.md` and the paper in `paper/`.
+
+**v0.6 runtime:** the library is a sidecar, not a media hairpin. `shieldcall.runtime.SidecarRuntime` isolates one session per call, sheds under concurrency limits (fail-open on the telephone path), and trips an ASR circuit breaker. Capacity is `calls/core = (hop_ms / ms_frame) * util`, measured by `python scripts/run_capacity.py`. Design: `docs/SYSTEM_DESIGN.md`. ADR: `docs/ADR-003-sidecar-runtime.md`. This is not a carrier deployment.
 
 **v0.5 agent:** the pipeline is a sensor. `shieldcall.agent.DefenseAgent` holds a belief over five call hypotheses and chooses monitor / challenge / warn / escalate / adapt / abstain by information gain minus interruption cost. It never sees raw audio. It is not an LLM. Demo: `python scripts/run_agent_demo.py`. ADR: `docs/ADR-002-belief-state-defense-agent.md`.
 
@@ -57,7 +59,7 @@ Configs: `configs/default.yaml`, `configs/telephony_harsh.yaml`, `configs/resear
 shieldcall/     engine
 scripts/        download, paper experiments, demo
 tests/          unit tests (including synthetic sanity checks)
-docs/           architecture notes, honest novelty, results
+docs/           architecture, system design (scale / reliability / cost), novelty, results
 paper/          arXiv draft (LaTeX + PDF)
 data/           Mini LibriSpeech (gitignored; download script)
 ```
