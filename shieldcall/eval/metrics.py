@@ -108,3 +108,88 @@ def summarize_scores(
     labels = [0] * len(human_scores) + [1] * len(synthetic_scores)
     scores = list(human_scores) + list(synthetic_scores)
     return equal_error_rate(labels, scores)
+
+
+def bootstrap_ci(
+    labels: Sequence[int],
+    scores: Sequence[float],
+    fn,
+    n_boot: int = 1000,
+    seed: int = 0,
+    alpha: float = 0.05,
+) -> Tuple[float, float, float]:
+    """Return (point, lo, hi) for ``fn(labels, scores)`` via case bootstrap."""
+    labels = np.asarray(labels, dtype=int)
+    scores = np.asarray(scores, dtype=float)
+    point = float(fn(labels, scores))
+    if len(labels) < 4:
+        return point, point, point
+    rng = np.random.RandomState(seed)
+    stats = []
+    n = len(labels)
+    for _ in range(n_boot):
+        idx = rng.randint(0, n, n)
+        stats.append(float(fn(labels[idx], scores[idx])))
+    lo = float(np.quantile(stats, alpha / 2))
+    hi = float(np.quantile(stats, 1.0 - alpha / 2))
+    return point, lo, hi
+
+
+def precision_at_fpr(
+    labels: Sequence[int], scores: Sequence[float], target_fpr: float = 0.05
+) -> float:
+    labels = np.asarray(labels, dtype=int)
+    scores = np.asarray(scores, dtype=float)
+    fpr, tpr, thr = roc_curve(labels, scores)
+    if len(fpr) == 0:
+        return 0.0
+    # operating point: largest TPR with FPR <= target
+    ok = np.where(fpr <= target_fpr + 1e-12)[0]
+    if len(ok) == 0:
+        i = int(np.argmin(fpr))
+    else:
+        i = int(ok[np.argmax(tpr[ok])])
+    th = thr[i] if i < len(thr) else 0.5
+    pred = scores >= th
+    tp = int(((pred) & (labels == 1)).sum())
+    fp = int(((pred) & (labels == 0)).sum())
+    return float(tp / max(tp + fp, 1))
+
+
+def min_dcf(
+    labels: Sequence[int],
+    scores: Sequence[float],
+    p_target: float = 0.05,
+    c_miss: float = 1.0,
+    c_fa: float = 1.0,
+) -> float:
+    """Normalized min DCF (ASVspoof-style, default 0.05 prior)."""
+    labels = np.asarray(labels, dtype=int)
+    scores = np.asarray(scores, dtype=float)
+    n_pos = max((labels == 1).sum(), 1)
+    n_neg = max((labels == 0).sum(), 1)
+    best = 1.0
+    for th in np.unique(scores):
+        pred = scores >= th
+        fnr = ((~pred) & (labels == 1)).sum() / n_pos
+        fpr = ((pred) & (labels == 0)).sum() / n_neg
+        dcf = c_miss * p_target * fnr + c_fa * (1.0 - p_target) * fpr
+        best = min(best, dcf)
+    denom = min(c_miss * p_target, c_fa * (1.0 - p_target))
+    return float(best / max(denom, 1e-12))
+
+
+def recall_at_threshold(labels: Sequence[int], scores: Sequence[float], th: float = 0.5) -> float:
+    labels = np.asarray(labels, dtype=int)
+    scores = np.asarray(scores, dtype=float)
+    pred = scores >= th
+    n_pos = max((labels == 1).sum(), 1)
+    return float(((pred) & (labels == 1)).sum() / n_pos)
+
+
+def fpr_at_threshold(labels: Sequence[int], scores: Sequence[float], th: float = 0.5) -> float:
+    labels = np.asarray(labels, dtype=int)
+    scores = np.asarray(scores, dtype=float)
+    pred = scores >= th
+    n_neg = max((labels == 0).sum(), 1)
+    return float(((pred) & (labels == 0)).sum() / n_neg)

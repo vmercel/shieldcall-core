@@ -34,6 +34,10 @@ class CodecProfile(str, Enum):
     G711_ULAW = "g711_ulaw"
     HARSH_VOIP = "harsh_voip"
     DEGRADED_PSTN = "degraded_pstn"
+    OPUS_NB = "opus_nb"
+    OPUS_WB = "opus_wb"
+    NEURAL_CODEC = "neural_codec"
+    G729_LIKE = "g729_like"
 
 
 @dataclass
@@ -70,6 +74,26 @@ def _bandlimit(x: np.ndarray, sr: int, low: float = 300.0, high: float = 3400.0)
         return x.astype(np.float32)
     b, a = signal.butter(4, [lo, hi], btype="band")
     return signal.lfilter(b, a, x).astype(np.float32)
+
+
+def _neural_codec_sim(x: np.ndarray, sr: int, bits: int = 4) -> np.ndarray:
+    """Encodec/DAC-like artifacts: quantized log-STFT + high-band phase noise."""
+    x = x.astype(np.float64)
+    nper, nover = 256, 192
+    _, _, z = signal.stft(x, fs=sr, nperseg=nper, noverlap=nover)
+    mag = np.abs(z)
+    logm = np.log1p(mag)
+    levels = 2 ** bits
+    lo, hi = float(logm.min()), float(logm.max() + 1e-8)
+    q = np.round((logm - lo) / (hi - lo) * (levels - 1))
+    rec = np.expm1(q / (levels - 1) * (hi - lo) + lo)
+    rng = np.random.RandomState(5)
+    phase = np.angle(z) + 0.7 * rng.randn(*z.shape)
+    rec_c = rec * np.exp(1j * phase)
+    _, y = signal.istft(rec_c, fs=sr, nperseg=nper, noverlap=nover)
+    y = y[: len(x)]
+    peak = np.max(np.abs(y)) + 1e-8
+    return np.clip((y / peak) * 0.95, -1.0, 1.0).astype(np.float32)
 
 
 def _add_noise(x: np.ndarray, snr_db: float, rng: np.random.RandomState) -> np.ndarray:
@@ -122,6 +146,10 @@ class TelephonyChannelTwin:
         CodecProfile.G711_ULAW: dict(bandlimit=True, ulaw=True, snr_db=35.0, packet_loss_rate=0.0),
         CodecProfile.HARSH_VOIP: dict(bandlimit=True, ulaw=True, snr_db=20.0, packet_loss_rate=0.08),
         CodecProfile.DEGRADED_PSTN: dict(bandlimit=True, ulaw=True, snr_db=12.0, packet_loss_rate=0.15),
+        CodecProfile.OPUS_NB: dict(bandlimit=True, ulaw=False, snr_db=30.0, packet_loss_rate=0.02, extra="opus_nb"),
+        CodecProfile.OPUS_WB: dict(bandlimit=False, ulaw=False, snr_db=32.0, packet_loss_rate=0.02, extra="opus_wb"),
+        CodecProfile.NEURAL_CODEC: dict(bandlimit=True, ulaw=False, snr_db=28.0, packet_loss_rate=0.0, extra="neural"),
+        CodecProfile.G729_LIKE: dict(bandlimit=True, ulaw=False, snr_db=25.0, packet_loss_rate=0.04, extra="g729"),
     }
 
     def __init__(self, config: Optional[ChannelConfig] = None):
@@ -139,10 +167,23 @@ class TelephonyChannelTwin:
             x = x / peak
 
         defaults = self.PROFILE_DEFAULTS[self.config.profile]
-        if defaults["bandlimit"]:
+        extra = defaults.get("extra")
+        if extra == "opus_wb":
+            x = _bandlimit(x, sample_rate, low=50.0, high=7000.0 if sample_rate >= 16000 else 3400.0)
+            x = _ulaw_encode_decode(x, mu=63.0)  # coarser than G.711: SILK-like
+        elif extra == "opus_nb":
+            x = _bandlimit(x, sample_rate, low=100.0, high=4000.0)
+            x = _ulaw_encode_decode(x, mu=31.0)
+        elif extra == "neural":
+            x = _neural_codec_sim(x, sample_rate)
+        elif extra == "g729":
             x = _bandlimit(x, sample_rate)
-        if defaults["ulaw"]:
-            x = _ulaw_encode_decode(x)
+            x = _ulaw_encode_decode(x, mu=15.0)  # 4-bit-ish CS-ACELP caricature
+        else:
+            if defaults["bandlimit"]:
+                x = _bandlimit(x, sample_rate)
+            if defaults["ulaw"]:
+                x = _ulaw_encode_decode(x)
 
         snr = self.config.snr_db if self.config.snr_db is not None else defaults["snr_db"]
         if snr is not None:

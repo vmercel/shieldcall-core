@@ -349,3 +349,107 @@ def adaptation_protocol(
         "eer_reduction": float(eer_before - eer_after),
         "n_shots": float(n_shots),
     }
+
+
+def _script_turns(script: CallScript) -> List[str]:
+    return [t[1] for t in script.turns]
+
+
+def linguistic_ablation_protocol(
+    *,
+    confirmatory: bool = True,
+    asr_wer: float = 0.0,
+    seed: int = 0,
+) -> Dict[str, EvalResult]:
+    """Locked-lexicon confirmatory linguistic table.
+
+    Systems: narrow keywords (PATTERN_GROUPS), wide lexicon (STAGE_EMISSIONS
+    bag), SDTG (HMM path), NTM (fit on train scripts only).
+    Population: independent_scripts if confirmatory else author held-out.
+    """
+    from ..linguistic.asr_noise import degrade_turns
+    from ..linguistic.discourse import emission_only_score, path_only_score, wide_lexicon_score
+    from ..linguistic.ntm import NeuralTrajectoryModel
+    from ..linguistic.scorer import LinguisticFraudScorer
+    from .corpora.independent_scripts import independent_scripts
+    from .metrics import bootstrap_ci
+
+    train = train_scripts()
+    test = independent_scripts() if confirmatory else heldout_scripts()
+    ntm = NeuralTrajectoryModel(seed=seed)
+    ntm.fit(([t[1] for t in s.turns] for s in train), (1 if s.is_scam else 0 for s in train))
+
+    def narrow_score(turns: List[str]) -> float:
+        scorer = LinguisticFraudScorer(discourse_weight=0.0, pattern_weight=1.0)
+        last = None
+        for i, t in enumerate(turns):
+            last = scorer.update(t, float(i))
+        return float(last.fraud_prob if last else 0.0)
+
+    systems = {
+        "narrow_keywords": lambda turns: narrow_score(turns),
+        "wide_lexicon": lambda turns: emission_only_score(turns),
+        "sdtg": lambda turns: path_only_score(turns),
+        "ntm": lambda turns: ntm.score(turns),
+    }
+    results: Dict[str, EvalResult] = {}
+    for name, fn in systems.items():
+        labels, scores = [], []
+        for s in test:
+            turns = _script_turns(s)
+            if asr_wer > 0:
+                turns = degrade_turns(turns, wer=asr_wer, seed=seed)
+            labels.append(1 if s.is_scam else 0)
+            scores.append(float(fn(turns)))
+        auc, lo, hi = bootstrap_ci(labels, scores, auc_roc, n_boot=400, seed=seed)
+        traps = [sc for s, sc in zip(test, scores) if s.trap == "isolated_keyword" and not s.is_scam]
+        results[f"ling_{name}{'_asr' if asr_wer else ''}"] = EvalResult(
+            condition=f"ling/{name}/wer={asr_wer}",
+            n_samples=len(test),
+            eer_estimate=equal_error_rate(labels, scores),
+            mean_latency_ms=0.0,
+            auc=auc,
+            notes=f"confirmatory={confirmatory} wer={asr_wer}",
+            extras={
+                "auc_lo": lo,
+                "auc_hi": hi,
+                "trap_mean": float(np.mean(traps)) if traps else 0.0,
+            },
+        )
+    return results
+
+
+def fusion_ablation_from_pairs(pairs: Sequence[PairScore]) -> Dict[str, EvalResult]:
+    """Attribute complementary-cell recall to floors vs blend vs OR."""
+    from .metrics import bootstrap_ci, fpr_at_threshold, recall_at_threshold
+
+    results: Dict[str, EvalResult] = {}
+    modes = {
+        "naive": lambda p: p.naive,
+        "logreg": lambda p: p.logreg,
+        "cscf": lambda p: p.cscf,
+        "floors": lambda p: FusionEngine.floors_only(p.synth, p.fraud),
+        "calibrated_or": lambda p: FusionEngine.calibrated_or(p.synth, p.fraud),
+    }
+    for name, fn in modes.items():
+        labels = [p.y for p in pairs]
+        scores = [float(fn(p)) for p in pairs]
+        disc_y, disc_s, safe_s = [], [], []
+        for p, sc in zip(pairs, scores):
+            if p.cell in ("social_engineering", "spoof_probe"):
+                disc_y.append(1)
+                disc_s.append(sc)
+            if p.cell == "safe":
+                safe_s.append(sc)
+        auc, lo, hi = bootstrap_ci(labels, scores, auc_roc, n_boot=400, seed=0)
+        rec = float(np.mean([1.0 if s >= 0.5 else 0.0 for s in disc_s])) if disc_s else 0.0
+        fpr = float(np.mean([1.0 if s >= 0.5 else 0.0 for s in safe_s])) if safe_s else 0.0
+        results[f"fuse_{name}"] = EvalResult(
+            condition=f"fusion/{name}",
+            n_samples=len(pairs),
+            eer_estimate=equal_error_rate(labels, scores),
+            mean_latency_ms=0.0,
+            auc=auc,
+            extras={"auc_lo": lo, "auc_hi": hi, "disc_recall@0.5": rec, "safe_fpr@0.5": fpr},
+        )
+    return results

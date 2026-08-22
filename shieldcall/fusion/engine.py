@@ -4,8 +4,8 @@ Cross-stream score fusion (CSCF)
 
 Rule-based fusion of acoustic authenticity and linguistic fraud-intent.
 
-This is not causal inference. "Causal window" only means the two streams
-are aligned in time (no future frames). Mechanisms:
+This is not causal inference. "Non-anticipative window" means the two
+streams are aligned in time (no future frames). Mechanisms:
 
   1. Confidence-weighted blend of the two streams.
   2. Trajectory: a rising score slightly increases risk.
@@ -57,6 +57,7 @@ class FusedRisk:
     handoff_statistic: float = 0.0
     handoff_pvalue: float = 1.0
     handoff_score: float = 0.0
+    attestation: str = "A"  # STIR/SHAKEN A/B/C/unsigned
 
 
 class FusionEngine:
@@ -153,14 +154,19 @@ class FusionEngine:
         depth: int = 0,
         coact: float = 0.0,
         apply_trajectory: bool = True,
+        use_floors: bool = True,
+        floors_only: bool = False,
+        attestation: str = "A",
     ) -> float:
         """Score from stream components. Used by fuse() and counterfactuals."""
         aw = self.acoustic_weight * (0.5 + 0.5 * ac_conf)
         lw = self.linguistic_weight * (0.5 + 0.5 * li_conf)
         wsum = aw + lw + 1e-8
         base = (aw * synth + lw * fraud) / wsum * (self.acoustic_weight + self.linguistic_weight)
+        if floors_only:
+            base = 0.0
 
-        if apply_trajectory and len(self._history) >= 5:
+        if apply_trajectory and (not floors_only) and len(self._history) >= 5:
             recent = list(self._history)[-5:]
             earlier = list(self._history)[:-5] or recent[:1]
             rise = float(np.mean(recent) - np.mean(earlier))
@@ -173,19 +179,43 @@ class FusionEngine:
             base *= 1.0 + 0.35 * coact
 
         # Social engineering: hostile script, voice not clearly synthetic.
-        if fraud >= 0.45 and li_conf >= 0.35 and synth < 0.55:
+        if use_floors and fraud >= 0.45 and li_conf >= 0.35 and synth < 0.55:
             se_floor = 0.88 * fraud * min(max(escalation, 1.0), 1.6)
             if depth >= 3:
                 se_floor = max(se_floor, 0.52 + 0.06 * min(depth, 6))
             base = max(base, se_floor)
 
         # Spoof probe: only if acoustic evidence is actually confident.
-        if synth >= 0.55 and ac_conf >= 0.45 and fraud < 0.40:
+        if use_floors and synth >= 0.55 and ac_conf >= 0.45 and fraud < 0.40:
             base = max(base, 0.80 * synth + 0.08 * fraud)
 
-        if synth >= 0.50 and fraud >= 0.50:
+        if use_floors and synth >= 0.50 and fraud >= 0.50:
             base = max(base, 0.5 * (synth + fraud) + 0.20 * min(synth, fraud))
 
+        # STIR/SHAKEN is a third stream: unsigned/C slightly raises risk;
+        # A-attestation does not by itself clear a hostile script.
+        if attestation in ("unsigned", "C"):
+            base = min(1.0, base + 0.04)
+        elif attestation == "B":
+            base = min(1.0, base + 0.015)
+
+        return float(np.clip(base, 0.0, 1.0))
+
+    @staticmethod
+    def calibrated_or(synth: float, fraud: float) -> float:
+        """OR of two [0,1] marginals: 1 - (1-s)(1-f)."""
+        return float(np.clip(1.0 - (1.0 - synth) * (1.0 - fraud), 0.0, 1.0))
+
+    @staticmethod
+    def floors_only(synth: float, fraud: float) -> float:
+        """Disagreement floors with no blend (ablation)."""
+        base = 0.0
+        if fraud >= 0.45 and synth < 0.55:
+            base = max(base, 0.88 * fraud)
+        if synth >= 0.55 and fraud < 0.40:
+            base = max(base, 0.80 * synth)
+        if synth >= 0.50 and fraud >= 0.50:
+            base = max(base, 0.5 * (synth + fraud) + 0.20 * min(synth, fraud))
         return float(np.clip(base, 0.0, 1.0))
 
     @staticmethod

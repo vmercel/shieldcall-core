@@ -20,7 +20,7 @@ from scipy import signal
 
 from ..acoustic.residual import _estimate_f0
 
-VocoderName = Literal["lpc", "griffin_lim", "pulse_formant"]
+VocoderName = Literal["lpc", "griffin_lim", "pulse_formant", "neural_quant"]
 
 
 def _frames(x: np.ndarray, frame_len: int, hop: int) -> list[np.ndarray]:
@@ -164,6 +164,36 @@ def pulse_formant_vocode(x: np.ndarray, sr: int) -> np.ndarray:
     return np.clip(y, -1.0, 1.0).astype(np.float32)
 
 
+def neural_quant_vocode(x: np.ndarray, sr: int, bits: int = 5, n_iter: int = 8) -> np.ndarray:
+    """STFT magnitude quantization + phase noise (Encodec/DAC-like artifacts).
+
+    This is not a licensed neural codec. It is a *telephony-like neural-codec
+    surrogate*: coarse codebook on log-magnitudes and scrambled residual
+    phase. Headline tables may use it; do not call it HiFi-GAN or Encodec.
+    """
+    x = x.astype(np.float64)
+    nper = 256
+    nover = 192
+    _, _, z = signal.stft(x, fs=sr, nperseg=nper, noverlap=nover)
+    mag = np.abs(z)
+    logm = np.log1p(mag)
+    levels = 2 ** bits
+    lo, hi = float(logm.min()), float(logm.max() + 1e-8)
+    q = np.round((logm - lo) / (hi - lo) * (levels - 1))
+    rec = np.expm1(q / (levels - 1) * (hi - lo) + lo)
+    rng = np.random.RandomState(3)
+    phase = np.angle(z) + rng.randn(*z.shape) * 0.65
+    # extra high-band phase scramble (neural codecs smear 3–4 kHz)
+    freqs = np.linspace(0, sr / 2, z.shape[0])
+    high = freqs > 2400
+    phase[high] = rng.uniform(-np.pi, np.pi, size=phase[high].shape)
+    rec_c = rec * np.exp(1j * phase)
+    _, y = signal.istft(rec_c, fs=sr, nperseg=nper, noverlap=nover)
+    y = y[: len(x)]
+    peak = np.max(np.abs(y)) + 1e-8
+    return np.clip(y / peak * 0.95, -1.0, 1.0).astype(np.float32)
+
+
 def vocode(x: np.ndarray, sr: int, name: VocoderName) -> np.ndarray:
     if name == "lpc":
         return lpc_vocode(x, sr)
@@ -171,4 +201,6 @@ def vocode(x: np.ndarray, sr: int, name: VocoderName) -> np.ndarray:
         return griffin_lim_vocode(x, sr)
     if name == "pulse_formant":
         return pulse_formant_vocode(x, sr)
+    if name == "neural_quant":
+        return neural_quant_vocode(x, sr)
     raise ValueError(f"unknown vocoder {name}")

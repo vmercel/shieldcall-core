@@ -16,7 +16,7 @@ Massimiliano Todisco, Xin Wang, Ville Vestman, Md~Sahidullah, H{\'e}ctor Delgado
 \newblock In {\em Proc. Interspeech}, pages 1008--1012, 2019.
 
 \bibitem{wang2020asvspoof}
-Xin Wang, Junichi Yamagishi, Massimiliano Todisco, H{\'e}ctor Delgado, Andreas Nautsch, Nicholas Evans, Md~Sahidullah, Ville Vestman, Tomi Kinnunen, Kong~Aik Lee, et~al.
+Xin Wang, Junichi Yamagishi, Massimiliano Todisco, H{\'e}ctor Delgado, Andreas Nautsch, Nicholas Evans, Md~Sahidullah, Ville Vestman, Tomi Kinnunen, and Kong~Aik Lee.
 \newblock {ASVspoof} 2019: A large-scale public database of synthesized, converted and replayed speech.
 \newblock {\em Computer Speech \& Language}, 64:101114, 2020.
 
@@ -44,6 +44,22 @@ Lin Zhang, Xin Wang, Erica Cooper, Nicholas Evans, and Junichi Yamagishi.
 Andreas Stolcke, Klaus Ries, Noah Coccaro, Elizabeth Shriberg, Rebecca Bates, Daniel Jurafsky, Paul Taylor, Rachel Martin, Carol Van Ess-Dykema, and Marie Meteer.
 \newblock Dialogue act modeling for automatic tagging and recognition of conversational speech.
 \newblock {\em Computational Linguistics}, 26(3):339--373, 2000.
+
+\bibitem{liu2023asvspoof5}
+Xin Wang, H{\'e}ctor Delgado, Hemlata Tak, Jee-weon Jung, Hye-jin Shim, Massimiliano Todisco, Ivan Kukanov, Xuechen Liu, Md~Sahidullah, Tomi Kinnunen, Nicholas Evans, Kong~Aik Lee, and Junichi Yamagishi.
+\newblock {ASVspoof} 5: Crowdsourced speech data, deepfakes, and adversarial attacks at scale.
+\newblock In {\em ASVspoof Workshop 2024}, 2024.
+
+\bibitem{wang2026asvspoof5}
+Xin Wang, H{\'e}ctor Delgado, Nicholas Evans, Xuechen Liu, Tomi Kinnunen, Md~Sahidullah, Massimiliano Todisco, and Junichi Yamagishi.
+\newblock {ASVspoof} 5: Evaluation of spoofing, deepfake, and adversarial attack detection using crowdsourced speech.
+\newblock {\em arXiv preprint arXiv:2601.03944}, 2026.
+
+\bibitem{xie2025codecfake}
+Yuankun Xie.
+\newblock The {Codecfake} dataset and countermeasures for universal deepfake audio detection.
+\newblock {\em {IEEE/ACM} Trans. Audio, Speech, Lang. Process.}, 33:386, 2025.
+\newblock See also arXiv:2405.04880.
 
 \bibitem{angelopoulos2023gentle}
 Anastasios~N. Angelopoulos and Stephen Bates.

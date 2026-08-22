@@ -1,0 +1,277 @@
+{
+  "lexicon_lock": "0f4711da7b427528",
+  "host": "Mercels-MBP",
+  "platform": "macOS-26.3-x86_64-i386-64bit-Mach-O",
+  "asvspoof": false,
+  "speech": true,
+  "linguistic_independent": {
+    "ling_narrow_keywords": {
+      "auc": 0.546875,
+      "eer": 0.4583333333333333,
+      "n": 40,
+      "extras": {
+        "auc_lo": 0.38495833333333335,
+        "auc_hi": 0.7012520833333332,
+        "trap_mean": 0.49982181749288906
+      },
+      "notes": "confirmatory=True wer=0.0"
+    },
+    "ling_wide_lexicon": {
+      "auc": 0.8385416666666667,
+      "eer": 0.25,
+      "n": 40,
+      "extras": {
+        "auc_lo": 0.7196857142857143,
+        "auc_hi": 0.9369318181818181,
+        "trap_mean": 0.13333333333333333
+      },
+      "notes": "confirmatory=True wer=0.0"
+    },
+    "ling_sdtg": {
+      "auc": 0.8203125,
+      "eer": 0.30208333333333337,
+      "n": 40,
+      "extras": {
+        "auc_lo": 0.6895562770562771,
+        "auc_hi": 0.9302083333333333,
+        "trap_mean": 0.5419795612347015
+      },
+      "notes": "confirmatory=True wer=0.0"
+    },
+    "ling_ntm": {
+      "auc": 0.75,
+      "eer": 0.25,
+      "n": 40,
+      "extras": {
+        "auc_lo": 0.5933826264880953,
+        "auc_hi": 0.8772068392134181,
+        "trap_mean": 0.1916308139934634
+      },
+      "notes": "confirmatory=True wer=0.0"
+    },
+    "ling_narrow_keywords_asr": {
+      "auc": 0.53125,
+      "eer": 0.46875,
+      "n": 40,
+      "extras": {
+        "auc_lo": 0.3959484848484848,
+        "auc_hi": 0.6693613636363636,
+        "trap_mean": 0.3896801316388497
+      },
+      "notes": "confirmatory=True wer=0.25"
+    },
+    "ling_wide_lexicon_asr": {
+      "auc": 0.78125,
+      "eer": 0.2916666666666667,
+      "n": 40,
+      "extras": {
+        "auc_lo": 0.6455700549450549,
+        "auc_hi": 0.8875,
+        "trap_mean": 0.1
+      },
+      "notes": "confirmatory=True wer=0.25"
+    },
+    "ling_sdtg_asr": {
+      "auc": 0.7408854166666667,
+      "eer": 0.30208333333333337,
+      "n": 40,
+      "extras": {
+        "auc_lo": 0.5803148809523809,
+        "auc_hi": 0.87632547754156,
+        "trap_mean": 0.3885478446551274
+      },
+      "notes": "confirmatory=True wer=0.25"
+    },
+    "ling_ntm_asr": {
+      "auc": 0.6171874999999999,
+      "eer": 0.375,
+      "n": 40,
+      "extras": {
+        "auc_lo": 0.450072596973572,
+        "auc_hi": 0.7804216669945566,
+        "trap_mean": 0.13310655185020523
+      },
+      "notes": "confirmatory=True wer=0.25"
+    }
+  },
+  "agent_sim": {
+    "agent": {
+      "benign": {
+        "hypothesis": "benign",
+        "n": 20,
+        "missed_harvest": 0.0,
+        "false_challenge": 0.0,
+        "false_warn": 0.0,
+        "mean_cost": 0.0,
+        "challenge_rate": 0.0
+      },
+      "social_engineering": {
+        "hypothesis": "social_engineering",
+        "n": 20,
+        "missed_harvest": 0.0,
+        "false_challenge": 0.0,
+        "false_warn": 0.0,
+        "mean_cost": 1.1,
+        "challenge_rate": 0.0
+      },
+      "synthetic_full": {
+        "hypothesis": "synthetic_full",
+        "n": 20,
+        "missed_harvest": 0.0,
+        "false_challenge": 0.0,
+        "false_warn": 0.0,
+        "mean_cost": 1.2440000000000002,
+        "challenge_rate": 0.8
+      },
+      "handoff": {
+        "hypothesis": "handoff",
+        "n": 20,
+        "missed_harvest": 0.0,
+        "false_challenge": 0.0,
+        "false_warn": 0.0,
+        "mean_cost": 1.1,
+        "challenge_rate": 0.0
+      },
+      "unknown_family": {
+        "hypothesis": "unknown_family",
+        "n": 20,
+        "missed_harvest": 0.0,
+        "false_challenge": 0.0,
+        "false_warn": 0.0,
+        "mean_cost": 0.5,
+        "challenge_rate": 0.0
+      }
+    },
+    "threshold": {
+      "benign": {
+        "hypothesis": "benign",
+        "n": 20,
+        "missed_harvest": 0.0,
+        "false_challenge": 0.0,
+        "false_warn": 0.0,
+        "mean_cost": 0.0,
+        "challenge_rate": 0.0
+      },
+      "social_engineering": {
+        "hypothesis": "social_engineering",
+        "n": 20,
+        "missed_harvest": 0.0,
+        "false_challenge": 0.0,
+        "false_warn": 0.0,
+        "mean_cost": 1.1,
+        "challenge_rate": 0.0
+      },
+      "synthetic_full": {
+        "hypothesis": "synthetic_full",
+        "n": 20,
+        "missed_harvest": 0.0,
+        "false_challenge": 0.0,
+        "false_warn": 0.0,
+        "mean_cost": 0.9499999999999996,
+        "challenge_rate": 1.0
+      },
+      "handoff": {
+        "hypothesis": "handoff",
+        "n": 20,
+        "missed_harvest": 0.0,
+        "false_challenge": 0.0,
+        "false_warn": 0.0,
+        "mean_cost": 1.2800000000000002,
+        "challenge_rate": 1.0
+      },
+      "unknown_family": {
+        "hypothesis": "unknown_family",
+        "n": 20,
+        "missed_harvest": 0.0,
+        "false_challenge": 0.0,
+        "false_warn": 0.0,
+        "mean_cost": 0.0,
+        "challenge_rate": 0.0
+      }
+    }
+  },
+  "acoustic": {
+    "ac_lpc_clean": {
+      "auc": 0.5555555555555556,
+      "eer": 0.5,
+      "n": 6,
+      "notes": "speaker-disjoint bona fide vs vocoded"
+    },
+    "ac_lpc_narrowband": {
+      "auc": 0.6666666666666667,
+      "eer": 0.3333333333333333,
+      "n": 6,
+      "notes": "speaker-disjoint bona fide vs vocoded"
+    },
+    "ac_neural_quant_clean": {
+      "auc": 1.0,
+      "eer": 0.0,
+      "n": 6,
+      "notes": "speaker-disjoint bona fide vs vocoded"
+    },
+    "ac_neural_quant_narrowband": {
+      "auc": 1.0,
+      "eer": 0.0,
+      "n": 6,
+      "notes": "speaker-disjoint bona fide vs vocoded"
+    }
+  },
+  "fusion_ablation": {
+    "fuse_naive": {
+      "auc": 1.0,
+      "eer": 0.0,
+      "n": 12,
+      "extras": {
+        "auc_lo": 0.0,
+        "auc_hi": 1.0,
+        "disc_recall@0.5": 0.0,
+        "safe_fpr@0.5": 0.0
+      }
+    },
+    "fuse_logreg": {
+      "auc": 1.0,
+      "eer": 0.0,
+      "n": 12,
+      "extras": {
+        "auc_lo": 0.0,
+        "auc_hi": 1.0,
+        "disc_recall@0.5": 1.0,
+        "safe_fpr@0.5": 0.0
+      }
+    },
+    "fuse_cscf": {
+      "auc": 1.0,
+      "eer": 0.0,
+      "n": 12,
+      "extras": {
+        "auc_lo": 0.0,
+        "auc_hi": 1.0,
+        "disc_recall@0.5": 1.0,
+        "safe_fpr@0.5": 0.0
+      }
+    },
+    "fuse_floors": {
+      "auc": 0.8333333333333333,
+      "eer": 0.16666666666666666,
+      "n": 12,
+      "extras": {
+        "auc_lo": 0.0,
+        "auc_hi": 1.0,
+        "disc_recall@0.5": 0.5,
+        "safe_fpr@0.5": 0.0
+      }
+    },
+    "fuse_calibrated_or": {
+      "auc": 1.0,
+      "eer": 0.0,
+      "n": 12,
+      "extras": {
+        "auc_lo": 0.0,
+        "auc_hi": 1.0,
+        "disc_recall@0.5": 1.0,
+        "safe_fpr@0.5": 0.0
+      }
+    }
+  },
+  "seconds": 113.56876995996572
+}

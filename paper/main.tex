@@ -9,22 +9,20 @@
 
 \begin{document}
 
-\title{ShieldCall: Dual-stream telephony sensing and a belief-state defense agent for vishing and vocoded-speech threats}
+\title{Disjunctive dual-stream defense of live telephone calls: operational fusion, mid-call production change, and a sufficient-statistic agent}
 \author{Vubangsi Mercel\\
 {\small Independent researcher \quad\texttt{vmercel@gmail.com}}}
 \date{}
 \maketitle
 
-\noindent\textit{Intended venue.} Computers \& Security (Elsevier), with Information Fusion as an alternative. This is a journal manuscript, not an arXiv note. Claims are limited to measurements in the companion repository.
-
-\vspace{0.6em}
+\vspace{0.4em}
 \noindent\textbf{Highlights}
 \begin{itemize}
-\item A scam-stage tracker outperforms high-precision keywords on held-out paraphrases (AUC $0.88$ vs $0.42$) while isolated-keyword benign traps remain low ($0.23$).
-\item Operational call threat is defined as the disjunction of hostile language and vocoded production; disagreement-aware fusion raises complementary-cell recall from $0.30$ to $1.00$ at a documented false-alarm cost.
-\item A belief-state agent treats detectors as sensors and spends an interruption budget as experiments; it warns on human social engineering and does not waste a nonce on a live speaker.
-\item Stage-aligned production change is posed as a timing statistic for mid-call handoffs, validated on synthetic point processes (AUC $1.00$), and \emph{not} supported on pulse-formant splices into Mini LibriSpeech (AUC $0.47$).
-\item Lightweight residual features detect an easy pulse-formant vocoder after bandlimiting and fail on LPC (narrowband AUC $0.49$). Neural TTS and ASVspoof numbers are not claimed.
+\item On a lexicon-locked independent script set ($n{=}40$), a wide bag of the frozen stage lexicon reaches AUC $0.84$ versus $0.55$ for narrow keywords; the HMM stage tracker does \emph{not} beat the wide bag (AUC $0.82$).
+\item Operational threat is the disjunction of hostile language and vocoded production. Disagreement floors and a calibrated OR recover complementary cells that a weighted sum misses, at a documented safe-cell false-alarm cost.
+\item A sufficient-statistic agent, scored in a class-conditional simulator against an open-loop threshold, warns on human social engineering and does not spend its nonce there.
+\item Residual features remain at chance on LPC after telephone-band filtering (AUC $0.49$). Pulse-formant is an easy unit condition, not a headline result. ASVspoof is not run.
+\item Stage-aligned production change is posed and, on pulse-formant splices, \emph{not} supported. ACI does not beat a frozen quantile on the reported stream.
 \end{itemize}
 
 \begin{figure}[h]
@@ -35,12 +33,12 @@
 \end{figure}
 
 \begin{abstract}
-Telephone fraud increasingly mixes social-engineering scripts with synthetic or vocoded speech. Published countermeasures usually address one stream: anti-spoofing on whole utterances, or text classifiers on transcripts. Late fusion by weighted averaging treats the streams as redundant rather than complementary, and it cannot represent a mid-call production switch timed to a harvest ask. This paper describes ShieldCall, a streaming system that scores linguistic fraud-intent and acoustic production artifacts on a shared eight-kilohertz timeline, fuses them under an operational disjunction label, and hands the resulting sufficient statistics to a belief-state defense agent. The agent never observes waveforms or transcripts. It maintains a distribution over five call hypotheses and selects among monitor, challenge, warn, escalate, adapt, and abstain by expected information gain minus interruption cost. Likelihoods in the agent are heuristic; we do not claim a fitted Bayesian network or an improvement in equal error rate.
+Telephone fraud mixes social-engineering scripts with synthetic or vocoded speech, including mid-call production switches timed to a harvest ask. Utterance-level anti-spoofing and keyword products treat those as separate markets; weighted-sum fusion treats them as redundant. This paper formulates a streaming, telephony-conditioned, \emph{disjunctive} detection problem: a call is a threat if either stream is hostile. A channel twin (narrowband, $\mu$-law, packet loss, and neural-codec-like STFT quantization) is first-class evaluation law. Linguistic scoring is reported on a lexicon-locked independent set, not on author paraphrases written against the same emissions. A sufficient-statistic agent never sees waveforms or transcripts and spends at most one liveness challenge per call.
 
-On eighty-six author-written English scripts, a discourse-stage tracker recovers held-out paraphrases that collapse a keyword baseline (AUC $0.883$ versus $0.417$). On speaker-disjoint Mini LibriSpeech, a pulse-formant vocoder is separated after telephone-band filtering (EER $0$, $n{=}20$), whereas low-order LPC is not (narrowband AUC $0.49$). Under the operational label ``threat if scam language or vocoded voice,'' disagreement-aware fusion reaches complementary-cell recall $1.00$ against $0.30$ for a naive weighted sum, with safe-cell false-positive rate $0.40$ versus $0.00$ at threshold $0.5$ ($n{=}40$). Adaptive conformal inference tracks a coverage target of $0.90$ with empirical coverage $0.885$ on a synthetic prevalence-shift stream. A timing statistic for stage-aligned production change ranks perfectly on synthetic point processes and does not separate matched-mix vocoded splices. The contribution is a formulated problem, a measured sensor stack, a measured agent policy shape, and public negative results. It is not a state-of-the-art anti-spoofing encoder.
+On forty independent English scripts, a wide frozen lexicon reaches AUC $0.84$ (bootstrap interval about $0.72$--$0.94$) against $0.55$ for narrow keywords; an HMM stage tracker does not beat the wide bag. Residual acoustics remain at chance on LPC after bandlimiting (AUC $0.49$). Disagreement floors recover complementary-cell recall that a naive sum misses, at a safe-cell false-positive cost we report. A class-conditional agent simulator warns on human social engineering and does not waste the nonce there. Stage-aligned production change is not supported on pulse-formant splices. Scope: offline evaluation of a research sidecar on English, single-talker, injected transcripts. It is not a state-of-the-art anti-spoofing encoder and not a U.S.\ deployment.
 \end{abstract}
 
-\noindent\textit{Keywords:} vishing; voice spoofing; telephone channel; score fusion; change-point; conformal inference; intelligent agent; active sensing.
+\noindent\textit{Keywords:} vishing; voice spoofing; telephone channel; score fusion; change-point; conformal inference; active sensing; sufficient-statistic agent.
 
 \section{Introduction}
 
@@ -53,25 +51,40 @@ This paper studies that joint problem with a system called ShieldCall. The detec
 The research questions are stated so they can fail.
 
 \begin{quote}
-\textbf{RQ1.} Does a streaming scam-stage tracker add detection on paraphrases that avoid high-precision keywords, without inflating isolated-keyword benign traps?
+\textbf{RQ-B.} On independent transcripts, with the stage lexicon frozen first, does a trajectory model beat a \emph{wide} bag of the same emissions, and a narrow keyword list, with and without a 25\% ASR-noise model?
 
-\textbf{RQ2.} If a call is a threat whenever language is hostile \emph{or} production is vocoded, does disagreement-aware fusion recover complementary cells that a weighted sum misses, and at what false-alarm cost?
+\textbf{RQ-C.} For the OR-label, do disagreement floors or a calibrated OR dominate a weighted sum on complementary cells at threshold $0.5$, and what is the safe-cell FPR?
 
-\textbf{RQ3.} Can a residual-plus-prototype scorer, fit speaker-disjoint on Mini LibriSpeech, separate a pulse-formant vocoder and an LPC vocoder after telephone-band filtering?
-
-\textbf{RQ4.} Does a Gaussian coupling of an estimated production change-point to harvest-class stage times rank aligned handoffs above duration-matched unaligned splices?
-
-\textbf{RQ5.} Does a belief-state agent, given only those sufficient statistics, produce different action traces for benign, human-vishing, and handoff-like percept sequences, without using an LLM?
+\textbf{RQ-E.} Given only sufficient statistics, does a budgeted agent reduce wasted challenges on human social engineering relative to an open-loop threshold, in a class-conditional simulator?
 \end{quote}
 
-The answers, in preview, are yes (RQ1), yes with a quantified cost (RQ2), yes on pulse-formant and no on LPC (RQ3), no on the LibriSpeech construction despite a clean synthetic check (RQ4), and yes on scripted percepts (RQ5). We treat the RQ4 failure as a result, not as a prompt to retune until the test passes.
+Author-written held-out paraphrases and pulse-formant EER remain as \emph{sanity} splits. They are not confirmatory. SAPC and residual-vs-LPC are reported as negatives in Results, not as extra research questions. We treat those failures as results, not as a prompt to retune until the tests pass.
 
 \section{Related work}
 
-\subsection{Anti-spoofing and telephony}
-ASVspoof established community protocols for logical access and replay~\cite{todisco2019asvspoof,wang2020asvspoof}. Competitive systems use self-supervised front ends and graph or raw-waveform backends~\cite{jung2022aasist,tak2021end}. Those systems are the right comparison for neural text-to-speech and voice conversion. We do not replace them and we do not report ASVspoof equal error rates. Channel mismatch is a documented failure mode~\cite{zhang2021channel}. Our telephone-band simulator is a classical DSP chain (bandlimit, $\mu$-law, noise, packet loss with concealment). It is a stress test, not a learned generative model of the public switched network.
+\subsection{Utterance-level anti-spoofing and why telephony plus neural codecs break it}
+ASVspoof established community protocols for logical access and replay~\cite{todisco2019asvspoof,wang2020asvspoof}. Competitive systems use self-supervised front ends and graph or raw-waveform backends~\cite{jung2022aasist,tak2021end}. ASVspoof~5 adds crowdsourced speech, neural codecs, PSTN simulation, and adversarial attacks~\cite{liu2023asvspoof5,wang2026asvspoof5}. Codec-based deepfakes (CodecFake and related ALM work) are a 2024--2026 TASLP concern~\cite{xie2025codecfake}. Those systems are the right comparison for neural TTS and voice conversion. We do not replace them and we do not report ASVspoof equal error rates: the inductive bias claimed here is telephony-first evaluation, not a leaderboard EER. Channel mismatch is a documented failure mode~\cite{zhang2021channel}. Our telephone-band simulator is a classical DSP chain plus Opus-like and neural-codec-like profiles. It is a stress test, not a learned generative model of the PSTN.
 
-PartialSpoof constructed utterances in which only some segments are fake and showed that counters trained on fully spoofed data degrade~\cite{zhang2021partial,zhang2023partialspoof}. That line asks whether any frame is synthetic. It does not ask whether the fake onset is timed to a vishing stage, and it does not consume a linguistic stream.
+\subsection{Partial and segmental spoofing versus timing-to-discourse}
+PartialSpoof constructed utterances in which only some segments are fake and showed that counters trained on fully spoofed data degrade~\cite{zhang2021partial,zhang2023partialspoof}. That line asks whether any frame is synthetic. It does not ask whether the fake onset is timed to a vishing stage, and it does not consume a linguistic stream. SAPC is that different question; it is currently unsupported on pulse-formant splices.
+
+\begin{table}[t]
+\centering
+\caption{Positioning. Telephony-first means the channel is an evaluation law, not an afterthought. Privacy means the decision maker does not see transcript or waveform.}
+\label{tab:pos}
+\scriptsize
+\begin{tabular}{lcccccc}
+\toprule
+System & Tel. & OR-label & Mid-call & Budget & Privacy & Open neg. \\
+\midrule
+ASVspoof CM (AASIST/RawNet2) & & & & & & \\
+PartialSpoof & & & any-fake & & & \\
+Late-average multimodal vishing & & & & & & \\
+LLM call copilots & & & & & no & \\
+ShieldCall (this work) & yes & yes & posed & yes & yes & yes \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Vishing and discourse}
 Applied vishing detectors typically classify transcripts or average an audio score with a text score. Dialogue-act models assign speech to acts such as request and statement~\cite{stolcke2000dialogue}. Professional scam calls are not a bag of words; they progress through greeting, claimed authority, invented problem, urgency, harvest, payment, secrecy, and threat. A keyword list that fires on ``IRS'' and ``gift card'' fails when those strings are paraphrased, and it fires on benign mentions of a bank holiday. The gap we test is whether a small stage machine with a broader emission lexicon recovers paraphrases while remaining quiet on isolated-keyword traps. We do not claim to have invented dialogue-act tagging.
@@ -190,22 +203,24 @@ Sample sizes are small. We do not report $p$-values on $n{=}6$ as evidence of ab
 
 \section{Results}
 
-\subsection{RQ1: language}
-Table~\ref{tab:ling} and Fig.~\ref{fig:ling} show that on canonical training lines the keyword list is already strong (AUC $0.929$). On held-out paraphrases it falls below chance (AUC $0.417$, EER $0.583$). Adding the stage tracker recovers AUC $0.883$ and EER $0.106$. Mean fraud probability on held-out isolated-keyword traps is $0.234$. The stage machine is doing work the keyword list cannot do on this corpus. The corpus is author-written English.
+\subsection{RQ-B: language, lexicon locked}
+Confirmatory numbers use an independent set written after \texttt{STAGE\_EMISSIONS} was hashed and frozen ($n{=}40$). Narrow keywords (high-precision groups) reach AUC $0.547$ (bootstrap interval about $0.39$--$0.70$). The \emph{wide} bag of the same frozen emissions reaches AUC $0.839$ ($0.72$--$0.94$). The HMM stage tracker reaches $0.820$ ($0.69$--$0.93$) and does not beat the wide bag. A logistic trajectory model fit only on the author train split reaches $0.750$. Under a 25\% ASR-noise model the wide bag remains strongest ($0.84$). Isolated-keyword trap means are $0.50$ (narrow), $0.13$ (wide), $0.54$ (HMM). The path prior is therefore not the mechanism of the lift: the broader lexicon is. Author held-out paraphrases, on which keywords+stages had AUC $0.88$ versus $0.42$, are a sanity split and are contaminated by shared authorship with the lexicon.
 
 \begin{table}[t]
 \centering
-\caption{Linguistic detection. Traps report mean fraud probability (lower is better).}
+\caption{Linguistic detection on the lexicon-locked independent set ($n{=}40$). Trap is mean score on isolated-keyword benign lines (lower is better). Author held-out is sanity only.}
 \label{tab:ling}
-\begin{tabular}{lccc}
+\begin{tabular}{lcccc}
 \toprule
-Condition & $n$ & EER & AUC \\
+Condition & $n$ & AUC & 95\% CI & Trap \\
 \midrule
-Train, keywords & 48 & 0.104 & 0.929 \\
-Train, keywords+stages & 48 & 0.000 & 1.000 \\
-Held-out, keywords & 38 & 0.583 & 0.417 \\
-Held-out, keywords+stages & 38 & 0.106 & 0.883 \\
-Held-out traps (mean score) & 8 & --- & 0.234 \\
+Independent, narrow keywords & 40 & 0.547 & 0.39--0.70 & 0.50 \\
+Independent, wide lexicon & 40 & 0.839 & 0.72--0.94 & 0.13 \\
+Independent, SDTG (HMM) & 40 & 0.820 & 0.69--0.93 & 0.54 \\
+Independent, NTM & 40 & 0.750 & 0.59--0.88 & 0.19 \\
+Independent, wide, ASR 25\% WER & 40 & 0.840 & --- & 0.03 \\
+Author held-out, keywords (sanity) & 38 & 0.417 & --- & 0.23 \\
+Author held-out, keywords+stages (sanity) & 38 & 0.883 & --- & 0.23 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -213,7 +228,7 @@ Held-out traps (mean score) & 8 & --- & 0.234 \\
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.72\textwidth]{figures/linguistic_auc.pdf}
-\caption{Linguistic AUC. The stage tracker is redundant on canonical training lines and necessary on held-out paraphrases.}
+\caption{Author-split sanity plot (not confirmatory). Confirmatory independent-set numbers are Table~\ref{tab:ling}.}
 \label{fig:ling}
 \end{figure}
 
@@ -222,7 +237,7 @@ Pulse-formant versus bona fide, speaker-disjoint, $n{=}20$, is easy: EER $0.00$ 
 
 LPC on the same protocol is hard. Clean LPC yielded EER $0.40$ / AUC $0.64$. Narrowband LPC was at chance (EER $0.45$ / AUC $0.49$). Five-shot adaptation of a pulse-formant memory toward LPC reduced unseen LPC EER from $0.50$ to $0.45$. Lightweight residual features, as implemented, are not a substitute for ASVspoof-trained neural countermeasures~\cite{jung2022aasist}.
 
-\subsection{RQ2: operational fusion}
+\subsection{RQ-C: operational fusion}
 Table~\ref{tab:fuse} and Fig.~\ref{fig:fuse} report the OR-label task. Linguistic-only almost never catches a vocoded call that uses mild language (disagreement recall $0.05$). Naive sum reaches AUC $0.973$ but complementary-cell recall $0.30$ at threshold $0.5$. ShieldCall fusion and logistic regression both reach disagreement recall $1.00$. ShieldCall ranking AUC is $1.000$ on this set of forty cells, with safe-cell false-positive rate $0.40$ versus $0.00$ for the naive sum. The floors buy recall; they are not free. Perfect AUC on $n{=}40$ must not be read as a population claim.
 
 \begin{table}[t]
@@ -257,7 +272,9 @@ On Mini LibriSpeech splices ($n{=}6$ pairs), mean synthetic probability is match
 \subsection{ACI}
 On a $400$-step synthetic stream whose positive prevalence jumps from $0.25$ to $0.75$ at the midpoint, ACI with target $1-\alpha=0.90$ has empirical coverage $0.885$. A frozen $90\%$ quantile fit on the first forty residuals has coverage $0.931$ on the remainder. ACI tracks the target. It is not shown to beat a frozen quantile on this shift.
 
-\subsection{RQ5: agent traces}
+\subsection{RQ-E: agent}
+A class-conditional simulator emitting sensor-like scores ($n{=}20$ traces per hypothesis) is the confirmatory policy table: the hand-set agent has missed-harvest $0$ and false-challenge $0$ on social engineering, i.e.\ it does not waste the nonce on a live scammer. An open-loop threshold also interrupts SE in this simulator; the distinction is the wasted-nonce rate, not recall. Table~\ref{tab:agent} still records the older scripted-percept illustration.
+
 Table~\ref{tab:agent} records the scripted percept evaluation. A dentist reminder stays in \texttt{benign} and issues only \texttt{monitor}. A human IRS-style path switches to \texttt{social\_engineering} and issues \texttt{warn}, with zero challenges: a live speaker would pass a nonce. A handoff-like path spends the single challenge at the uncertain midpoint and then \texttt{warn}s once \texttt{handoff} dominates. These traces are the agent result. They are not an EER.
 
 \begin{table}[t]
@@ -277,18 +294,23 @@ Handoff-like & handoff & monitor, challenge, warn $\times 2$ & 1 & Probe while u
 
 \section{Discussion}
 
-\subsection{Where novelty sits}
-The residual front end, the HMM stage tracker, CUSUM, prototypical memory, and ACI are not new algorithms. Journal novelty, if the manuscript has any, is the \emph{problem} and the \emph{measured policy}, not a new encoder. Specifically: operational threat as a disjunction; a paraphrase test that a keyword list fails and a stage tracker does not; a fusion comparison that reports the false-alarm bill; a timing statistic that is allowed to fail in public; and an agent that refuses to waste a liveness challenge on a human scammer. Reviewers who require a new neural architecture or an ASVspoof leaderboard number will correctly reject the paper on those grounds. Reviewers who require that negative results be suppressed will also reject it. Both reactions are more honest than inflating residual features into a discovery.
-
-\subsection{Threats to validity}
-Scripts are author-written and English-only. Audio is Mini LibriSpeech, not telephone speech and not ASVspoof. Pulse-formant is easy by construction. Fusion $n{=}40$ and SAPC $n{=}6$ are small. Agent likelihoods are not learned. There is no ASR in the loop, no user study, and no carrier deployment. The sidecar runtime is an in-process contract, not a measured Kubernetes service. Perfect fusion AUC on a small synthetic OR-task will not survive a larger, noisier set.
+\subsection{Limitations}
+\begin{enumerate}
+\item Independent scripts are still English, single-talker, and synthetic; they are not victim audio.
+\item Audio is Mini LibriSpeech, not ASVspoof~5 and not CPaaS playback.
+\item Pulse-formant is easy by construction and is not a headline result.
+\item Fusion cells are constructed, not sampled live-like trajectories.
+\item SAPC $n$ is a pilot; the gold $n{\ge}100$ streaming-VC construction is specified and not completed here.
+\item Agent likelihoods are not learned; the simulator is class-conditional, not a live A/B.
+\item No user study, no carrier deployment, no LLM transcript baseline in production (an LLM foil is specified as a baseline, not shipped).
+\end{enumerate}
 
 \subsection{What would change the claim}
-ASVspoof logical access through the same channel simulator, with AASIST or RawNet2 in the same table, would change RQ3. PartialSpoof-style splices with real transcripts would give RQ4 a second chance to fail or succeed. A labeled live-call corpus would test RQ1 and RQ5 outside author-written English. Until then the claims remain as scoped above.
+ASVspoof~5 through TCT-2, with AASIST or RawNet2 in the same table, would change the acoustic negative. A streaming-VC gold SAPC construction would give the timing hypothesis a second chance to fail or succeed. Public scam transcripts with a native evaluator would test RQ-B outside the independent set written for this paper. Until then the claims remain as scoped above.
 
 \section{Conclusion}
 
-ShieldCall is a streaming dual-stream sensor plus a budgeted defense agent for telephone-bandwidth fraud. A stage tracker still works when a keyword list is paraphrased away. Disagreement-aware fusion changes the recall and false-alarm tradeoff in the direction an operator would expect, at a price we report. Residual acoustics detect a robotic vocoder after bandlimiting and fail on LPC. Adaptive conformal inference tracks its coverage target on a synthetic shifting stream. A timing statistic for mid-call handoffs works on clean point processes and does not on vocoded LibriSpeech splices. The agent warns on human vishing and spends its nonce where a vocoder might fail. Those sentences are the paper. Sentences about state-of-the-art deepfake detection are not.
+ShieldCall is a streaming dual-stream sensor plus a budgeted defense agent for telephone-bandwidth fraud. On a lexicon-locked independent set, a wide frozen lexicon beats narrow keywords and an HMM stage tracker does not beat the wide bag. Disagreement-aware fusion changes the recall and false-alarm tradeoff in the direction an operator would expect, at a price we report. Residual acoustics fail on LPC after bandlimiting. A timing statistic for mid-call handoffs works on clean point processes and does not on vocoded LibriSpeech splices. The agent warns on human vishing and spends its nonce where a vocoder might fail. Those sentences are the paper. Sentences about state-of-the-art deepfake detection, U.S.\ deployment, or a novel discourse HMM are not.
 
 \section*{CRediT authorship contribution statement}
 Vubangsi Mercel: conceptualization, software, experiments, writing.
@@ -296,8 +318,14 @@ Vubangsi Mercel: conceptualization, software, experiments, writing.
 \section*{Declaration of competing interest}
 The author declares no competing interests.
 
+\section*{Ethics}
+No real victim audio is used. Independent scripts are synthetic. A live-call pilot would require IRB review, recording consent, and TCPA analysis before collection. The sidecar is designed to store decisions, not waveforms. No LLM is on the decision path; a character-level ASR-noise model was used for the WER ablation. Seeds and the frozen config are in \texttt{configs/paper.yaml}.
+
+\section*{Compute}
+Linguistic and agent-simulator tables run on CPU in under a minute. Acoustic tables use Mini LibriSpeech on the evaluation host named in \texttt{docs/results/upgrade\_experiments.json}. No GPU is required for the reported numbers.
+
 \section*{Data availability}
-Mini LibriSpeech is obtained from OpenSLR~31. Scripts, code, and tabulated results are in the companion repository. ASVspoof is not redistributed; set \texttt{SHIELDCALL\_ASVSPOOF\_ROOT} to enable the unused loader. Reproduce with \texttt{pytest -q}, \texttt{python scripts/run\_paper\_experiments.py}, \texttt{python scripts/run\_handoff\_experiment.py}, \texttt{python scripts/run\_agent\_demo.py}, and \texttt{python scripts/run\_capacity.py}.
+Mini LibriSpeech is obtained from OpenSLR~31. Independent script IDs, code, configs, and tabulated results are in the companion repository. ASVspoof is not redistributed; set \texttt{SHIELDCALL\_ASVSPOOF\_ROOT} to enable the loader. Reproduce with \texttt{pytest -q}, \texttt{python scripts/run\_upgrade\_experiments.py}, \texttt{python scripts/run\_paper\_experiments.py}, and \texttt{python scripts/run\_handoff\_experiment.py}. The protocol is public; regex weights may remain closed. We do not claim a released victim-call corpus.
 
 \bibliographystyle{unsrt}
 \bibliography{references}

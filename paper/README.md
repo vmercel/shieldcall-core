@@ -1,8 +1,8 @@
 # Journal manuscript
 
-**Intended venue:** Computers \& Security (Elsevier), Q1. Alternative: Information Fusion.
+**Target (not printed in the PDF):** Paper B to Information Fusion or IEEE TASLP. Paper A (fast path) Interspeech/ICASSP/Odyssey. Do **not** submit to Computers \& Security (AI/ML moratorium since 2024).
 
-This is **not** an arXiv-first note. The manuscript states measured claims only. Do not add ASVspoof SOTA language.
+The manuscript states measured claims only. Do not add ASVspoof SOTA language. Confirmatory tables come from `docs/results/upgrade_experiments.json`.
 
 Source: `main.tex`, `references.bib`, `figures/`. Compiled: `main.pdf`.
 

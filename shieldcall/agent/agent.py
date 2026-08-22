@@ -61,6 +61,8 @@ class DefenseAgent:
         )
 
     def step(self, perc: Perception, *, transcript: str = "") -> Decision:
+        # Privacy contract: belief update never sees transcript or waveform.
+        # ``transcript`` is consumed only by the challenge tool after a decision.
         self.belief = update(self.belief, perc)
         plan = select_action(
             self.belief,
@@ -95,6 +97,7 @@ class DefenseAgent:
     def trace_dicts(self) -> List[Dict[str, Any]]:
         out = []
         for d in self.trace:
+            # Nonce is never written to the audit export.
             out.append(
                 {
                     "t": d.timestamp_sec,
@@ -106,4 +109,7 @@ class DefenseAgent:
                     "perception": d.perception,
                 }
             )
+        for row in out:
+            if "nonce" in row["tool"] or "nonce" in str(row["tool"].get("detail", "")).lower():
+                raise RuntimeError("audit trace leaked a nonce")
         return out

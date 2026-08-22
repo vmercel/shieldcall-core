@@ -13,14 +13,18 @@ The path-likelihood of the observed stage sequence is a signal no
 static bag-of-words detector can produce  -  and it fires earlier when
 the *trajectory* is scam-like even before the payment ask.
 
-Novelty: continuous, streaming stage inference with path log-likelihood
-as a first-class fraud feature, not post-hoc explanation.
+This module is a **baseline stage HMM**, not a 2026 invention
+(cf. Stolcke 2000 dialogue-act tagging). The confirmatory claim is
+whether the *path* prior beats a bag of the *same* emissions
+(wide-lexicon control) on a lexicon-locked independent set.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
+import hashlib
+import json
 import re
 
 import numpy as np
@@ -114,6 +118,54 @@ STAGE_EMISSIONS: Dict[str, List[str]] = {
         r"\bno action (is )?required\b", r"\bno payment\b", r"\bhave a good\b",
     ],
 }
+
+# Frozen 2026-08-22. Adding a pattern after this lock contaminates any
+# test line that motivated it (see docs/lab/CONTAMINATION.md).
+LEXICON_LOCK = hashlib.sha256(
+    json.dumps(STAGE_EMISSIONS, sort_keys=True, separators=(",", ":")).encode("utf-8")
+).hexdigest()[:16]
+
+
+def wide_lexicon_patterns() -> List[re.Pattern]:
+    """Bag of the *same* emissions as SDTG, with no HMM path prior."""
+    pats: List[re.Pattern] = []
+    for stage, raw in STAGE_EMISSIONS.items():
+        if stage == "BENIGN":
+            continue
+        for p in raw:
+            pats.append(re.compile(p, re.IGNORECASE))
+    return pats
+
+
+_WIDE = None
+
+
+def wide_lexicon_score(text: str) -> float:
+    """0-1 score: hit density of the frozen lexicon, no transitions."""
+    global _WIDE
+    if _WIDE is None:
+        _WIDE = wide_lexicon_patterns()
+    if not text or not text.strip():
+        return 0.0
+    hits = sum(1 for p in _WIDE if p.search(text))
+    return float(min(1.0, hits / 6.0))
+
+
+def emission_only_score(turns: List[str]) -> float:
+    """Max wide-lexicon score over turns (no path)."""
+    if not turns:
+        return 0.0
+    return float(max(wide_lexicon_score(t) for t in turns))
+
+
+def path_only_score(turns: List[str]) -> float:
+    """SDTG path_score with emissions, but reported as path component."""
+    g = ScamDiscourseGraph()
+    last = None
+    for i, t in enumerate(turns):
+        last = g.update(t, float(i))
+    return float(last.path_score if last else 0.0)
+
 
 # Log-space transition bonuses: progressing forward through scam stages
 # is more "script-like" than random jumps.

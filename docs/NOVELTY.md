@@ -1,50 +1,59 @@
-# Novelty: what is measured
+# Novelty: target claims vs current claims
 
-Read with `RESEARCH.md` (claim → code → test) and the journal manuscript `paper/main.pdf` (Computers \& Security target). Not an arXiv note.
+A claim is **in scope** only if it is implemented, numbered in `docs/results/`,
+and differentiated from the cited literature. The upgrade checklist’s
+*target* claims are the endeavor. Current claims are baselines until
+independent data says otherwise.
 
-A claim is **in scope** only if it is implemented, has a number in `docs/results/`, and is differentiated from the cited literature. Everything else is roadmap.
+Locked lexicon: `LEXICON_LOCK` in `shieldcall/linguistic/discourse.py`.
+Frozen hyperparameters: `configs/paper.yaml`.
+Contamination log: `docs/lab/CONTAMINATION.md`.
 
-## v0.5 agent
+## Target (TNCD) vs current (v0.6)
 
-A **belief-state defense agent** treats detectors as instruments and actions as experiments (ADR-002). Five hypotheses, info-gain planner, one-challenge budget, audit traces. **Not an LLM.** Verified by scripted-percept tests (`tests/test_agent.py`), not by a reduction in EER. Do not claim the agent detects vocoders better than the sensors.
+| Claim | Current (measured) | Target | Status |
+|-------|--------------------|--------|--------|
+| Stage tracker recovers paraphrases keywords miss | Author held-out AUC 0.88 vs 0.42 — **contaminated** | Independent set, locked lexicon, wide-keyword control | **Confirmatory:** independent wide-lexicon AUC ~0.84 vs narrow ~0.55; SDTG 0.82 **does not beat** wide bag. Discourse-HMM novelty **dropped** (kill criterion). |
+| OR-label fusion vs naive sum | Complementary recall 1.00 vs 0.30, safe FPR 0.40 vs 0.00, *n*=40 constructed cells | DET + floors vs blend vs calibrated-OR on joint trajectories | Floors/OR ablations implemented; still constructed cells until more audio |
+| Pulse-formant after bandlimit | EER 0, *n*=20, easy | Demoted to unit test | Headline vocoders: LPC, neural_quant |
+| Residual vs LPC+NB | AUC 0.49 | Hybrid-H vs published neural baseline on TCT-2 | Residual still at chance until Hybrid-H/AASIST table exists |
+| SAPC harvest-timed handoff | Synthetic AUC 1.00; audio 0.47, *n*=6 | Gold *n*≥100 streaming-VC | Protocol exists; audio claim **not supported** |
+| ACI coverage | 0.885 vs frozen 0.931 | Real fusion streams; demote if frozen wins | Frozen still wins on the reported stream |
+| Agent warn-on-SE | 3 scripted traces | Simulator + closed-loop sensor scores vs threshold | Simulator table in `upgrade_experiments.json` |
+| U.S.-deployable detector | Denied in README | CPaaS trial | **Not claimed** |
 
-## v0.4 methods (SAPC, ACI)
+## Supported by current confirmatory data
 
-**Stage-aligned production change** asks whether a production change-point is closer to a harvest-class stage than a circular-shift null. Code: `acoustic/changepoint.py`, `fusion/coupling.py`. On **synthetic point processes** the statistic ranks aligned vs unaligned at AUC 1.0. On **pulse-formant splices into Mini LibriSpeech** it does not (AUC 0.47, 6 pairs, mix matched). That audio claim is **not** made.
+1. **Wide locked lexicon vs narrow keywords on independent scripts** (not author held-out). See `docs/results/upgrade_experiments.json`.
+2. **SDTG path prior does not beat the wide bag** on that set. The HMM is a baseline, not a contribution.
+3. **Disagreement floors / calibrated-OR vs naive sum** on operational cells (FPR bill is the number to lead with).
+4. **LPC after narrowband remains hard** for residual features.
+5. **Agent simulator:** social-engineering traces prefer warn; challenge rate on SE is the wasted-nonce metric.
 
-**ACI** (Gibbs & Candès 2021) is implemented as published: `fusion/aci.py`. Empirical coverage 0.885 vs target 0.90 on a synthetic prevalence-shift stream. A frozen quantile was 0.931 on the same stream; we do not claim ACI won.
+## Negative results (keep)
 
-ADR: `docs/ADR-001-stage-aligned-production-change.md`.
-
-## Supported by current data
-
-1. **Stage tracker vs keywords on paraphrases.** Held-out author-written scripts: keyword AUC 0.42, keywords+stages AUC 0.88. Code: `linguistic/discourse.py`, `eval/corpora/vishing_scripts.py`.
-
-2. **Disagreement-aware fusion vs naive sum, on operational labels** (threat = scam language OR vocoded voice). Disagreement recall at 0.5: CSCF 1.00 vs naive 0.30. Cost: safe-cell FPR 0.40 vs 0.00. Code: `fusion/engine.py`.
-
-3. **Pulse-formant vocoder vs bona fide LibriSpeech** at 8 kHz and after bandlimiting, speaker-disjoint, residual+prototype scorer. Easy condition, EER 0. Easy is allowed if labeled easy.
-
-## Negative results (also in scope)
-
-- **LPC vocoder after narrowband:** residual features at chance (AUC 0.49).
-- **Five-shot PMA on unseen LPC:** EER 0.50 → 0.45. Not a coverage-debt success story.
+- LPC narrowband residual AUC ~0.49.
+- SAPC audio AUC 0.47 (*n* small; not a powered gold construction yet).
+- ACI does not beat a frozen quantile on the reported synthetic stream.
+- Five-shot PMA on unseen LPC: EER 0.50 → 0.45.
+- SDTG ≉ wide lexicon on independent text.
 
 ## Not claimed
 
-| Phrase we do not use | Why |
-|----------------------|-----|
+| Phrase | Why |
+|--------|-----|
 | Best ASVspoof EER | Corpus not run |
-| Causal fusion / causal inference | Time-aligned score rules only |
-| Conformal coverage guarantee | EMA residual band |
-| Neural vocoder / HiFi-GAN detection | Pulse-formant and LPC only |
-| Production ASR | Interface only |
-| Keyword fraud detection as novel | Baseline |
-| Weighted fusion as novel | Naive sum is the baseline |
+| Causal fusion | Non-anticipative score rules |
+| Conformal coverage guarantee | EMA / ACI measured, not guaranteed |
+| HiFi-GAN / Encodec detection | neural_quant is a surrogate |
+| Production ASR | Noise model + optional Whisper |
+| Discourse HMM as novel | Kill criterion fired |
+| U.S.-deployable | Not measured |
 
 ## Reproduce
 
 ```bash
 pytest -q
-python scripts/download_speech.py
-python scripts/run_paper_experiments.py
+python scripts/run_paper_experiments.py   # sanity / historical
+python scripts/run_upgrade_experiments.py # confirmatory
 ```
