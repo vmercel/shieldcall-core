@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ShieldCall Detector Lab — live MVP</title>
+  <style>
+    :root {
+      --bg: #071018;
+      --card: #0e1c28;
+      --line: #1d3344;
+      --text: #e8f1f6;
+      --muted: #8aa0ae;
+      --ling: #3dd6c6;
+      --acou: #7aa7ff;
+      --fuse: #f0c14b;
+      --warn: #f59e0b;
+      --bad: #ef6b6b;
+      --ok: #5ee0a0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+      background: radial-gradient(1200px 600px at 10% -10%, #123044 0%, var(--bg) 55%);
+      color: var(--text);
+    }
+    header {
+      padding: 22px 28px 8px;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    h1 { margin: 0; font-size: 22px; letter-spacing: .04em; }
+    .sub { color: var(--muted); font-size: 13px; margin-top: 6px; max-width: 720px; line-height: 1.45; }
+    .pill {
+      font-size: 11px; font-weight: 700; letter-spacing: .08em;
+      border: 1px solid var(--line); padding: 6px 10px; border-radius: 999px;
+      color: var(--muted); white-space: nowrap;
+    }
+    main { padding: 12px 28px 40px; display: grid; gap: 14px; }
+    .grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 14px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+    .card {
+      background: color-mix(in srgb, var(--card) 92%, black);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 6px; }
+    button, input, textarea {
+      font: inherit; color: var(--text);
+    }
+    input, textarea {
+      width: 100%; background: #08141d; border: 1px solid var(--line);
+      border-radius: 10px; padding: 10px 12px;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    button {
+      background: #143246; border: 1px solid #2a4d66; border-radius: 10px;
+      padding: 9px 12px; cursor: pointer;
+    }
+    button.primary { background: #0f766e; border-color: #14b8a6; }
+    button.danger { background: #4a1d1d; border-color: #7f2d2d; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .meters { display: grid; gap: 10px; }
+    .meter label { display: flex; justify-content: space-between; margin: 0 0 6px; }
+    .bar { height: 12px; background: #102230; border-radius: 99px; overflow: hidden; }
+    .bar > span { display: block; height: 100%; width: 0%; transition: width .2s ease; }
+    .action {
+      font-size: 28px; font-weight: 800; letter-spacing: .06em; margin: 4px 0 8px;
+    }
+    .fail { display: none; background: #3a1515; border: 1px solid #7f2d2d; color: #ffd0d0;
+      padding: 10px 12px; border-radius: 10px; }
+    .fail.show { display: block; }
+    .log {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px; color: #b7c9d4; max-height: 220px; overflow: auto;
+      white-space: pre-wrap;
+    }
+    .scripts { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { font-size: 12px; }
+    .chip.se { border-color: #7a3b1a; background: #2a1a12; }
+    .chip.safe { border-color: #1f5a3d; background: #10261c; }
+    .consent { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--muted); line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>ShieldCall Detector Lab</h1>
+      <p class="sub">
+        MVP for a consented live call. Dual-stream scores (linguistic vishing + acoustic vocoder artifacts)
+        fuse on this page. Recommend-only: this lab never hangs up. If the sidecar dies, the call path stays up.
+      </p>
+    </div>
+    <div class="pill" id="healthPill">SIDECAR …</div>
+  </header>
+  <main>
+    <div class="fail" id="failOpen">Sidecar unreachable. Fail-open: no hang-up, no quiz. Restart <code>python scripts/run_sidecar.py</code>.</div>
+    <div class="grid">
+      <section class="card">
+        <label class="consent">
+          <input type="checkbox" id="consent" />
+          <span>I am recording or testing a consented call. This page sends microphone audio and recognized speech to the local sidecar on this machine. Audio is not written to disk by default.</span>
+        </label>
+        <div class="row" style="margin-top:12px">
+          <button class="primary" id="btnStart">Start live session</button>
+          <button id="btnListen">Listen on microphone</button>
+          <button class="danger" id="btnStop">Stop</button>
+        </div>
+        <p class="sub" style="margin-top:10px">
+          For a video: put a phone on speaker next to this laptop. Chrome listens. Speak or play a live call.
+          Linguistic score moves on recognized speech. Acoustic score moves on microphone PCM.
+        </p>
+        <div class="meters" style="margin-top:16px">
+          <div class="action" id="action">IDLE</div>
+          <div class="meter">
+            <label><span>Linguistic (vishing language)</span><b id="fraudPct">0%</b></label>
+            <div class="bar"><span id="fraudBar" style="background:var(--ling)"></span></div>
+          </div>
+          <div class="meter">
+            <label><span>Acoustic (vocoded / synthetic)</span><b id="synthPct">0%</b></label>
+            <div class="bar"><span id="synthBar" style="background:var(--acou)"></span></div>
+          </div>
+          <div class="meter">
+            <label><span>Fused risk</span><b id="riskPct">0%</b></label>
+            <div class="bar"><span id="riskBar" style="background:var(--fuse)"></span></div>
+          </div>
+          <div class="sub" id="meta">regime — · stage — · turns 0</div>
+        </div>
+        <label>Live transcript (Web Speech, Chrome)</label>
+        <div class="log" id="transcript">Waiting for speech…</div>
+        <label>Or type a turn you just heard</label>
+        <textarea id="typed" placeholder="Paste or type a sentence from the live call, then Push turn."></textarea>
+        <div class="row" style="margin-top:8px">
+          <button class="primary" id="btnPush">Push turn</button>
+        </div>
+      </section>
+      <section class="card">
+        <label>Controlled fixtures (independent scripts)</label>
+        <p class="sub">Use these if you want a clean A/B in the video: dentist reminder vs grandparent bond.</p>
+        <div class="scripts" id="scripts"></div>
+        <label style="margin-top:16px">Event log</label>
+        <div class="log" id="log"></div>
+      </section>
+    </div>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const state = { callId: null, listening: false, rec: null, ctx: null, pcm: [] };
+    const logEl = $("log");
+    const fail = $("failOpen");
+
+    function log(line) {
+      logEl.textContent = line + "\n" + logEl.textContent;
+    }
+    function setFail(on) { fail.classList.toggle("show", on); }
+
+    function paint(ev) {
+      if (!ev) return;
+      const fraud = Math.round((ev.fraud || 0) * 100);
+      const synth = Math.round((ev.synth || 0) * 100);
+      const risk = Math.round((ev.risk || 0) * 100);
+      $("fraudPct").textContent = fraud + "%";
+      $("synthPct").textContent = synth + "%";
+      $("riskPct").textContent = risk + "%";
+      $("fraudBar").style.width = fraud + "%";
+      $("synthBar").style.width = synth + "%";
+      $("riskBar").style.width = risk + "%";
+      $("action").textContent = (ev.action || "idle").toUpperCase();
+      $("action").style.color = ev.action === "monitor" || ev.action === "abstain" ? "var(--ok)"
+        : ev.action === "warn" ? "var(--warn)" : "var(--bad)";
+      $("meta").textContent = `regime ${ev.regime || "—"} · stage ${ev.stage || "—"} · turns ${ev.n_turns || 0}`;
+      if (ev.last_text) $("transcript").textContent = ev.last_text;
+    }
+
+    async function jfetch(path, opt) {
+      const res = await fetch(path, Object.assign({ headers: { "Content-Type": "application/json" } }, opt));
+      if (!res.ok) throw new Error(await res.text());
+      const ct = res.headers.get("content-type") || "";
+      return ct.includes("json") ? res.json() : res.text();
+    }
+
+    async function health() {
+      try {
+        const h = await jfetch("/health");
+        $("healthPill").textContent = h.live ? `SIDECAR LIVE · ${h.actuation}` : "SIDECAR DOWN";
+        setFail(!h.live);
+      } catch {
+        $("healthPill").textContent = "SIDECAR DOWN";
+        setFail(true);
+      }
+    }
+
+    async function startSession() {
+      if (!$("consent").checked) {
+        log("Consent required before a live session.");
+        return;
+      }
+      try {
+        const opened = await jfetch("/v1/calls", { method: "POST", body: JSON.stringify({}) });
+        state.callId = opened.call_id;
+        setFail(false);
+        $("action").textContent = "MONITOR";
+        log("open " + opened.call_id);
+      } catch (e) {
+        setFail(true);
+        log("open failed: " + e.message);
+      }
+    }
+
+    async function stopSession() {
+      stopListen();
+      if (state.callId) {
+        try { await jfetch("/v1/calls/" + encodeURIComponent(state.callId), { method: "DELETE" }); } catch {}
+      }
+      state.callId = null;
+      $("action").textContent = "IDLE";
+      log("stopped");
+    }
+
+    async function pushText(text) {
+      if (!state.callId) await startSession();
+      if (!state.callId) return;
+      const t = (text || "").trim();
+      if (!t) return;
+      try {
+        const ev = await jfetch("/v1/calls/" + encodeURIComponent(state.callId) + "/transcript", {
+          method: "POST", body: JSON.stringify({ t: Date.now() / 1000, text: t })
+        });
+        paint(ev);
+        log("turn  fraud=" + ev.fraud.toFixed(2) + " synth=" + ev.synth.toFixed(2) + " action=" + ev.action);
+        setFail(false);
+      } catch (e) {
+        setFail(true);
+        log("transcript failed: " + e.message);
+      }
+    }
+
+    function downsample(input, inRate, outRate) {
+      if (outRate === inRate) return input;
+      const ratio = inRate / outRate;
+      const n = Math.floor(input.length / ratio);
+      const out = new Float32Array(n);
+      for (let i = 0; i < n; i++) out[i] = input[Math.floor(i * ratio)];
+      return out;
+    }
+
+    function floatToS16(f32) {
+      const bytes = new Uint8Array(f32.length * 2);
+      const view = new DataView(bytes.buffer);
+      for (let i = 0; i < f32.length; i++) {
+        const s = Math.max(-1, Math.min(1, f32[i]));
+        view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+      }
+      let bin = "";
+      const step = 0x8000;
+      for (let i = 0; i < bytes.length; i += step) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + step, bytes.length)));
+      }
+      return btoa(bin);
+    }
+
+    async function sendPcm(f32) {
+      if (!state.callId || f32.length < 400) return;
+      try {
+        const ev = await jfetch("/v1/calls/" + encodeURIComponent(state.callId) + "/audio", {
+          method: "POST",
+          body: JSON.stringify({ sr: 8000, pcm_s16le_b64: floatToS16(f32) })
+        });
+        paint(ev);
+        setFail(false);
+      } catch (e) {
+        setFail(true);
+        log("audio failed: " + e.message);
+      }
+    }
+
+    async function startListen() {
+      if (!$("consent").checked) { log("Consent required."); return; }
+      if (!state.callId) await startSession();
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const ctx = new AudioContext();
+      const src = ctx.createMediaStreamSource(stream);
+      const proc = ctx.createScriptProcessor(4096, 1, 1);
+      const mute = ctx.createGain();
+      mute.gain.value = 0;
+      let acc = [];
+      proc.onaudioprocess = (e) => {
+        const f = e.inputBuffer.getChannelData(0);
+        const d = downsample(f, ctx.sampleRate, 8000);
+        acc.push(...d);
+        if (acc.length >= 1600) {
+          const chunk = Float32Array.from(acc.splice(0, acc.length));
+          sendPcm(chunk);
+        }
+      };
+      src.connect(proc);
+      proc.connect(mute);
+      mute.connect(ctx.destination);
+      state.ctx = { ctx, proc, stream };
+      state.listening = true;
+      log("microphone on");
+
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SR) {
+        const rec = new SR();
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.lang = "en-US";
+        rec.onresult = (ev) => {
+          let final = "";
+          let interim = "";
+          for (let i = ev.resultIndex; i < ev.results.length; i++) {
+            const t = ev.results[i][0].transcript;
+            if (ev.results[i].isFinal) final += t;
+            else interim += t;
+          }
+          if (interim) $("transcript").textContent = interim;
+          if (final) {
+            $("transcript").textContent = final;
+            pushText(final);
+          }
+        };
+        rec.onerror = () => {};
+        rec.start();
+        state.rec = rec;
+      } else {
+        log("Web Speech API not in this browser. Type turns or use Chrome.");
+      }
+    }
+
+    function stopListen() {
+      if (state.rec) { try { state.rec.stop(); } catch {} state.rec = null; }
+      if (state.ctx) {
+        try { state.ctx.proc.disconnect(); state.ctx.ctx.close(); state.ctx.stream.getTracks().forEach(t => t.stop()); } catch {}
+        state.ctx = null;
+      }
+      state.listening = false;
+    }
+
+    $("btnStart").onclick = startSession;
+    $("btnListen").onclick = startListen;
+    $("btnStop").onclick = stopSession;
+    $("btnPush").onclick = () => pushText($("typed").value);
+
+    async function loadScripts() {
+      try {
+        const data = await jfetch("/v1/scripts");
+        const box = $("scripts");
+        (data.scripts || []).forEach((s) => {
+          const b = document.createElement("button");
+          b.className = "chip " + (s.is_scam ? "se" : "safe");
+          b.textContent = (s.is_scam ? "SE · " : "SAFE · ") + s.family + " (" + s.id + ")";
+          b.onclick = async () => {
+            if (!state.callId) await startSession();
+            const ev = await jfetch("/v1/calls/" + encodeURIComponent(state.callId) + "/inject", {
+              method: "POST", body: JSON.stringify({ script_id: s.id })
+            });
+            paint(ev);
+            log("inject " + s.id + " action=" + ev.action);
+          };
+          box.appendChild(b);
+        });
+      } catch (e) {
+        log("scripts: " + e.message);
+      }
+    }
+
+    health();
+    loadScripts();
+    setInterval(health, 5000);
+  </script>
+</body>
+</html>

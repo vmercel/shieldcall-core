@@ -32,6 +32,8 @@ class CallSession:
     decisions: int = 0
     last_action: Action = Action.MONITOR
     closed: bool = False
+    last_text: str = ""
+    n_turns: int = 0
     _trace: List[Decision] = field(default_factory=list)
 
     def push_audio(self, samples: np.ndarray, sample_rate: int) -> List[SessionEvent]:
@@ -66,6 +68,8 @@ class CallSession:
             self.breaker.record_failure()
             return
         try:
+            self.last_text = text
+            self.n_turns += 1
             self.pipeline.push_transcript(text, timestamp_sec)
             self.breaker.record_success()
         except Exception:
