@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
+from ..application.detector import DetectorApplication
 from ..eval.corpora.independent_scripts import independent_scripts
 from ..pipeline import PipelineConfig
 from ..runtime.runtime import SidecarRuntime
@@ -46,6 +47,29 @@ class AudioBody(BaseModel):
 class InjectBody(BaseModel):
     script_id: Optional[str] = None
     turns: Optional[List[str]] = None
+
+
+class ChunkBody(BaseModel):
+    t: float = 0.0
+    text: str = ""
+    sr: int = 8000
+    pcm_s16le_b64: Optional[str] = None
+
+
+class LinguisticScoreBody(BaseModel):
+    text: str = ""
+    t: float = 0.0
+
+
+class AcousticScoreBody(BaseModel):
+    sr: int = 8000
+    pcm_s16le_b64: str = Field(..., min_length=1)
+
+
+class FuseScoreBody(BaseModel):
+    fraud: float = 0.0
+    synth: float = 0.0
+    t: float = 0.0
 
 
 def _check_token(authorization: Optional[str]) -> None:
@@ -107,8 +131,18 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
     if rt.pipeline_config.channel is not None:
         raise RuntimeError("live sidecar must not enable the channel twin")
 
-    app = FastAPI(title="ShieldCall sidecar", version="0.7.0-mvp")
+    app = FastAPI(
+        title="ShieldCall Core Detector API",
+        version="0.8.0",
+        description=(
+            "Domain-driven detector sidecar. Recommend-only. Fail-open. "
+            "Does not hang up. Does not join the carrier path. "
+            "Live OpenAPI at /docs and /openapi.json."
+        ),
+    )
     app.state.runtime = rt
+    detector = DetectorApplication(rt)
+    app.state.detector = detector
     origins = os.environ.get("SHIELDCALL_CORS", "*").split(",")
     app.add_middleware(
         CORSMiddleware,
@@ -141,17 +175,18 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
 
     @app.get("/health")
     def health():
-        h = rt.health()
-        return {
-            "live": h.live,
-            "ready": h.ready,
-            "active_calls": h.active_calls,
-            "max_calls": h.max_calls,
-            "shed_total": h.shed_total,
-            "detail": h.detail,
-            "channel_twin": False,
-            "actuation": "recommend_only",
-        }
+        return detector.health()
+
+    @app.get("/ready")
+    def ready():
+        body = detector.ready()
+        if not body["ready"]:
+            raise HTTPException(status_code=503, detail=body)
+        return body
+
+    @app.get("/v1/capabilities")
+    def capabilities():
+        return detector.capabilities()
 
     @app.post("/v1/calls")
     def open_call(body: OpenCallBody, authorization: Optional[str] = Header(default=None)):
@@ -228,6 +263,64 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
             noise = (0.01 * np.random.RandomState(i).randn(sr // 5)).astype(np.float32)
             last = sess.push_audio(noise, sr)
         return {"call_id": call_id, "n_turns": len(turns), **_last_event_dict(sess, last)}
+
+    @app.get("/v1/calls")
+    def list_calls(authorization: Optional[str] = Header(default=None)):
+        _check_token(authorization)
+        return detector.list_calls()
+
+    @app.get("/v1/calls/{call_id}")
+    def get_call(call_id: str, authorization: Optional[str] = Header(default=None)):
+        _check_token(authorization)
+        body = detector.get_call(call_id)
+        if body is None:
+            raise HTTPException(status_code=404, detail="unknown call_id")
+        return body
+
+    @app.get("/v1/calls/{call_id}/decision")
+    def last_decision(call_id: str, authorization: Optional[str] = Header(default=None)):
+        _check_token(authorization)
+        body = detector.decision(call_id)
+        if body is None:
+            raise HTTPException(status_code=404, detail="unknown call_id")
+        return body
+
+    @app.post("/v1/calls/{call_id}/chunk")
+    def chunk(
+        call_id: str,
+        body: ChunkBody,
+        authorization: Optional[str] = Header(default=None),
+    ):
+        _check_token(authorization)
+        samples = None
+        if body.pcm_s16le_b64:
+            try:
+                samples = _pcm_to_float(body.pcm_s16le_b64)
+            except Exception as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+        ev = detector.ingest_chunk(call_id, body.text, body.t, samples, body.sr)
+        if ev is None:
+            raise HTTPException(status_code=404, detail="unknown call_id")
+        return ev
+
+    @app.post("/v1/score/linguistic")
+    def score_linguistic(body: LinguisticScoreBody, authorization: Optional[str] = Header(default=None)):
+        _check_token(authorization)
+        return detector.score_linguistic(body.text, body.t)
+
+    @app.post("/v1/score/acoustic")
+    def score_acoustic(body: AcousticScoreBody, authorization: Optional[str] = Header(default=None)):
+        _check_token(authorization)
+        try:
+            samples = _pcm_to_float(body.pcm_s16le_b64)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        return detector.score_acoustic(samples, body.sr)
+
+    @app.post("/v1/score/fuse")
+    def score_fuse(body: FuseScoreBody, authorization: Optional[str] = Header(default=None)):
+        _check_token(authorization)
+        return detector.score_fuse(body.fraud, body.synth, body.t)
 
     @app.websocket("/v1/calls/{call_id}/stream")
     async def stream(ws: WebSocket, call_id: str):

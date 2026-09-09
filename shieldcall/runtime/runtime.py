@@ -8,7 +8,7 @@ across two call_ids.
 from __future__ import annotations
 
 import threading
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 from ..agent.agent import DefenseAgent
 from ..linguistic.asr_bridge import ASRBridge, PassthroughASR
@@ -79,6 +79,14 @@ class SidecarRuntime:
             )
             self._sessions[call_id] = sess
             return sess
+
+    def get_call(self, call_id: str) -> Optional[CallSession]:
+        with self._lock:
+            return self._sessions.get(call_id)
+
+    def list_calls(self) -> List[CallSession]:
+        with self._lock:
+            return [s for s in self._sessions.values() if not s.closed]
 
     def close_call(self, call_id: str):
         with self._lock:
