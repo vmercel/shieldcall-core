@@ -77,13 +77,35 @@ def _resample(x: np.ndarray, orig_sr: int, target_sr: int) -> np.ndarray:
     return y.astype(np.float32)
 
 
+def _read_audio_file(path: Path) -> Tuple[np.ndarray, int]:
+    """Load a wav/flac as float32 mono. Prefers soundfile; falls back to scipy for WAV."""
+    if sf is not None:
+        audio, sr = sf.read(str(path), always_2d=False)
+        if audio.ndim > 1:
+            audio = np.mean(audio, axis=-1)
+        return audio.astype(np.float32), int(sr)
+    suffix = path.suffix.lower()
+    if suffix in {".wav", ".wave"}:
+        from scipy.io import wavfile
+
+        sr, audio = wavfile.read(str(path))
+        audio = np.asarray(audio, dtype=np.float64)
+        if audio.ndim > 1:
+            audio = audio.mean(axis=-1)
+        peak = np.max(np.abs(audio)) + 1e-8
+        if peak > 1.5:  # integer PCM
+            audio = audio / max(abs(np.iinfo(np.int16).min), 1)
+        return audio.astype(np.float32), int(sr)
+    raise RuntimeError(
+        "Cannot decode FLAC without soundfile (Mini LibriSpeech is FLAC).\n"
+        "Install the audio stack from the repo root:\n"
+        "  pip install -r requirements.txt\n"
+        "or: pip install soundfile"
+    )
+
+
 def load_audio(path: Path, target_sr: int = DEFAULT_TARGET_SR) -> Tuple[np.ndarray, int]:
-    if sf is None:
-        raise RuntimeError("soundfile is required to load FLAC/WAV. pip install soundfile")
-    audio, sr = sf.read(str(path), always_2d=False)
-    if audio.ndim > 1:
-        audio = np.mean(audio, axis=-1)
-    audio = audio.astype(np.float32)
+    audio, sr = _read_audio_file(path)
     audio = _resample(audio, int(sr), target_sr)
     return audio, target_sr
 

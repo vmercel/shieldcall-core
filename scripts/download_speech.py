@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import _repo  # noqa: F401
+
 from shieldcall.eval.speech_data import download_mini_librispeech, list_speakers, speech_available
 
 

@@ -18,24 +18,27 @@ from shieldcall.eval.protocols import fusion_ablation_from_pairs, linguistic_abl
 from shieldcall.eval.vocoders import vocode
 from shieldcall.fusion.engine import FusionEngine
 from shieldcall.linguistic.discourse import LEXICON_LOCK, STAGE_EMISSIONS, emission_only_score, path_only_score
+from shieldcall.linguistic.lock import current_lexicon_lock, stage_emissions_lock
 from shieldcall.pipeline import PipelineConfig
 from shieldcall.runtime.runtime import SidecarRuntime
 
 
 def test_lexicon_lock_is_stable():
     assert len(LEXICON_LOCK) == 16
-    frozen = json.dumps(STAGE_EMISSIONS, sort_keys=True, separators=(",", ":"))
-    import hashlib
-
-    assert hashlib.sha256(frozen.encode()).hexdigest()[:16] == LEXICON_LOCK
+    assert stage_emissions_lock() == LEXICON_LOCK
+    assert len(current_lexicon_lock()) == 16
+    assert current_lexicon_lock() != ""
 
 
 def test_independent_set_has_scam_and_benign():
     scripts = independent_scripts()
-    assert len(scripts) >= 30
+    assert len(scripts) >= 40
     assert any(s.is_scam for s in scripts)
     assert any(not s.is_scam for s in scripts)
     assert all(s.split == "independent" for s in scripts)
+    joined = " ".join(t[1] for s in scripts if not s.is_scam for t in s.turns).lower()
+    assert "we will never ask" not in joined
+    assert "we do not ask for gift cards" not in joined
 
 
 def test_wide_lexicon_is_not_identical_to_path_on_independent():
@@ -50,7 +53,7 @@ def test_linguistic_ablation_runs():
     assert "ling_narrow_keywords" in res
     assert "ling_wide_lexicon" in res
     assert "ling_sdtg" in res
-    assert "ling_ntm" in res
+    assert "ling_ltm" in res
     for v in res.values():
         assert 0.0 <= v.auc <= 1.0
         assert v.n_samples >= 30
@@ -125,6 +128,24 @@ def test_two_sessions_do_not_share_cusum_or_belief():
     assert a.agent is not b.agent
 
 
+def test_closed_loop_runs_on_short_audio():
+    from shieldcall.eval.agent_closed_loop import run_pipeline_agent
+    from shieldcall.eval.corpora.independent_scripts import independent_scripts
+
+    rng = np.random.RandomState(0)
+    audio = (rng.randn(4000).astype(np.float32) * 0.05)
+    script = next(s for s in independent_scripts() if not s.is_scam)
+    ag, acts = run_pipeline_agent(audio, 8000, script)
+    assert isinstance(acts, list)
+
+
+def test_linear_trajectory_has_no_wide_feature():
+    from shieldcall.linguistic.ntm import turn_features
+
+    # 8 scam stages + forward + path + n_turns  (wide bag is not a feature)
+    assert turn_features(["hello there"]).shape[0] == 11
+
+
 def test_fusion_ablation_keys():
     from shieldcall.eval.protocols import PairScore
 
@@ -137,3 +158,4 @@ def test_fusion_ablation_keys():
     res = fusion_ablation_from_pairs(pairs)
     assert res["fuse_floors"].extras["disc_recall@0.5"] >= 0.5
     assert "fuse_calibrated_or" in res
+    assert "tpr@fpr0.05" in res["fuse_cscf"].extras

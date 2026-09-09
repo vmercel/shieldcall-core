@@ -14,6 +14,8 @@ from pathlib import Path
 
 import numpy as np
 
+import _repo  # noqa: F401
+
 from shieldcall.pipeline import PipelineConfig, ShieldCallPipeline
 from shieldcall.runtime.capacity import plan_capacity
 from shieldcall.runtime.slo import SLO

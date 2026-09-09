@@ -77,7 +77,7 @@ def _bandlimit(x: np.ndarray, sr: int, low: float = 300.0, high: float = 3400.0)
 
 
 def _neural_codec_sim(x: np.ndarray, sr: int, bits: int = 4) -> np.ndarray:
-    """Encodec/DAC-like artifacts: quantized log-STFT + high-band phase noise."""
+    """Log-STFT magnitude quantization (caricature of neural-codec artifacts)."""
     x = x.astype(np.float64)
     nper, nover = 256, 192
     _, _, z = signal.stft(x, fs=sr, nperseg=nper, noverlap=nover)
@@ -134,10 +134,26 @@ def _packet_loss(
     return out
 
 
+# Profiles named Opus / G.729 / neural_codec are **DSP caricatures**
+# (bandlimit + mu-law or log-STFT quant). They are not libopus, CS-ACELP,
+# Encodec, or DAC. Tests only check that the waveform changes.
+CARICATURE_PROFILES = frozenset(
+    {
+        CodecProfile.OPUS_NB,
+        CodecProfile.OPUS_WB,
+        CodecProfile.NEURAL_CODEC,
+        CodecProfile.G729_LIKE,
+    }
+)
+
+
 class TelephonyChannelTwin:
     """
-    Stochastic telephone channel. Apply to any waveform to stress-test
-    acoustic scorers under the conditions that matter for real calls.
+    Stochastic telephone-channel *simulator* for evaluation.
+
+    Classical G.711 / narrowband / packet-loss paths are first-class.
+    Names such as OPUS_NB and NEURAL_CODEC are caricatures until a real
+    encoder-decoder is wired in. Production workers must leave this off.
     """
 
     PROFILE_DEFAULTS = {

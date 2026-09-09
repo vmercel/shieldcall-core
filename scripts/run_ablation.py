@@ -8,11 +8,9 @@ proxies as evidence for claim language.
 
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+import _repo  # noqa: F401
 
 from shieldcall.eval.protocols import linguistic_protocol
 from shieldcall.eval.speech_data import speech_available

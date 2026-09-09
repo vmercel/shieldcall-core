@@ -18,6 +18,24 @@ Protocol hashes and experiment locks. Append-only. Do not rewrite history.
   - independent wide-lexicon AUC 0.839 vs narrow 0.547; SDTG 0.820 (does not beat wide).
   - agent sim: SE missed_harvest 0, false_challenge 0.
 
+## 2026-08-22 — standard-uplift pass (checklist Part V)
+
+- Combined lexicon lock: `shieldcall/linguistic/lock.py`.
+- Independent set: detector-aware benign tells removed; extra tropes added; still same-lab (not a hired second writer).
+- LTM rename: `LinearTrajectoryModel` (no wide-bag feature).
+- Acoustic headline vocoder: LPC only; Hybrid-H logistic on residual embeddings.
+- TCT Opus/G.729/neural flagged as caricatures.
+- Closed-loop agent: `eval/agent_closed_loop.py`.
+- Fusion extras: TPR at FPR 0.05 / 0.50.
+- Gates in `run_upgrade_experiments.py` (linguistic n, acoustic n, no easy vocoder in headline, fusion n).
+- README/RESEARCH no longer lead with contaminated 0.88.
+- Confirmatory run 2026-08-22 (`upgrade_experiments.json`, 533 s, all gates PASS):
+  - ling n=48 corpus `7879918a4fe08c5d`: narrow AUC 0.596 trap 0.24; wide 0.836 trap 0.10; SDTG 0.817 trap 0.33; LTM 0.733 trap 0.10.
+  - LPC residual n=32: clean AUC 0.773; narrowband 0.586.
+  - Hybrid-H n=32: clean 0.922 / NB 0.910 (64-D, small n — exploratory).
+  - Fusion n=40: CSCF disc@0.5=0.70 safeFPR=0.50 tpr@fpr0.05=0.23; calibrated-OR disc=1.00 but safeFPR=1.00.
+  - Closed-loop n=4/class: SE challenge_rate=1.0 (policy does not survive real scores yet).
+
 ## How to hash a result JSON
 
 ```bash

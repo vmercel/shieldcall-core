@@ -1,6 +1,9 @@
 # Journal manuscript
 
-**Target (not printed in the PDF):** Paper B to Information Fusion or IEEE TASLP. Paper A (fast path) Interspeech/ICASSP/Odyssey. Do **not** submit to Computers \& Security (AI/ML moratorium since 2024).
+**Target (not printed in the PDF):** Paper B to Information Fusion or IEEE TASLP.
+Paper A (fast path): **ICASSP 2027** (confirm the live deadline on the Signal Processing Society site; historically ~September of the prior year) or Interspeech 2027.
+Do **not** submit to Computers \& Security (AI/ML moratorium since 2024).
+Template still `\documentclass{article}` — switch to `IEEEtran`/`elsarticle` before submission.
 
 The manuscript states measured claims only. Do not add ASVspoof SOTA language. Confirmatory tables come from `docs/results/upgrade_experiments.json`.
 

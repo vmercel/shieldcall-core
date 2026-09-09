@@ -179,6 +179,21 @@ def min_dcf(
     return float(best / max(denom, 1e-12))
 
 
+def tpr_at_fpr(
+    labels: Sequence[int], scores: Sequence[float], target_fpr: float = 0.05
+) -> float:
+    """Maximum TPR with empirical FPR at most ``target_fpr``."""
+    labels = np.asarray(labels, dtype=int)
+    scores = np.asarray(scores, dtype=float)
+    fpr, tpr, _ = roc_curve(labels, scores)
+    if len(fpr) == 0:
+        return 0.0
+    ok = np.where(fpr <= target_fpr + 1e-12)[0]
+    if len(ok) == 0:
+        return float(tpr[int(np.argmin(fpr))])
+    return float(np.max(tpr[ok]))
+
+
 def recall_at_threshold(labels: Sequence[int], scores: Sequence[float], th: float = 0.5) -> float:
     labels = np.asarray(labels, dtype=int)
     scores = np.asarray(scores, dtype=float)

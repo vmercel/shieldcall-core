@@ -9,6 +9,8 @@ from pathlib import Path
 
 import numpy as np
 
+import _repo  # noqa: F401
+
 from shieldcall.audio.channel import CodecProfile
 from shieldcall.eval.protocols import (
     acoustic_protocol,

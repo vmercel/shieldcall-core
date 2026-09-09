@@ -217,23 +217,23 @@ INDEPENDENT: Tuple[CallScript, ...] = (
     ]),
     _benign("ind_b06", "independent", "bank_legit", [
         "This is your bank. A large debit posted; if you recognize it, no action.",
-        "You can review it in the app. We will never ask for your PIN on this call.",
+        "You can review the charge in the mobile app under recent activity.",
         "Have a good day.",
     ], trap="isolated_keyword"),
     _benign("ind_b07", "independent", "irs_legit", [
         "A reminder from the tax-prep office that documents are due Friday.",
-        "Bring W-2s. We do not ask for gift cards.",
+        "Bring W-2s and last year's return if you have it.",
         "See you then.",
     ], trap="isolated_keyword"),
     _benign("ind_b08", "independent", "ssa_legit", [
         "Your benefits statement is in the mail.",
-        "No need to call. We will never demand a password.",
+        "You can also download it from the online account you already use.",
         "Thank you.",
     ], trap="isolated_keyword"),
     _benign("ind_b09", "independent", "retail", [
         "Your online order shipped. Tracking is in the email.",
         "The gift card you bought as a present is the SKU you chose.",
-        "No further steps.",
+        "Estimated delivery is Thursday.",
     ], trap="isolated_keyword"),
     _benign("ind_b10", "independent", "doctor", [
         "Lab results are posted to the patient portal.",
@@ -256,7 +256,7 @@ INDEPENDENT: Tuple[CallScript, ...] = (
     ]),
     _benign("ind_b14", "independent", "password_legit", [
         "IT reminder: rotate your password this week using the self-service page.",
-        "We will never ask you to read a password on the phone.",
+        "Use the browser bookmark you already have for the portal.",
         "Thanks.",
     ], trap="isolated_keyword"),
     _benign("ind_b15", "independent", "city", [
@@ -266,6 +266,55 @@ INDEPENDENT: Tuple[CallScript, ...] = (
     _benign("ind_b16", "independent", "charity", [
         "This is a registered food-bank fundraiser.",
         "Any gift is optional and goes through our public website.",
-        "We do not take wire transfers on this call.",
+        "A receipt will be emailed if you give online.",
     ]),
+    _benign("ind_b17", "independent", "hr", [
+        "Human resources. Open enrollment closes Friday.",
+        "You can change dental coverage in the benefits portal.",
+        "Reply to this voicemail if you need a paper form.",
+    ]),
+    _benign("ind_b18", "independent", "weather", [
+        "County alert: freeze warning overnight.",
+        "Cover outdoor pipes if you are able.",
+        "More information is on the county website.",
+    ]),
+    _benign("ind_b19", "independent", "jury", [
+        "Jury services. Your group number is not required tomorrow.",
+        "Check the recorded line after five for the next date.",
+    ]),
+    _benign("ind_b20", "independent", "vet", [
+        "The clinic called about your pet's follow-up next Tuesday.",
+        "Please bring the cone if it is still in use.",
+    ]),
+    # extra scam paraphrases (oblique; still same-lab, not a hired second writer)
+    _scam("ind_s25", "independent", "shipping", [
+        "Customs brokerage on a package listed at your address.",
+        "A duty amount has to clear before the carrier releases it.",
+        "They want a transfer reference from a kiosk this morning.",
+        "If a roommate hears, the hold extends another day.",
+    ], "paraphrase"),
+    _scam("ind_s26", "independent", "school", [
+        "District finance. A lunch-account overdraft will go to collections.",
+        "A same-day card payment at the number I read keeps the file open.",
+        "Do not use the parent app; it duplicates the ticket.",
+    ], "paraphrase"),
+    _scam("ind_s27", "independent", "insurance", [
+        "Claims intake. A policy lapse will post at four unless a rider is paid.",
+        "Read the numbers from two pharmacy cards so we can bind it.",
+        "Your broker should not be copied until it is active.",
+    ], "paraphrase"),
+    _scam("ind_s28", "independent", "crypto_desk", [
+        "Exchange compliance. A withdrawal is frozen pending a source-of-funds step.",
+        "Send a voucher to the address in the email I am about to dictate.",
+        "Stay on this handset until the freeze lifts.",
+    ], "paraphrase"),
 )
+
+
+def independent_corpus_hash() -> str:
+    import hashlib
+    import json
+
+    rows = [(s.script_id, s.is_scam, [t[1] for t in s.turns]) for s in INDEPENDENT]
+    blob = json.dumps(rows, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()[:16]

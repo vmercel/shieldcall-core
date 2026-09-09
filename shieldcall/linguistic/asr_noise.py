@@ -29,8 +29,16 @@ _SUBS = (
 )
 
 
+def synthetic_text_noise(text: str, rate: float = 0.25, seed: int = 0) -> str:
+    """Character/word noise. This is **not** ASR. Do not report ``rate`` as WER."""
+    return degrade_text(text, wer=rate, seed=seed)
+
+
 def degrade_text(text: str, wer: float = 0.25, seed: int = 0) -> str:
-    """Approximate a target word-error rate with substitutions and drops."""
+    """Approximate a target error rate with substitutions and drops.
+
+    ``wer`` is a noise knob, not a measured word-error rate from a recognizer.
+    """
     acc = 0
     for ch in text:
         acc = (acc * 31 + ord(ch)) % 100000

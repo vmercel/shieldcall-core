@@ -2,24 +2,24 @@
 
 Streaming detector for **vishing language** and **vocoded speech** on telephone-bandwidth audio.
 
-## Live MVP (record this)
+## Who uses what
 
-The current shippable slice is a **Detector Lab**, not a carrier product. It runs next to a consented live call, scores two streams, and never hangs up.
+**People use the phone app** (Live Protect in the ShieldCall client). That listens on the handset microphone while the other phone is on speaker. It does not hang up.
+
+**This repo is the detector.** The HTTP sidecar is for the phone on the LAN and for engine work. The Chrome page at `/` is a developer lab, not the product.
 
 ```bash
 pip install -r requirements-serve.txt
 python scripts/run_sidecar.py
-# Chrome: http://127.0.0.1:8765
+# phone: EXPO_PUBLIC_SHIELDCALL_URL=http://<lan-ip>:8765
+# engine lab only: http://127.0.0.1:8765
 ```
 
-1. Check consent. Start a live session. Click **Listen on microphone**.
-2. Put a phone on speaker next to the laptop, or speak both sides of a call in the room.
-3. Watch **linguistic** (vishing language), **acoustic** (vocoded / synthetic), and **fused risk**. The action is recommend-only.
-4. Optional A/B in the same take: inject dentist reminder (`ind_b01`) then grandparent-bond (`ind_s01`).
+1. Consent, then listen on the phone (or, for engine work, on the Chrome lab).
+2. Linguistic meter: vishing language. Acoustic meter: vocoded / synthetic. Fusion is recommend-only.
+3. Optional A/B in the lab: inject dentist reminder (`ind_b01`) then grandparent-bond (`ind_s01`).
 
-Recording recipe: [`docs/DEMO.md`](docs/DEMO.md).
-
-**Recorded walkthrough:** add the clip URL here after capture (YouTube unlisted or a GitHub Release). Until then the live lab is the demo.
+Recording recipe for the engine lab: [`docs/DEMO.md`](docs/DEMO.md).
 
 This is a research prototype (v0.7 MVP), not a certified product and not a state-of-the-art ASVspoof system. The measured claims, and the things we explicitly do not claim, are in `docs/NOVELTY.md` and the paper in `paper/`.
 

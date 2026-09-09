@@ -1,30 +1,35 @@
 # Research status
 
+Confirmatory tables: `docs/results/upgrade_experiments.json` from
+`python scripts/run_upgrade_experiments.py`.
+Author held-out linguistic numbers in `paper_experiments.json` are **sanity
+only** (lexicon and paraphrases share an author).
+
 ## Claim → code → experiment
 
 | Claim | Code | Experiment | Status |
 |-------|------|------------|--------|
-| Telephone channel simulation | `audio/channel.py` | paper acoustic narrowband | Implemented |
-| Residual frame features | `acoustic/residual.py` | pulse-formant vs LPC | Implemented; LPC fails under bandlimit |
-| Prototype memory fit on speech | `acoustic/scorer.py` `fit()` | speaker-disjoint protocol | Implemented |
-| Scam stage tracker | `linguistic/discourse.py` | held-out scripts | Implemented |
-| Keyword + stage blend | `linguistic/scorer.py` | same | Implemented |
-| Disagreement fusion | `fusion/engine.py` | operational protocol | Implemented; recall vs FPR tradeoff |
-| Uncertainty band | `fusion/conformal.py` | unit tests | Heuristic, not CP |
-| Counterfactuals by re-score | `fusion/explain.py` | unit tests | Implemented |
-| Challenge+voice check | `adaptation/hooks.py` | unit tests | Transcript plus synth cap |
-| Production ASR | `asr_bridge.py` | — | Interface only |
-| ASVspoof numbers | `eval/asvspoof.py` | set `SHIELDCALL_ASVSPOOF_ROOT` | Loader only |
-| Production change-point | `acoustic/changepoint.py` | unit tests | Implemented (CUSUM + mean-shift) |
-| Stage-aligned coupling | `fusion/coupling.py` | synthetic AUC 1.0; LibriSpeech splices **fail** | Method yes; audio claim **no** |
-| Gibbs–Candès ACI | `fusion/aci.py` | coverage 0.885 vs 0.90 | Implemented |
+| Telephone channel simulation | `audio/channel.py` | TCT-2 caricature profiles + classical NB | Implemented; Opus/G.729/neural names are DSP caricatures |
+| Residual frame features | `acoustic/residual.py` | LPC vs bona fide | LPC under bandlimit remains hard |
+| Prototype memory | `acoustic/scorer.py` `fit()` | speaker-disjoint | Implemented |
+| Hybrid-H logistic head | `acoustic/hybrid.py` | same protocol, `hy_*` rows | Linear head on residual embeddings; not AASIST |
+| Wide locked lexicon vs narrow keywords | `discourse.wide_lexicon_score` | independent set | Wide bag beats narrow |
+| Stage HMM vs wide bag | `linguistic/discourse.py` | independent set | **Kill:** SDTG does not beat wide bag |
+| Linear trajectory model | `linguistic/ntm.py` `LinearTrajectoryModel` | train-fit, independent eval | Baseline; not neural |
+| Disagreement fusion | `fusion/engine.py` | operational OR-label | Report disc-recall and TPR at FPR, not AUC 1.0 |
+| Synthetic text noise | `linguistic/asr_noise.py` | independent + noise knob | **Not ASR** |
+| Production ASR | `asr_bridge.py` | — | Interface + unused Whisper hook |
+| ASVspoof numbers | `eval/asvspoof.py` | `SHIELDCALL_ASVSPOOF_ROOT` | Loader only |
+| SAPC | `fusion/coupling.py` | LibriSpeech splices | Audio claim **not** supported |
+| Agent (scripted / sim) | `agent/` | `compare_policies` | Class-conditional means |
+| Agent closed-loop | `eval/agent_closed_loop.py` | pipeline scores | Implemented; small n |
 
-## What “works” means here
+## What “works” means here (confirmatory)
 
-1. Stage tracker beats keywords on held-out paraphrases.
-2. Pulse-formant vocoding of real speech is detected at 8 kHz after bandlimiting.
-3. LPC vocoding is **not** detected after bandlimiting with this front end.
-4. Fusion labeled by *threat* (scam or vocoded) raises disagreement recall vs naive sum and raises safe-cell FPR.
+1. A **wide frozen lexicon** beats **narrow keywords** on the independent set.
+2. The **HMM path prior does not beat** that wide bag (discourse novelty dropped).
+3. Residual features remain weak on **LPC** after telephone-band filtering.
+4. Fusion floors / calibrated-OR change complementary-cell recall vs a weighted sum, at a false-alarm cost. Lead with that tradeoff, not ranking AUC.
 
 ## Reproduce
 
@@ -32,24 +37,24 @@
 source .venv/bin/activate
 python scripts/download_speech.py
 pytest -q
-python scripts/run_paper_experiments.py
+python scripts/run_upgrade_experiments.py
 ```
-
-Snapshot: `docs/results/ablation_latest.txt`, `docs/results/paper_experiments.json`.
 
 ## Still required for a stronger scientific claim
 
-- ASVspoof LA through the channel simulator, same table as AASIST or RawNet2.
-- Labeled real call transcripts (not author-written English).
-- Larger speaker set; report confidence intervals.
-- Neural vocoders (HiFi-GAN / official TTS), not only pulse-formant and LPC.
-- Human study of explanations.
+- ASVspoof 5 (or 2019 LA) through TCT, **same table as AASIST or RawNet2**.
+- A true second-writer or public transcript dump (current independent set is same-lab tropes without detector-aware benign tells).
+- Real ASR-in-the-loop (Whisper or telephony ASR), not `synthetic_text_noise`.
+- Neural vocoders / streaming VC, not STFT-quant surrogates.
+- Gold SAPC *n*≥100.
+- Named-instance capacity; CPaaS playback.
 
 ## Publication checklist
 
 - [x] Ablation tables under `docs/results/`
-- [x] arXiv draft under `paper/`
+- [x] Journal draft under `paper/` (not submitted)
+- [x] Timestamped lab notebook (`docs/lab/NOTEBOOK.md`)
 - [ ] ASVspoof run
-- [ ] Timestamped lab notebook beyond git
-- [ ] Provisional patent (optional; do not file on unmeasured neural-TTS claims)
+- [ ] Venue template (elsarticle / IEEEtran)
+- [ ] Provisional patent
 - [ ] Independent users, pilots, or letters

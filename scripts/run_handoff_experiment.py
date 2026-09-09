@@ -11,6 +11,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import _repo  # noqa: F401
+
 from shieldcall.eval.handoff import run_handoff_protocol
 from shieldcall.eval.metrics import auc_roc
 from shieldcall.eval.speech_data import speech_available

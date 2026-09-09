@@ -24,9 +24,9 @@ Intended use: research sidecar scoring a **fork** of call audio/text. RTP is not
 
 ## Evaluated now
 
-- A1: independent scripts + agent warn-not-challenge policy.
-- A2: LPC and neural-quant vocoders through TCT-2 (pulse-formant is sanity only).
-- A3: SAPC protocol (currently a powered-or-pilot negative on pulse-formant splices).
+- A1: independent scripts + agent warn-not-challenge policy (simulator + closed-loop).
+- A2: LPC through TCT (headline). Pulse-formant and neural_quant are sanity only.
+- A3: SAPC protocol (currently a pilot negative on pulse-formant splices).
 - A4: independent paraphrases vs locked lexicon (wide bag vs narrow).
 
 A5 and A6 are specified; A5 adaptive search is not a confirmatory table yet.

@@ -18,7 +18,7 @@
 \vspace{0.4em}
 \noindent\textbf{Highlights}
 \begin{itemize}
-\item On a lexicon-locked independent script set ($n{=}40$), a wide bag of the frozen stage lexicon reaches AUC $0.84$ versus $0.55$ for narrow keywords; the HMM stage tracker does \emph{not} beat the wide bag (AUC $0.82$).
+\item On a lexicon-locked independent script set, a wide bag of the frozen stage lexicon beats narrow keywords; the HMM stage tracker does \emph{not} beat the wide bag. Trap means are reported alongside AUC.
 \item Operational threat is the disjunction of hostile language and vocoded production. Disagreement floors and a calibrated OR recover complementary cells that a weighted sum misses, at a documented safe-cell false-alarm cost.
 \item A sufficient-statistic agent, scored in a class-conditional simulator against an open-loop threshold, warns on human social engineering and does not spend its nonce there.
 \item Residual features remain at chance on LPC after telephone-band filtering (AUC $0.49$). Pulse-formant is an easy unit condition, not a headline result. ASVspoof is not run.
@@ -35,7 +35,7 @@
 \begin{abstract}
 Telephone fraud mixes social-engineering scripts with synthetic or vocoded speech, including mid-call production switches timed to a harvest ask. Utterance-level anti-spoofing and keyword products treat those as separate markets; weighted-sum fusion treats them as redundant. This paper formulates a streaming, telephony-conditioned, \emph{disjunctive} detection problem: a call is a threat if either stream is hostile. A channel twin (narrowband, $\mu$-law, packet loss, and neural-codec-like STFT quantization) is first-class evaluation law. Linguistic scoring is reported on a lexicon-locked independent set, not on author paraphrases written against the same emissions. A sufficient-statistic agent never sees waveforms or transcripts and spends at most one liveness challenge per call.
 
-On forty independent English scripts, a wide frozen lexicon reaches AUC $0.84$ (bootstrap interval about $0.72$--$0.94$) against $0.55$ for narrow keywords; an HMM stage tracker does not beat the wide bag. Residual acoustics remain at chance on LPC after bandlimiting (AUC $0.49$). Disagreement floors recover complementary-cell recall that a naive sum misses, at a safe-cell false-positive cost we report. A class-conditional agent simulator warns on human social engineering and does not waste the nonce there. Stage-aligned production change is not supported on pulse-formant splices. Scope: offline evaluation of a research sidecar on English, single-talker, injected transcripts. It is not a state-of-the-art anti-spoofing encoder and not a U.S.\ deployment.
+On a lexicon-locked independent English set, a wide frozen lexicon beats narrow keywords; an HMM stage tracker does not beat the wide bag, so discourse-HMM novelty is not claimed. Residual acoustics remain weak on LPC after bandlimiting. Disagreement floors change complementary-cell recall relative to a weighted sum, at a documented false-alarm cost; ranking AUC on constructed cells is not the headline. A sufficient-statistic agent is scored in a class-conditional simulator and, in a smaller closed loop, on pipeline scores. Stage-aligned production change is not supported on pulse-formant splices. Scope: offline evaluation of a research sidecar on English, single-talker, injected transcripts. It is not a state-of-the-art anti-spoofing encoder and not a U.S.\ deployment. Numbers in the PDF must match \texttt{docs/results/upgrade\_experiments.json} after the last confirmatory run.
 \end{abstract}
 
 \noindent\textit{Keywords:} vishing; voice spoofing; telephone channel; score fusion; change-point; conformal inference; active sensing; sufficient-statistic agent.
@@ -87,7 +87,7 @@ ShieldCall (this work) & yes & yes & posed & yes & yes & yes \\
 \end{table}
 
 \subsection{Vishing and discourse}
-Applied vishing detectors typically classify transcripts or average an audio score with a text score. Dialogue-act models assign speech to acts such as request and statement~\cite{stolcke2000dialogue}. Professional scam calls are not a bag of words; they progress through greeting, claimed authority, invented problem, urgency, harvest, payment, secrecy, and threat. A keyword list that fires on ``IRS'' and ``gift card'' fails when those strings are paraphrased, and it fires on benign mentions of a bank holiday. The gap we test is whether a small stage machine with a broader emission lexicon recovers paraphrases while remaining quiet on isolated-keyword traps. We do not claim to have invented dialogue-act tagging.
+Applied vishing detectors typically classify transcripts or average an audio score with a text score. Dialogue-act models assign speech to acts such as request and statement~\cite{stolcke2000dialogue}. Professional scam calls progress through greeting, claimed authority, invented problem, urgency, harvest, payment, secrecy, and threat. We test a locked-lexicon control: a \emph{wide bag} of the same stage emissions versus a narrow high-precision keyword list versus an HMM path prior versus a linear stage-count model. On an independent set the wide bag accounts for the lift; the HMM does not beat it. We do not claim to have invented dialogue-act tagging, and we do not claim the stage machine as a contribution.
 
 \subsection{Fusion and uncertainty}
 Late fusion by weighted sum or stacking is standard multimodal practice. If the operational label is a logical OR, averaging is the wrong combination: a vocoded probe with mild language is diluted, and a human vishing call is diluted by a low synthetic score. Disagreement regimes (safe, social engineering, spoof probe, dual) are a taxonomy, not Pearl causality. We compare rule-based floors against naive sum, unimodal scores, and logistic regression on the same two scalars.
@@ -197,7 +197,7 @@ Fusion uses the operational OR label and $n{=}40$ cells (safe, social engineerin
 
 SAPC audio uses stitched $\sim$10\,s calls, a vocoded window of relative length $0.34$, and $n{=}6$ speaker pairs. Mix match is a gate: mean $s$ must agree within $0.12$ before ranking is interpreted. Synthetic SAPC uses forty aligned versus unaligned point-process draws.
 
-Agent evaluation uses scripted percept sequences, not live audio: a dentist reminder, a human IRS-style vishing path, and a handoff-like path. The measured object is the action trace.
+Agent evaluation uses (i) a class-conditional score simulator against an open-loop threshold and (ii) a smaller closed loop in which the pipeline emits sufficient statistics from audio plus injected transcripts. Scripted percept traces remain an illustration, not the confirmatory table.
 
 Sample sizes are small. We do not report $p$-values on $n{=}6$ as evidence of absence beyond the ranking AUC itself.
 
@@ -208,17 +208,17 @@ Confirmatory numbers use an independent set written after \texttt{STAGE\_EMISSIO
 
 \begin{table}[t]
 \centering
-\caption{Linguistic detection on the lexicon-locked independent set ($n{=}40$). Trap is mean score on isolated-keyword benign lines (lower is better). Author held-out is sanity only.}
+\caption{Linguistic detection on the lexicon-locked independent set ($n{=}48$, corpus hash \texttt{7879918a4fe08c5d}). Trap is mean score on isolated-keyword benign lines (lower is better). Author held-out is sanity only. LTM is logistic regression on stage counts, not a neural net. Text-noise is not ASR WER. Source: \texttt{upgrade\_experiments.json}.}
 \label{tab:ling}
 \begin{tabular}{lcccc}
 \toprule
 Condition & $n$ & AUC & 95\% CI & Trap \\
 \midrule
-Independent, narrow keywords & 40 & 0.547 & 0.39--0.70 & 0.50 \\
-Independent, wide lexicon & 40 & 0.839 & 0.72--0.94 & 0.13 \\
-Independent, SDTG (HMM) & 40 & 0.820 & 0.69--0.93 & 0.54 \\
-Independent, NTM & 40 & 0.750 & 0.59--0.88 & 0.19 \\
-Independent, wide, ASR 25\% WER & 40 & 0.840 & --- & 0.03 \\
+Independent, narrow keywords & 48 & 0.596 & 0.49--0.70 & 0.24 \\
+Independent, wide lexicon & 48 & 0.836 & 0.73--0.92 & 0.10 \\
+Independent, SDTG (HMM) & 48 & 0.817 & 0.71--0.92 & 0.33 \\
+Independent, LTM (linear counts) & 48 & 0.733 & 0.59--0.86 & 0.10 \\
+Independent, wide, text-noise $0.25$ & 48 & 0.785 & 0.65--0.89 & 0.07 \\
 Author held-out, keywords (sanity) & 38 & 0.417 & --- & 0.23 \\
 Author held-out, keywords+stages (sanity) & 38 & 0.883 & --- & 0.23 \\
 \bottomrule
@@ -242,7 +242,7 @@ Table~\ref{tab:fuse} and Fig.~\ref{fig:fuse} report the OR-label task. Linguisti
 
 \begin{table}[t]
 \centering
-\caption{Operational fusion, $n{=}40$. Disagreement recall and safe-cell FPR use threshold $0.5$.}
+\caption{Operational fusion on a constructed OR-label grid (sanity). Confirmatory fusion rows, including TPR at FPR $0.05$, are in \texttt{upgrade\_experiments.json}. Do not read AUC $1.000$ as a population result.}
 \label{tab:fuse}
 \begin{tabular}{lcccc}
 \toprule

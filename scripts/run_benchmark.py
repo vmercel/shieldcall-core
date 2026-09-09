@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import _repo  # noqa: F401
+
 from shieldcall.eval.harness import run_full_benchmark
 
 

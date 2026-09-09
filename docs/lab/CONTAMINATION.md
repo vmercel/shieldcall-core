@@ -5,7 +5,7 @@ A test utterance is **contaminated** if it influenced a regex, a floor, or a hyp
 ## Lock
 
 - Date: 2026-08-22
-- Object: `STAGE_EMISSIONS` and `PATTERN_GROUPS` as of this commit
+- Object: `STAGE_EMISSIONS` (`LEXICON_LOCK`) and `PATTERN_GROUPS` (`current_lexicon_lock()` in `linguistic/lock.py`)
 - Rule: no new regex because a test line missed. If a regex is added, the triggering ID is listed here and dropped from confirmatory splits.
 
 ## Known contamination (pre-lock; not used as confirmatory)
@@ -17,7 +17,9 @@ A test utterance is **contaminated** if it influenced a regex, a floor, or a hyp
 
 ## Independent set
 
-`shieldcall/eval/corpora/independent_scripts.py` was drafted **after** the lock, from public FTC/CISA impersonation tropes, without adding regexes. If a later commit adds a regex because an `ind_*` line missed, that `ind_*` ID is contaminated.
+`shieldcall/eval/corpora/independent_scripts.py` was drafted **after** the lock, from public FTC/CISA impersonation tropes, without adding regexes. It is **same-lab** English, not a hired second writer. Detector-aware benign tells (“we will never ask for PIN/gift cards”) were removed. If a later commit adds a regex because an `ind_*` line missed, that `ind_*` ID is contaminated.
+
+Corpus hash: `independent_corpus_hash()`.
 
 ## Current confirmatory exclusions
 

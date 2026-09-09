@@ -5,8 +5,8 @@ with calibrated noise around class-conditional means. The agent and a
 threshold baseline are scored on missed-harvest, false-challenge, false-warn,
 and mean interruption cost.
 
-This is still a simulator. Closed-loop audio+text lives in
-``eval.agent_closed_loop``.
+This is still a class-conditional *score* simulator. Closed-loop audio+text
+is ``shieldcall.eval.agent_closed_loop``.
 """
 
 from __future__ import annotations

@@ -52,8 +52,11 @@ agent:
 
 eval:
   linguistic_confirmatory: independent
-  acoustic_headline_vocoders: [lpc, neural_quant]
-  acoustic_sanity_vocoders: [pulse_formant]
+  acoustic_headline_vocoders: [lpc]
+  acoustic_sanity_vocoders: [pulse_formant, neural_quant]
   sapc_min_pairs: 24
   bootstrap_n: 1000
   bootstrap_seed: 0
+  min_acoustic_n: 20
+  min_fusion_n: 40
+  min_linguistic_n: 40

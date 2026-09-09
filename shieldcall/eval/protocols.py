@@ -19,9 +19,10 @@ from ..audio.preprocessor import TelephonyPreprocessor
 from ..fusion.baselines import LogisticLateFusion
 from ..fusion.engine import FusionEngine
 from ..linguistic.scorer import LinguisticFraudScorer, LinguisticScore
+from .corpora.independent_scripts import independent_scripts
 from .corpora.vishing_scripts import CallScript, heldout_scripts, train_scripts
 from .harness import EvalResult
-from .metrics import auc_roc, equal_error_rate
+from .metrics import auc_roc, equal_error_rate, tpr_at_fpr
 from .speech_data import SpeechClip, load_speaker_disjoint, speech_available
 from .vocoders import vocode, VocoderName
 
@@ -139,10 +140,11 @@ def linguistic_protocol() -> Dict[str, EvalResult]:
 def acoustic_protocol(
     n_train_speakers: int = 8,
     n_test_speakers: int = 8,
-    utt_per_speaker: int = 4,
-    vocoders: Sequence[VocoderName] = ("pulse_formant",),
+    utt_per_speaker: int = 2,
+    vocoders: Sequence[VocoderName] = ("lpc",),
     profiles: Sequence[CodecProfile] = (CodecProfile.CLEAN, CodecProfile.NARROWBAND),
     seed: int = 0,
+    include_hybrid: bool = False,
 ) -> Tuple[Dict[str, EvalResult], AcousticDeepfakeScorer, List[SpeechClip], List[SpeechClip], Dict[str, List[np.ndarray]]]:
     if not speech_available():
         raise FileNotFoundError("Mini LibriSpeech not found. Run scripts/download_speech.py")
@@ -184,8 +186,54 @@ def acoustic_protocol(
                 eer_estimate=equal_error_rate(labels, scores),
                 mean_latency_ms=0.0,
                 auc=auc_roc(labels, scores),
-                notes="speaker-disjoint bona fide vs vocoded",
+                notes="speaker-disjoint bona fide vs vocoded; residual+PMA",
             )
+    if include_hybrid:
+        from ..acoustic.hybrid import HybridHScorer
+
+        train_embs, train_y = [], []
+        for clip in train:
+            e = clip_mean_embedding(clip.audio, sr)
+            if e is not None:
+                train_embs.append(e)
+                train_y.append(False)
+        for audio in fit_spoof:
+            e = clip_mean_embedding(audio, sr)
+            if e is not None:
+                train_embs.append(e)
+                train_y.append(True)
+        if train_embs:
+            hybrid = HybridHScorer(seed=seed)
+            hybrid.fit(train_embs, train_y)
+            for v in vocoders:
+                for profile in profiles:
+                    labels, scores = [], []
+                    for clip in test:
+                        audio = clip.audio
+                        if profile != CodecProfile.CLEAN:
+                            audio = TelephonyChannelTwin(
+                                ChannelConfig(profile=profile, seed=seed)
+                            ).apply(audio, sr)
+                        e = clip_mean_embedding(audio, sr)
+                        scores.append(0.5 if e is None else hybrid.score(e))
+                        labels.append(0)
+                    for audio in test_spoof[v]:
+                        a = audio
+                        if profile != CodecProfile.CLEAN:
+                            a = TelephonyChannelTwin(
+                                ChannelConfig(profile=profile, seed=seed)
+                            ).apply(a, sr)
+                        e = clip_mean_embedding(a, sr)
+                        scores.append(0.5 if e is None else hybrid.score(e))
+                        labels.append(1)
+                    results[f"hy_{v}_{profile.value}"] = EvalResult(
+                        condition=f"hybridH/{v}/{profile.value}",
+                        n_samples=len(labels),
+                        eer_estimate=equal_error_rate(labels, scores),
+                        mean_latency_ms=0.0,
+                        auc=auc_roc(labels, scores),
+                        notes="logistic head on residual embeddings; not AASIST",
+                    )
     return results, scorer, train, test, test_spoof
 
 
@@ -198,8 +246,9 @@ def operational_fusion_protocol(
 ) -> Tuple[EvalResult, List[PairScore], Dict[str, EvalResult]]:
     """Threat label = scam language OR vocoded audio."""
     sr = test_bona[0].sample_rate
-    scam = [s for s in heldout_scripts() if s.is_scam]
-    benign = [s for s in heldout_scripts() if not s.is_scam]
+    pool = independent_scripts()
+    scam = [s for s in pool if s.is_scam]
+    benign = [s for s in pool if not s.is_scam]
     train_scam = [s for s in train_scripts() if s.is_scam]
     train_benign = [s for s in train_scripts() if not s.is_scam]
 
@@ -252,7 +301,13 @@ def operational_fusion_protocol(
             gl.append(y)
     logreg.fit(gx, gy, gl)
 
-    items = cells(test_bona, test_spoof, scam, benign, n_pair=min(12, len(test_bona), len(test_spoof)))
+    items = cells(
+        test_bona,
+        test_spoof,
+        scam,
+        benign,
+        n_pair=min(10, len(test_bona), len(test_spoof), len(scam), len(benign)),
+    )
     pairs: List[PairScore] = []
     by_mode = {m: ([], []) for m in ("cscf", "naive", "acoustic", "linguistic", "logreg")}
 
@@ -364,20 +419,21 @@ def linguistic_ablation_protocol(
     """Locked-lexicon confirmatory linguistic table.
 
     Systems: narrow keywords (PATTERN_GROUPS), wide lexicon (STAGE_EMISSIONS
-    bag), SDTG (HMM path), NTM (fit on train scripts only).
+    bag), SDTG (HMM path), LTM (linear stage-counts, train split only).
     Population: independent_scripts if confirmatory else author held-out.
+    asr_wer is a synthetic text-noise knob, not measured ASR WER.
     """
     from ..linguistic.asr_noise import degrade_turns
-    from ..linguistic.discourse import emission_only_score, path_only_score, wide_lexicon_score
-    from ..linguistic.ntm import NeuralTrajectoryModel
+    from ..linguistic.discourse import emission_only_score, path_only_score
+    from ..linguistic.ntm import LinearTrajectoryModel
     from ..linguistic.scorer import LinguisticFraudScorer
-    from .corpora.independent_scripts import independent_scripts
+    from .corpora.independent_scripts import independent_corpus_hash, independent_scripts
     from .metrics import bootstrap_ci
 
     train = train_scripts()
     test = independent_scripts() if confirmatory else heldout_scripts()
-    ntm = NeuralTrajectoryModel(seed=seed)
-    ntm.fit(([t[1] for t in s.turns] for s in train), (1 if s.is_scam else 0 for s in train))
+    ltm = LinearTrajectoryModel(seed=seed)
+    ltm.fit(([t[1] for t in s.turns] for s in train), (1 if s.is_scam else 0 for s in train))
 
     def narrow_score(turns: List[str]) -> float:
         scorer = LinguisticFraudScorer(discourse_weight=0.0, pattern_weight=1.0)
@@ -390,7 +446,7 @@ def linguistic_ablation_protocol(
         "narrow_keywords": lambda turns: narrow_score(turns),
         "wide_lexicon": lambda turns: emission_only_score(turns),
         "sdtg": lambda turns: path_only_score(turns),
-        "ntm": lambda turns: ntm.score(turns),
+        "ltm": lambda turns: ltm.score(turns),
     }
     results: Dict[str, EvalResult] = {}
     for name, fn in systems.items():
@@ -409,11 +465,15 @@ def linguistic_ablation_protocol(
             eer_estimate=equal_error_rate(labels, scores),
             mean_latency_ms=0.0,
             auc=auc,
-            notes=f"confirmatory={confirmatory} wer={asr_wer}",
+            notes=(
+                f"confirmatory={confirmatory} text_noise={asr_wer} "
+                f"(not ASR WER) corpus={independent_corpus_hash() if confirmatory else 'author'}"
+            ),
             extras={
                 "auc_lo": lo,
                 "auc_hi": hi,
                 "trap_mean": float(np.mean(traps)) if traps else 0.0,
+                "corpus_hash": independent_corpus_hash() if confirmatory else "author",
             },
         )
     return results
@@ -444,12 +504,23 @@ def fusion_ablation_from_pairs(pairs: Sequence[PairScore]) -> Dict[str, EvalResu
         auc, lo, hi = bootstrap_ci(labels, scores, auc_roc, n_boot=400, seed=0)
         rec = float(np.mean([1.0 if s >= 0.5 else 0.0 for s in disc_s])) if disc_s else 0.0
         fpr = float(np.mean([1.0 if s >= 0.5 else 0.0 for s in safe_s])) if safe_s else 0.0
+        extras = {
+            "auc_lo": lo,
+            "auc_hi": hi,
+            "disc_recall@0.5": rec,
+            "safe_fpr@0.5": fpr,
+            "tpr@fpr0.05": tpr_at_fpr(labels, scores, 0.05),
+            "tpr@fpr0.50": tpr_at_fpr(labels, scores, 0.50),
+        }
+        n_neg = int(sum(1 for y in labels if y == 0))
+        if n_neg >= 20:
+            extras["tpr@fpr0.01"] = tpr_at_fpr(labels, scores, 0.01)
         results[f"fuse_{name}"] = EvalResult(
             condition=f"fusion/{name}",
             n_samples=len(pairs),
             eer_estimate=equal_error_rate(labels, scores),
             mean_latency_ms=0.0,
             auc=auc,
-            extras={"auc_lo": lo, "auc_hi": hi, "disc_recall@0.5": rec, "safe_fpr@0.5": fpr},
+            extras=extras,
         )
     return results
