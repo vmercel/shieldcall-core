@@ -31,6 +31,26 @@ only** (lexicon and paraphrases share an author).
 3. Residual features remain weak on **LPC** after telephone-band filtering.
 4. Fusion floors / calibrated-OR change complementary-cell recall vs a weighted sum, at a false-alarm cost. Lead with that tradeoff, not ranking AUC.
 
+## Multi-seed confirmatory reruns (P2-3, 2026-09-13)
+
+`python scripts/run_multiseed.py` re-ran the seed-dependent paper-experiment
+components (acoustic, operational fusion, adaptation) across seeds 0-4 on
+real Mini LibriSpeech audio (dev-clean-2, 26 speakers; the linguistic
+protocol takes no seed and was not re-run). Full per-seed values in
+`docs/results/multiseed.json`; 95% CIs use the t-distribution (df=4).
+
+| Metric | Mean | 95% CI | Verdict |
+|---|---|---|---|
+| Acoustic pulse-formant AUC (clean / narrowband) | 1.000 / 1.000 | [1.000, 1.000] | Perfect on all 5 splits, but n=20 and a toy vocoder: confirms the task is easy, not that the detector is strong |
+| Operational CSCF disagreement recall@0.5 | 0.870 | [0.836, 0.904] | Robust advantage over naive sum 0.330 [0.259, 0.401] |
+| Operational CSCF AUC | 0.858 | [0.849, 0.868] | Stable across splits |
+| LogReg fusion AUC | 0.890 | [0.843, 0.937] | Stable |
+| Adaptation EER reduction (5-shot) | 0.030 | [-0.113, 0.173] | **Not supported:** CI spans zero; adaptation hurt on 2/5 seeds (-0.05, -0.10). Do not claim few-shot gains |
+
+Headline: the fusion advantage survives multi-seed scrutiny; the few-shot
+adaptation benefit does not. Any paper or petition text claiming adaptation
+gains must be revised or dropped.
+
 ## Reproduce
 
 ```bash
@@ -38,6 +58,7 @@ source .venv/bin/activate
 python scripts/download_speech.py
 pytest -q
 python scripts/run_upgrade_experiments.py
+python scripts/run_multiseed.py   # P2-3: 5 seeds, ~30 min, writes docs/results/multiseed.json
 ```
 
 ## Still required for a stronger scientific claim
