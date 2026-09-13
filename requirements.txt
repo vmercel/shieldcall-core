@@ -7,3 +7,4 @@ pytest>=7.0
 matplotlib>=3.7
 soundfile>=0.12
 # Optional: torch/librosa only if you add a neural backend.
+websockets>=12.0

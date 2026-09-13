@@ -23,6 +23,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 from ..application.detector import DetectorApplication
 from ..eval.corpora.independent_scripts import independent_scripts
+from ..linguistic.provider import make_asr_from_env
 from ..pipeline import PipelineConfig
 from ..runtime.runtime import SidecarRuntime
 from ..runtime.session import CallSession, SessionEvent
@@ -127,7 +128,7 @@ def _script_turns(script_id: Optional[str], turns: Optional[List[str]]) -> List[
 
 def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
     cfg = PipelineConfig(channel=None, use_conformal=True, fuse_every_n_frames=5)
-    rt = runtime or SidecarRuntime(max_calls=8, pipeline_config=cfg)
+    rt = runtime or SidecarRuntime(max_calls=8, pipeline_config=cfg, asr=make_asr_from_env())
     if rt.pipeline_config.channel is not None:
         raise RuntimeError("live sidecar must not enable the channel twin")
 
