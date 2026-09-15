@@ -1,10 +1,12 @@
 # Hosted inference design: ShieldCall Core detector as a service
 
-Status: **design doc** (P2-4). Nothing here is deployed; there is no
-production traffic, no vendor quotes, and no customer commitments.
-All prices are labelled *illustrative*. Numbers grounded in the repo
-are marked with their source; proposed targets are marked
-`(target)`, measurements `(measured)`.
+Status: **design doc** (P2-4) + **prototype implementation** (P2-5,
+2026-09-15). The P2-5 prototype lives in `shieldcall/serve/hosted.py`,
+behind the `SHIELDCALL_HOSTED_ENDPOINT` feature flag (off by default).
+There is still no production deployment, no vendor quotes, and no
+customer commitments. All prices are labelled *illustrative*. Numbers
+grounded in the repo are marked with their source; proposed targets are
+marked `(target)`, measurements `(measured)`.
 
 ## 1. What exists today
 
@@ -195,3 +197,31 @@ for > N minutes, p95 frame time > 8 ms, token-auth failure spikes
   P3-1 consent work).
 - App Store / Play billing integration (P1-1..P1-3, needs Mercel's
   developer accounts).
+
+## 8. Prototype implementation (P2-5)
+
+`shieldcall/serve/hosted.py` implements the first three items of the
+section-2 production contract, registered only when
+`SHIELDCALL_HOSTED_ENDPOINT=1`:
+
+1. **Fail closed at startup.** `create_app` raises `RuntimeError` when
+   the flag is on and no token is configured; the worker never serves
+   the hosted routes unauthenticated.
+2. **Rotatable tokens.** `SHIELDCALL_SIDECAR_TOKENS="id:value,..."`
+   (constant-time compare per token; the authenticating token id is
+   logged with each request). Legacy `SHIELDCALL_SIDECAR_TOKEN` still
+   works as token id `default`.
+3. **Per-client quota.** In-process per-token-id per-minute budget
+   (`SHIELDCALL_HOSTED_QUOTA_PER_MIN`, default 60) on the ingest route;
+   429 with `Retry-After` past the budget.
+
+Single detector route: `POST /hosted/v1/analyze` takes transcript
+turns and/or one PCM16 audio chunk, runs them through the pipeline in
+an ephemeral call session (opened and closed inside the request, so it
+works without sticky routing), and returns tier, risk, fraud/synth
+probs, and the acting verdict. `GET /hosted/v1/status` reports the
+prototype config behind the same auth.
+
+Deliberately not in the prototype: persistent quota store (in-process
+fixed window resets on worker restart), per-route latency histograms,
+JWT-for-app-origin auth, pinned CORS. All remain Phase 1 work.

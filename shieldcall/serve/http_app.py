@@ -27,6 +27,7 @@ from ..linguistic.provider import make_asr_from_env
 from ..pipeline import PipelineConfig
 from ..runtime.runtime import SidecarRuntime
 from ..runtime.session import CallSession, SessionEvent
+from . import hosted
 
 TOKEN = os.environ.get("SHIELDCALL_SIDECAR_TOKEN", "").strip()
 
@@ -127,6 +128,17 @@ def _script_turns(script_id: Optional[str], turns: Optional[List[str]]) -> List[
 
 
 def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
+    # Prototype hosted endpoint (P2-5): fail closed at startup when the flag
+    # is on but no bearer token is configured.
+    hosted_auth = None
+    if hosted.hosted_enabled():
+        hosted_auth = hosted.HostedAuth.from_env()
+        if not hosted_auth.tokens:
+            raise RuntimeError(
+                "SHIELDCALL_HOSTED_ENDPOINT is enabled but no sidecar token is "
+                "configured (set SHIELDCALL_SIDECAR_TOKENS or "
+                "SHIELDCALL_SIDECAR_TOKEN). Refusing to serve unauthenticated."
+            )
     cfg = PipelineConfig(channel=None, use_conformal=True, fuse_every_n_frames=5)
     rt = runtime or SidecarRuntime(max_calls=8, pipeline_config=cfg, asr=make_asr_from_env())
     if rt.pipeline_config.channel is not None:
@@ -360,6 +372,9 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
                 await ws.send_json({"type": "error", "detail": str(exc)})
             except Exception:
                 pass
+
+    if hosted_auth is not None:
+        hosted.register_hosted_routes(app, rt, hosted_auth)
 
     return app
 
