@@ -7,6 +7,8 @@ Channel twin is off. Recommend-only: this API never hangs up a call.
 from __future__ import annotations
 
 import base64
+import hmac
+import logging
 import os
 import time
 import uuid
@@ -19,6 +21,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
+log = logging.getLogger(__name__)
+
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 from ..application.detector import DetectorApplication
@@ -29,7 +33,38 @@ from ..runtime.runtime import SidecarRuntime
 from ..runtime.session import CallSession, SessionEvent
 from . import hosted
 
-TOKEN = os.environ.get("SHIELDCALL_SIDECAR_TOKEN", "").strip()
+def _sidecar_tokens() -> Dict[str, str]:
+    """Configured bearer tokens, read lazily so tests can set env per case."""
+    return hosted.parse_tokens()
+
+
+def _unauthenticated_allowed() -> bool:
+    return os.environ.get("SHIELDCALL_SIDECAR_ALLOW_UNAUTHENTICATED", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _require_sidecar_auth_configured() -> None:
+    """Fail closed at startup: serving the detector API without a bearer
+    token is only allowed under the explicit local-dev escape hatch
+    SHIELDCALL_SIDECAR_ALLOW_UNAUTHENTICATED=1."""
+    if _sidecar_tokens():
+        return
+    if _unauthenticated_allowed():
+        log.warning(
+            "SHIELDCALL_SIDECAR_ALLOW_UNAUTHENTICATED is set: the sidecar API "
+            "serves without a bearer token. Never use in production."
+        )
+        return
+    raise RuntimeError(
+        "No sidecar bearer token is configured (set SHIELDCALL_SIDECAR_TOKENS "
+        "or SHIELDCALL_SIDECAR_TOKEN). Refusing to serve the detector API "
+        "unauthenticated. For local lab use only, set "
+        "SHIELDCALL_SIDECAR_ALLOW_UNAUTHENTICATED=1."
+    )
 
 
 class OpenCallBody(BaseModel):
@@ -75,12 +110,20 @@ class FuseScoreBody(BaseModel):
 
 
 def _check_token(authorization: Optional[str]) -> None:
-    if not TOKEN:
-        return
+    tokens = _sidecar_tokens()
+    if not tokens:
+        # create_app refuses to start in this state; this is defense in depth
+        # in case the environment changed after startup.
+        if _unauthenticated_allowed():
+            return
+        raise HTTPException(status_code=503, detail="sidecar auth not configured")
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="missing bearer token")
-    if authorization.split(" ", 1)[1] != TOKEN:
-        raise HTTPException(status_code=403, detail="bad token")
+    presented = authorization.split(" ", 1)[1]
+    for value in tokens.values():
+        if hmac.compare_digest(presented, value):
+            return
+    raise HTTPException(status_code=403, detail="bad token")
 
 
 def _pcm_to_float(b64: str) -> np.ndarray:
@@ -128,6 +171,9 @@ def _script_turns(script_id: Optional[str], turns: Optional[List[str]]) -> List[
 
 
 def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
+    # Fail closed at startup: the detector API must not serve unauthenticated
+    # (P2-4 gap; the hosted endpoint already had this from P2-5).
+    _require_sidecar_auth_configured()
     # Prototype hosted endpoint (P2-5): fail closed at startup when the flag
     # is on but no bearer token is configured.
     hosted_auth = None
@@ -338,7 +384,7 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
     @app.websocket("/v1/calls/{call_id}/stream")
     async def stream(ws: WebSocket, call_id: str):
         await ws.accept()
-        if TOKEN:
+        if _sidecar_tokens() or not _unauthenticated_allowed():
             proto = ws.headers.get("authorization") or ""
             try:
                 _check_token(proto)
@@ -379,4 +425,11 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
     return app
 
 
-app = create_app()
+try:
+    app = create_app()
+except RuntimeError as exc:
+    # Module import must not crash when auth is unconfigured (tests, docs
+    # builds). create_app() is the supported entry point and still fails
+    # closed; uvicorn entry points must call it after configuring env.
+    log.warning("shieldcall.serve.http_app: %s", exc)
+    app = None

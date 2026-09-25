@@ -37,17 +37,25 @@ design keeps:
 ## 2. Authenticated endpoint (production hardening)
 
 Gap found while writing this doc: `_check_token` in `http_app.py`
-**fails open when `SHIELDCALL_SIDECAR_TOKEN` is unset** — any
-deployment that forgets the variable ships unauthenticated. The
-production contract is:
+**failed open when `SHIELDCALL_SIDECAR_TOKEN` was unset** — any
+deployment that forgot the variable shipped unauthenticated. FIXED
+2026-09-25: `create_app` now raises at startup when no bearer token is
+configured, on BOTH the main `/v1/` API and the hosted prototype
+(P2-5 had only covered `/hosted/*`). The explicit local-dev escape
+hatch `SHIELDCALL_SIDECAR_ALLOW_UNAUTHENTICATED=1` permits
+unauthenticated serving for lab use and logs a warning; it must never
+be set in production. The production contract is:
 
-1. **Fail closed at startup.** If the token variable is unset in a
-   production config profile, `create_app` must raise instead of
-   serving. (Code change for P2-5.)
+1. **Fail closed at startup.** If no token is configured and the escape
+   hatch is off, `create_app` raises instead of serving. DONE 2026-09-25
+   for the main API (tests/test_sidecar_auth.py).
 2. **Rotatable credentials.** Support a small list of active token IDs
    (e.g. `SHIELDCALL_SIDECAR_TOKENS`, comma-separated `id:value`) so a
    new token can be rolled out with a grace window before the old one
    is revoked; log which token ID authenticated each request.
+   Rotatable tokens are accepted on the main API as well as the hosted
+   routes (constant-time compare); legacy `SHIELDCALL_SIDECAR_TOKEN`
+   still works as token id "default".
 3. **Per-client quota.** Reuse the `consume_ai_quota` RPC pattern
    already live on the Supabase edge functions (P0-3): a per-client,
    per-minute budget on ingest routes, 429 with `Retry-After` past the
