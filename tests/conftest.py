@@ -19,3 +19,7 @@ def _lab_unauthenticated(monkeypatch):
     monkeypatch.delenv("SHIELDCALL_SIDECAR_TOKEN", raising=False)
     monkeypatch.delenv("SHIELDCALL_SIDECAR_TOKENS", raising=False)
     monkeypatch.delenv("SHIELDCALL_HOSTED_ENDPOINT", raising=False)
+    # Keep the suite hermetic: the persistent quota store (P2-6a) must not
+    # write to the real ~/.shieldcall/quota.db during tests. Individual
+    # tests override this with tmp files where they verify env wiring.
+    monkeypatch.setenv("SHIELDCALL_QUOTA_DB_PATH", ":memory:")

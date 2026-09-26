@@ -61,7 +61,22 @@ be set in production. The production contract is:
    per-minute budget on ingest routes, 429 with `Retry-After` past the
    budget, counters exported to metrics. Never fail open on the quota
    store: if the store is unreachable, keep serving audio but freeze
-   new-call opens.
+   new-call opens. DONE 2026-09-26 (P2-6a):
+   `shieldcall/serve/quota_store.py` — SQLite-backed fixed-window
+   accounting (WAL mode, atomic `BEGIN IMMEDIATE` upserts) shared by
+   `POST /v1/calls` (scope `sidecar`,
+   `SHIELDCALL_SIDECAR_QUOTA_PER_MIN`, default 60) and
+   `POST /hosted/v1/analyze` (scope `hosted`,
+   `SHIELDCALL_HOSTED_QUOTA_PER_MIN`, default 60); scopes keep the two
+   budgets independent. `SHIELDCALL_QUOTA_DB_PATH` selects the database
+   file (default `~/.shieldcall/quota.db`); an unopenable database
+   raises at `create_app` startup (fail closed). Runtime store failure
+   returns 429 "quota store unavailable" (Retry-After 60) on new-call
+   ingest only; audio/score routes keep serving existing calls.
+   Process-local consumed/rejected/store-error counters are exported on
+   `GET /health` (`quota`) and `GET /hosted/v1/status`. The websocket
+   still opens a call implicitly when given an unknown call_id; gating
+   that path is open follow-up work.
 4. **App-origin traffic** may use Supabase Auth JWTs (validated against
    the project JWKS) instead of the static bearer token; the static
    token remains for SBC/sidecar integrations.
@@ -230,6 +245,19 @@ works without sticky routing), and returns tier, risk, fraud/synth
 probs, and the acting verdict. `GET /hosted/v1/status` reports the
 prototype config behind the same auth.
 
-Deliberately not in the prototype: persistent quota store (in-process
-fixed window resets on worker restart), per-route latency histograms,
+Deliberately not in the prototype: per-route latency histograms,
 JWT-for-app-origin auth, pinned CORS. All remain Phase 1 work.
+
+### Prototype hardening since P2-5
+
+- **2026-09-25 (P2-6):** fail-closed bearer-token auth on the main
+  `/v1/` API (previously only the hosted routes failed closed), with
+  the explicit `SHIELDCALL_SIDECAR_ALLOW_UNAUTHENTICATED=1` lab escape
+  hatch.
+- **2026-09-26 (P2-6a):** persistent quota store
+  (`shieldcall/serve/quota_store.py`). The in-process fixed-window
+  dict is gone: quota accounting is SQLite-backed, survives worker
+  restarts, and is shared across workers on the same database file.
+  Also enforced per-token quotas on the main API's new-call ingest
+  (`POST /v1/calls`, `SHIELDCALL_SIDECAR_QUOTA_PER_MIN`), which
+  previously had no quota at all.

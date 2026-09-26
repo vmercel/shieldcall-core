@@ -32,6 +32,13 @@ from ..pipeline import PipelineConfig
 from ..runtime.runtime import SidecarRuntime
 from ..runtime.session import CallSession, SessionEvent
 from . import hosted
+from . import quota_store as quota_store_mod
+from .quota_store import QuotaStoreError
+
+# Quota scope for the main detector API. Budgets are independent per
+# route family: the main API ("sidecar") and the hosted prototype
+# ("hosted") never eat each other's budget.
+SIDECAR_QUOTA_SCOPE = "sidecar"
 
 def _sidecar_tokens() -> Dict[str, str]:
     """Configured bearer tokens, read lazily so tests can set env per case."""
@@ -109,20 +116,57 @@ class FuseScoreBody(BaseModel):
     t: float = 0.0
 
 
-def _check_token(authorization: Optional[str]) -> None:
+def _sidecar_quota_per_min() -> int:
+    """Per-token-id budget of new-call opens per minute on the main API.
+    0 disables throttling."""
+    raw = os.environ.get("SHIELDCALL_SIDECAR_QUOTA_PER_MIN", "60").strip()
+    try:
+        return max(0, int(raw))
+    except ValueError:
+        return 60
+
+
+def _enforce_new_call_quota(qstore, token_id: str, limit: int) -> None:
+    """429 when the per-token new-call budget is spent, or when the quota
+    store is unreachable. A dead store freezes new-call opens; the
+    audio/score paths keep serving existing calls (never fail open)."""
+    if limit <= 0:
+        return
+    try:
+        decision = qstore.consume(SIDECAR_QUOTA_SCOPE, token_id, limit)
+    except QuotaStoreError:
+        log.error(
+            "sidecar quota store unreachable; freezing new-call opens", exc_info=True
+        )
+        raise HTTPException(
+            status_code=429,
+            detail="quota store unavailable",
+            headers={"Retry-After": "60"},
+        )
+    if not decision.allowed:
+        raise HTTPException(
+            status_code=429,
+            detail="sidecar quota exceeded",
+            headers={"Retry-After": str(decision.retry_after)},
+        )
+
+
+def _check_token(authorization: Optional[str]) -> str:
+    """Return the token id that authenticated the request ("lab" under the
+    explicit local-dev escape hatch). Raises 401/403/503 as before."""
     tokens = _sidecar_tokens()
     if not tokens:
         # create_app refuses to start in this state; this is defense in depth
         # in case the environment changed after startup.
         if _unauthenticated_allowed():
-            return
+            return "lab"
         raise HTTPException(status_code=503, detail="sidecar auth not configured")
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="missing bearer token")
     presented = authorization.split(" ", 1)[1]
-    for value in tokens.values():
+    for tid, value in tokens.items():
         if hmac.compare_digest(presented, value):
-            return
+            return tid
     raise HTTPException(status_code=403, detail="bad token")
 
 
@@ -174,6 +218,17 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
     # Fail closed at startup: the detector API must not serve unauthenticated
     # (P2-4 gap; the hosted endpoint already had this from P2-5).
     _require_sidecar_auth_configured()
+    # Persistent per-client quota store (P2-6 Phase 1). Fail closed at
+    # startup too: a deployment that cannot open its quota database must
+    # not boot and serve unthrottled.
+    try:
+        qstore = quota_store_mod.QuotaStore(quota_store_mod.default_quota_db_path())
+    except QuotaStoreError as exc:
+        raise RuntimeError(
+            f"Cannot open sidecar quota store ({exc}). Refusing to serve "
+            "without quota accounting."
+        ) from exc
+    sidecar_quota_per_min = _sidecar_quota_per_min()
     # Prototype hosted endpoint (P2-5): fail closed at startup when the flag
     # is on but no bearer token is configured.
     hosted_auth = None
@@ -202,6 +257,7 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
     app.state.runtime = rt
     detector = DetectorApplication(rt)
     app.state.detector = detector
+    app.state.quota_store = qstore
     origins = os.environ.get("SHIELDCALL_CORS", "*").split(",")
     app.add_middleware(
         CORSMiddleware,
@@ -234,7 +290,9 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
 
     @app.get("/health")
     def health():
-        return detector.health()
+        body = detector.health()
+        body["quota"] = app.state.quota_store.stats()
+        return body
 
     @app.get("/ready")
     def ready():
@@ -249,7 +307,8 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
 
     @app.post("/v1/calls")
     def open_call(body: OpenCallBody, authorization: Optional[str] = Header(default=None)):
-        _check_token(authorization)
+        tid = _check_token(authorization)
+        _enforce_new_call_quota(app.state.quota_store, tid, sidecar_quota_per_min)
         cid = (body.call_id or "").strip() or f"lab-{uuid.uuid4().hex[:12]}"
         sess = rt.open_call(cid)
         return {"call_id": sess.call_id, "shed": sess.shed}

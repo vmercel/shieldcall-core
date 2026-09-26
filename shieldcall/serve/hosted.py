@@ -2,9 +2,11 @@
 
 Implements the auth + quota contract from docs/HOSTED_INFERENCE_DESIGN.md
 (section 2) behind a feature flag. This is a prototype: single detector
-route, in-process per-client quota, stateless per-request analysis. Not
-production until it has a persistent quota store, structured metrics, and
-the Phase 1 sticky pool from the design doc.
+route, stateless per-request analysis. Not production until it has
+structured metrics and the Phase 1 sticky pool from the design doc.
+
+Per-client quota is SQLite-backed and persistent across worker restarts
+(P2-6a, shieldcall/serve/quota_store.py).
 
 Env knobs:
   SHIELDCALL_HOSTED_ENDPOINT   Set to 1/true/yes/on to register /hosted/*
@@ -21,6 +23,12 @@ Env knobs:
   SHIELDCALL_HOSTED_QUOTA_PER_MIN
                                Per-token-id budget of analyze calls per
                                minute. Default 60. 0 disables throttling.
+  SHIELDCALL_QUOTA_DB_PATH     SQLite file for quota accounting. Default
+                               ~/.shieldcall/quota.db. A store that cannot be
+                               opened fails create_app at startup; a store
+                               that fails at runtime freezes new analyze
+                               calls (429 "quota store unavailable") instead
+                               of serving unthrottled.
 """
 
 from __future__ import annotations
@@ -31,15 +39,22 @@ import logging
 import os
 import time
 import uuid
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from fastapi import APIRouter, FastAPI, HTTPException, Header
 from pydantic import BaseModel, Field
 
+from .quota_store import QuotaStore, QuotaStoreError, default_quota_db_path
+
 log = logging.getLogger(__name__)
 
-WINDOW_SECONDS = 60.0
+WINDOW_SECONDS = 60
+
+# Quota scope for the hosted routes. Scopes keep budgets independent per
+# route family: the main API ("sidecar") and the hosted prototype never
+# eat each other's budget.
+HOSTED_QUOTA_SCOPE = "hosted"
 
 
 def hosted_enabled() -> bool:
@@ -87,13 +102,24 @@ class AnalyzeBody(BaseModel):
 
 
 class HostedAuth:
-    """Bearer auth with rotatable token ids and an in-process per-client quota."""
+    """Bearer auth with rotatable token ids and a persistent per-client quota.
 
-    def __init__(self, tokens: Dict[str, str], quota_per_min: int = 60):
+    The quota store is SQLite-backed (shieldcall/serve/quota_store.py), so
+    budgets survive worker restarts and are shared across workers using the
+    same database file. Direct construction (no store given) uses a hermetic
+    in-memory store; from_env() wires the file-backed store from
+    SHIELDCALL_QUOTA_DB_PATH.
+    """
+
+    def __init__(
+        self,
+        tokens: Dict[str, str],
+        quota_per_min: int = 60,
+        quota_store: Optional[QuotaStore] = None,
+    ):
         self.tokens = tokens
         self.quota_per_min = max(0, quota_per_min)
-        # token_id -> (window_start_epoch, count)
-        self._usage: Dict[str, Tuple[float, int]] = {}
+        self.quota_store = quota_store if quota_store is not None else QuotaStore(":memory:")
 
     @classmethod
     def from_env(cls) -> "HostedAuth":
@@ -102,7 +128,14 @@ class HostedAuth:
             quota = int(quota_raw)
         except ValueError:
             quota = 60
-        return cls(parse_tokens(), quota_per_min=quota)
+        try:
+            store = QuotaStore(default_quota_db_path())
+        except QuotaStoreError as exc:
+            raise RuntimeError(
+                f"Cannot open hosted quota store ({exc}). Refusing to serve "
+                "the hosted endpoint without quota accounting."
+            ) from exc
+        return cls(parse_tokens(), quota_per_min=quota, quota_store=store)
 
     def authenticate(self, authorization: Optional[str]) -> str:
         """Return the token id that authenticated the request.
@@ -118,21 +151,26 @@ class HostedAuth:
                 return tid
         raise HTTPException(status_code=403, detail="bad token")
 
-    def quota_wait_seconds(self, token_id: str) -> Optional[int]:
-        """Consume one budget unit. Return seconds to wait when over quota."""
+    def check_quota(self, token_id: str) -> Optional[int]:
+        """Consume one budget unit. Return seconds to wait when over quota.
+
+        Raises QuotaStoreError when the store is unreachable: callers must
+        freeze new-call ingest (429), never serve unthrottled.
+        """
         if self.quota_per_min <= 0:
             return None
-        now = time.time()
-        start, count = self._usage.get(token_id, (now, 0))
-        if now - start >= WINDOW_SECONDS:
-            start, count = now, 0
-        if count >= self.quota_per_min:
-            return int(WINDOW_SECONDS - (now - start)) + 1
-        self._usage[token_id] = (start, count + 1)
-        return None
+        decision = self.quota_store.consume(
+            HOSTED_QUOTA_SCOPE, token_id, self.quota_per_min, WINDOW_SECONDS
+        )
+        if decision.allowed:
+            return None
+        return decision.retry_after
 
     def reset_usage(self) -> None:
-        self._usage.clear()
+        self.quota_store.reset()
+
+    def quota_stats(self) -> Dict[str, Any]:
+        return self.quota_store.stats()
 
 
 def _pcm_to_float(b64: str) -> np.ndarray:
@@ -145,7 +183,17 @@ def _pcm_to_float(b64: str) -> np.ndarray:
 
 def _require(auth: HostedAuth, authorization: Optional[str]) -> str:
     tid = auth.authenticate(authorization)
-    wait = auth.quota_wait_seconds(tid)
+    try:
+        wait = auth.check_quota(tid)
+    except QuotaStoreError:
+        # Never fail open: a dead quota store freezes new analyze calls
+        # (the audio paths keep serving existing calls).
+        log.error("hosted quota store unreachable; freezing new analyze calls", exc_info=True)
+        raise HTTPException(
+            status_code=429,
+            detail="quota store unavailable",
+            headers={"Retry-After": "60"},
+        )
     if wait is not None:
         raise HTTPException(
             status_code=429,
@@ -196,6 +244,7 @@ def register_hosted_routes(app: FastAPI, runtime, auth: HostedAuth) -> None:
             "tokens_configured": len(auth.tokens),
             "quota_per_min": auth.quota_per_min,
             "token_id": tid,
+            "quota": auth.quota_stats(),
         }
 
     @router.post("/analyze")
