@@ -452,7 +452,13 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
                 return
         sess = rt.get_call(call_id)
         if sess is None:
-            sess = rt.open_call(call_id)
+            # No implicit call creation (P2-6b): the only way to open a call
+            # is POST /v1/calls, which enforces the per-token new-call quota
+            # from the persistent quota store. Opening the session here would
+            # let a client bypass that gate and create unbounded sessions
+            # (resource-exhaustion vector).
+            await ws.close(code=4404, reason="unknown call_id")
+            return
         try:
             while True:
                 msg = await ws.receive_json()

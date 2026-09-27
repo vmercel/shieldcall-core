@@ -261,3 +261,8 @@ JWT-for-app-origin auth, pinned CORS. All remain Phase 1 work.
   Also enforced per-token quotas on the main API's new-call ingest
   (`POST /v1/calls`, `SHIELDCALL_SIDECAR_QUOTA_PER_MIN`), which
   previously had no quota at all.
+- **2026-09-27 (P2-6b):** the websocket (`/v1/calls/{id}/stream`) no
+  longer opens a call session implicitly for an unknown `call_id`.
+  Sessions open only through `POST /v1/calls`, so the per-token
+  new-call quota cannot be bypassed from a websocket and unbounded
+  session creation is not possible. Unknown ids get close code 4404.
