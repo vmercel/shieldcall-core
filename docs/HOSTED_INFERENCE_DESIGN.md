@@ -245,8 +245,9 @@ works without sticky routing), and returns tier, risk, fraud/synth
 probs, and the acting verdict. `GET /hosted/v1/status` reports the
 prototype config behind the same auth.
 
-Deliberately not in the prototype: per-route latency histograms,
-JWT-for-app-origin auth, pinned CORS. All remain Phase 1 work.
+Deliberately not in the prototype: JWT-for-app-origin auth, pinned
+CORS. Both remain Phase 1 work. Per-route latency histograms shipped
+2026-09-28 (P2-6c).
 
 ### Prototype hardening since P2-5
 
@@ -266,3 +267,14 @@ JWT-for-app-origin auth, pinned CORS. All remain Phase 1 work.
   Sessions open only through `POST /v1/calls`, so the per-token
   new-call quota cannot be bypassed from a websocket and unbounded
   session creation is not possible. Unknown ids get close code 4404.
+- **2026-09-28 (P2-6c):** per-route latency histograms and 4xx/5xx
+  rates (the observability half of section 6). `shieldcall/serve/
+  latency.py` is a thread-safe, fixed-bucket cumulative histogram keyed
+  by route TEMPLATE (`"POST /v1/calls/{call_id}"`), never concrete
+  paths, so distinct call ids cannot blow up cardinality; unmatched
+  paths land on `"METHOD unmatched"`. An HTTP middleware in
+  `create_app` records every exchange; percentiles are midpoint
+  estimates (`p50_ms_est`/`p95_ms_est`), honestly labelled. Exported
+  from `/health` as `route_latency`; buckets overridable via
+  `SHIELDCALL_LATENCY_BUCKETS`. Websocket hold time is excluded by
+  design (it would poison a latency histogram).

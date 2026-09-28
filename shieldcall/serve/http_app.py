@@ -20,6 +20,7 @@ from fastapi import FastAPI, Header, HTTPException, WebSocket, WebSocketDisconne
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
+from starlette.requests import Request
 
 log = logging.getLogger(__name__)
 
@@ -33,6 +34,7 @@ from ..runtime.runtime import SidecarRuntime
 from ..runtime.session import CallSession, SessionEvent
 from . import hosted
 from . import quota_store as quota_store_mod
+from .latency import RouteLatencyTracker, buckets_from_env
 from .quota_store import QuotaStoreError
 
 # Quota scope for the main detector API. Budgets are independent per
@@ -258,6 +260,33 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
     detector = DetectorApplication(rt)
     app.state.detector = detector
     app.state.quota_store = qstore
+    # Per-route latency histograms + 4xx/5xx rates (P2-6c, Phase 1). Buckets
+    # are env-overridable via SHIELDCALL_LATENCY_BUCKETS.
+    app.state.latency = RouteLatencyTracker(buckets_from_env())
+
+    @app.middleware("http")
+    async def record_route_latency(request: Request, call_next):
+        """Time every HTTP exchange and file it under the route TEMPLATE
+        (e.g. "POST /v1/calls/{call_id}"), never the concrete path, so
+        distinct call ids cannot blow up metric cardinality. Unmatched
+        paths (404s) land on "METHOD unmatched". Exceptions are recorded
+        as 5xx and re-raised to the outer ServerError middleware, which
+        still converts them to a 500 response. Websockets are untouched:
+        Starlette 'http' middleware only sees HTTP traffic, and WS hold
+        time would poison a latency histogram anyway."""
+        tracker: RouteLatencyTracker = request.app.state.latency
+        t0 = time.perf_counter()
+        status_code = 500
+        try:
+            response = await call_next(request)
+            status_code = response.status_code
+            return response
+        finally:
+            route = request.scope.get("route")
+            path = getattr(route, "path", None)
+            key = f"{request.method} {path}" if path else f"{request.method} unmatched"
+            tracker.record(key, (time.perf_counter() - t0) * 1000.0, status_code)
+
     origins = os.environ.get("SHIELDCALL_CORS", "*").split(",")
     app.add_middleware(
         CORSMiddleware,
@@ -292,6 +321,7 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
     def health():
         body = detector.health()
         body["quota"] = app.state.quota_store.stats()
+        body["route_latency"] = app.state.latency.snapshot()
         return body
 
     @app.get("/ready")
