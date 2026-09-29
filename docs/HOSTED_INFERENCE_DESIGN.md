@@ -79,7 +79,23 @@ be set in production. The production contract is:
    that path is open follow-up work.
 4. **App-origin traffic** may use Supabase Auth JWTs (validated against
    the project JWKS) instead of the static bearer token; the static
-   token remains for SBC/sidecar integrations.
+   token remains for SBC/sidecar integrations. DONE 2026-09-29:
+   `shieldcall/serve/app_jwt.py` — RS256/ES256 only (alg=none and HS*
+   rejected, so leaked anon/service keys never pass as a user),
+   `aud`/`role` must be `authenticated`, optional expected-`iss` check,
+   JWKS cached with TTL + single refresh on `kid` miss (rotation), JWKS
+   outage is 503 fail-closed, never pass-through. Env:
+   `SHIELDCALL_APP_JWT_JWKS_URL` (unset = JWT auth off),
+   `SHIELDCALL_APP_JWT_ISSUER`, `SHIELDCALL_APP_JWT_CACHE_TTL`,
+   `SHIELDCALL_APP_JWT_TIMEOUT`. Wiring in `http_app.py`: static tokens
+   tried first, user JWT accepted as the Bearer token; JWT principals
+   get identity `jwt:<sub>` (per-user quota + logging), may only touch
+   call sessions they opened (403 otherwise, incl. the websocket close
+   4403), and see only their own calls in `GET /v1/calls`; static-token
+   integrators stay unrestricted. A JWKS URL alone satisfies the
+   fail-closed startup check (JWT-only deployments). App side same day:
+   `services/shieldcallSidecar.ts` sends the Supabase session access
+   token when no static `EXPO_PUBLIC_SHIELDCALL_TOKEN` is configured.
 5. **CORS.** `SHIELDCALL_CORS` defaults to `*` today. Production must
    pin it to the app origin; wildcard CORS stays dev-only.
 6. TLS terminates at the load balancer; the worker binds to
@@ -278,3 +294,14 @@ CORS. Both remain Phase 1 work. Per-route latency histograms shipped
   from `/health` as `route_latency`; buckets overridable via
   `SHIELDCALL_LATENCY_BUCKETS`. Websocket hold time is excluded by
   design (it would poison a latency histogram).
+- **2026-09-29 (Phase 1, item 4):** app-origin JWT auth. Supabase Auth
+  access tokens are accepted as the sidecar Bearer token when
+  `SHIELDCALL_APP_JWT_JWKS_URL` is configured (`shieldcall/serve/
+  app_jwt.py`; RS256/ES256 only, `aud`/`role` = `authenticated`,
+  optional issuer pin, JWKS outage is 503 fail-closed). JWT principals
+  are identified as `jwt:<sub>` for per-user quota/logging, own the
+  call sessions they open (403 on anyone else's, websocket close 4403),
+  and see only their own calls in `GET /v1/calls`. Static bearer tokens
+  keep working unchanged for SBC/sidecar integrations. The ShieldCallAI
+  client sends the signed-in user's access token when no static token
+  is configured. Phase 1 remaining: pinned CORS.

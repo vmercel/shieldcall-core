@@ -12,6 +12,7 @@ import logging
 import os
 import time
 import uuid
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -34,6 +35,8 @@ from ..runtime.runtime import SidecarRuntime
 from ..runtime.session import CallSession, SessionEvent
 from . import hosted
 from . import quota_store as quota_store_mod
+from . import app_jwt as app_jwt_mod
+from .app_jwt import AppJwtAuth, AppJwtInvalid, AppJwtUnavailable
 from .latency import RouteLatencyTracker, buckets_from_env
 from .quota_store import QuotaStoreError
 
@@ -41,6 +44,46 @@ from .quota_store import QuotaStoreError
 # route family: the main API ("sidecar") and the hosted prototype
 # ("hosted") never eat each other's budget.
 SIDECAR_QUOTA_SCOPE = "sidecar"
+
+
+@dataclass(frozen=True)
+class AuthPrincipal:
+    """Who authenticated this request.
+
+    - Static bearer token -> token_id is the configured token id,
+      jwt_sub is None (a trusted integrator: SBC/sidecar/lab).
+    - Supabase app-user JWT -> token_id is "jwt:<sub>" (per-user quota
+      and logging identity), jwt_sub is the user's sub claim. A JWT
+      principal may only touch call sessions it opened itself.
+    - Lab escape hatch -> token_id "lab", jwt_sub None.
+    """
+
+    token_id: str
+    jwt_sub: Optional[str] = None
+
+
+_jwt_auth_instance: Optional[AppJwtAuth] = None
+_jwt_auth_env_key: Optional[tuple] = None
+
+
+def _app_jwt_auth() -> Optional[AppJwtAuth]:
+    """App-origin JWT auth, read lazily so tests can set env per case.
+
+    The instance is cached process-wide and rebuilt only when the
+    JWT env knobs change, so the JWKS document cache inside
+    AppJwtAuth actually pays off across requests.
+    """
+    global _jwt_auth_instance, _jwt_auth_env_key
+    key = (
+        os.environ.get("SHIELDCALL_APP_JWT_JWKS_URL", "").strip(),
+        os.environ.get("SHIELDCALL_APP_JWT_ISSUER", "").strip(),
+        os.environ.get("SHIELDCALL_APP_JWT_CACHE_TTL", "").strip(),
+        os.environ.get("SHIELDCALL_APP_JWT_TIMEOUT", "").strip(),
+    )
+    if _jwt_auth_env_key != key:
+        _jwt_auth_env_key = key
+        _jwt_auth_instance = AppJwtAuth.from_env()
+    return _jwt_auth_instance
 
 def _sidecar_tokens() -> Dict[str, str]:
     """Configured bearer tokens, read lazily so tests can set env per case."""
@@ -59,8 +102,17 @@ def _unauthenticated_allowed() -> bool:
 def _require_sidecar_auth_configured() -> None:
     """Fail closed at startup: serving the detector API without a bearer
     token is only allowed under the explicit local-dev escape hatch
-    SHIELDCALL_SIDECAR_ALLOW_UNAUTHENTICATED=1."""
+    SHIELDCALL_SIDECAR_ALLOW_UNAUTHENTICATED=1. A configured app-JWT JWKS
+    URL also counts as auth configured (JWT-only deployments serve the
+    app without a static token; SBC integrations then have no credential,
+    which is the operator's explicit choice)."""
     if _sidecar_tokens():
+        return
+    if _app_jwt_auth() is not None:
+        log.info(
+            "no static sidecar token configured; serving with app-JWT auth only "
+            "(SHIELDCALL_APP_JWT_JWKS_URL set)"
+        )
         return
     if _unauthenticated_allowed():
         log.warning(
@@ -70,7 +122,8 @@ def _require_sidecar_auth_configured() -> None:
         return
     raise RuntimeError(
         "No sidecar bearer token is configured (set SHIELDCALL_SIDECAR_TOKENS "
-        "or SHIELDCALL_SIDECAR_TOKEN). Refusing to serve the detector API "
+        "or SHIELDCALL_SIDECAR_TOKEN, or SHIELDCALL_APP_JWT_JWKS_URL for "
+        "app-JWT-only operation). Refusing to serve the detector API "
         "unauthenticated. For local lab use only, set "
         "SHIELDCALL_SIDECAR_ALLOW_UNAUTHENTICATED=1."
     )
@@ -153,23 +206,60 @@ def _enforce_new_call_quota(qstore, token_id: str, limit: int) -> None:
         )
 
 
-def _check_token(authorization: Optional[str]) -> str:
-    """Return the token id that authenticated the request ("lab" under the
-    explicit local-dev escape hatch). Raises 401/403/503 as before."""
+def _check_token(authorization: Optional[str]) -> AuthPrincipal:
+    """Authenticate the request. Static bearer tokens are tried first
+    (constant-time compare); when app-JWT auth is configured
+    (SHIELDCALL_APP_JWT_JWKS_URL), a Supabase user access token is
+    accepted as the Bearer token instead.
+
+    Returns the AuthPrincipal. Raises 401 (missing), 403 (bad token),
+    503 (auth not configured, or the JWKS is unreachable so the token
+    cannot be validated -- fail closed, never pass through).
+    """
     tokens = _sidecar_tokens()
-    if not tokens:
+    jwt_auth = _app_jwt_auth()
+    if not tokens and jwt_auth is None:
         # create_app refuses to start in this state; this is defense in depth
         # in case the environment changed after startup.
         if _unauthenticated_allowed():
-            return "lab"
+            return AuthPrincipal(token_id="lab")
         raise HTTPException(status_code=503, detail="sidecar auth not configured")
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="missing bearer token")
     presented = authorization.split(" ", 1)[1]
     for tid, value in tokens.items():
         if hmac.compare_digest(presented, value):
-            return tid
+            return AuthPrincipal(token_id=tid)
+    if jwt_auth is not None:
+        try:
+            principal = jwt_auth.validate(presented)
+        except AppJwtUnavailable as exc:
+            raise HTTPException(
+                status_code=503, detail=f"app JWT unavailable: {exc}"
+            ) from exc
+        except AppJwtInvalid as exc:
+            raise HTTPException(
+                status_code=403, detail=f"bad app JWT: {exc}"
+            ) from exc
+        return AuthPrincipal(token_id=principal.token_id, jwt_sub=principal.sub)
     raise HTTPException(status_code=403, detail="bad token")
+
+
+def _require_call_access(app: FastAPI, call_id: str, principal: AuthPrincipal) -> CallSession:
+    """Return the session for call_id if the principal may touch it.
+
+    404 when the call does not exist. A JWT (app-user) principal may only
+    access sessions it opened itself (403 otherwise); static-token
+    principals are trusted integrators and are unrestricted.
+    """
+    sess = app.state.runtime.get_call(call_id)
+    if sess is None:
+        raise HTTPException(status_code=404, detail="unknown call_id")
+    if principal.jwt_sub is not None:
+        owner = app.state.call_owners.get(call_id)
+        if owner != principal.jwt_sub:
+            raise HTTPException(status_code=403, detail="not your call")
+    return sess
 
 
 def _pcm_to_float(b64: str) -> np.ndarray:
@@ -260,6 +350,11 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
     detector = DetectorApplication(rt)
     app.state.detector = detector
     app.state.quota_store = qstore
+    # Call-session ownership for app-JWT principals (Phase 1, item 4):
+    # call_id -> owner sub, or None for sessions opened by a static
+    # bearer token (trusted integrator: SBC/sidecar/lab, unrestricted).
+    # A JWT principal may only touch sessions it opened itself.
+    app.state.call_owners: Dict[str, Optional[str]] = {}
     # Per-route latency histograms + 4xx/5xx rates (P2-6c, Phase 1). Buckets
     # are env-overridable via SHIELDCALL_LATENCY_BUCKETS.
     app.state.latency = RouteLatencyTracker(buckets_from_env())
@@ -337,24 +432,36 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
 
     @app.post("/v1/calls")
     def open_call(body: OpenCallBody, authorization: Optional[str] = Header(default=None)):
-        tid = _check_token(authorization)
-        _enforce_new_call_quota(app.state.quota_store, tid, sidecar_quota_per_min)
+        principal = _check_token(authorization)
+        _enforce_new_call_quota(app.state.quota_store, principal.token_id, sidecar_quota_per_min)
         cid = (body.call_id or "").strip() or f"lab-{uuid.uuid4().hex[:12]}"
         sess = rt.open_call(cid)
+        # open_call is idempotent: record the owner on first open, and
+        # refuse when a JWT principal tries to (re)open someone else's
+        # call. Static-token integrators own nothing (unrestricted).
+        owners: Dict[str, Optional[str]] = app.state.call_owners
+        if principal.jwt_sub is not None:
+            existing = owners.get(sess.call_id, "absent")
+            if existing == "absent":
+                owners[sess.call_id] = principal.jwt_sub
+            elif existing != principal.jwt_sub:
+                raise HTTPException(status_code=403, detail="not your call")
+        else:
+            owners.setdefault(sess.call_id, None)
         return {"call_id": sess.call_id, "shed": sess.shed}
 
     @app.delete("/v1/calls/{call_id}")
     def close_call(call_id: str, authorization: Optional[str] = Header(default=None)):
-        _check_token(authorization)
+        principal = _check_token(authorization)
+        _require_call_access(app, call_id, principal)
         trace = rt.close_call(call_id)
+        app.state.call_owners.pop(call_id, None)
         return {"call_id": call_id, "n_decisions": len(trace)}
 
     @app.get("/v1/calls/{call_id}/trace")
     def trace(call_id: str, authorization: Optional[str] = Header(default=None)):
-        _check_token(authorization)
-        sess = rt.get_call(call_id)
-        if sess is None:
-            raise HTTPException(status_code=404, detail="unknown call_id")
+        principal = _check_token(authorization)
+        sess = _require_call_access(app, call_id, principal)
         return {"call_id": call_id, "trace": sess.agent.trace_dicts()}
 
     @app.post("/v1/calls/{call_id}/transcript")
@@ -363,10 +470,8 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
         body: TranscriptBody,
         authorization: Optional[str] = Header(default=None),
     ):
-        _check_token(authorization)
-        sess = rt.get_call(call_id)
-        if sess is None:
-            raise HTTPException(status_code=404, detail="unknown call_id")
+        principal = _check_token(authorization)
+        sess = _require_call_access(app, call_id, principal)
         sess.push_transcript(body.text, float(body.t))
         # Drive one hop of silence so fusion emits after linguistic update.
         sr = 8000
@@ -380,10 +485,8 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
         body: AudioBody,
         authorization: Optional[str] = Header(default=None),
     ):
-        _check_token(authorization)
-        sess = rt.get_call(call_id)
-        if sess is None:
-            raise HTTPException(status_code=404, detail="unknown call_id")
+        principal = _check_token(authorization)
+        sess = _require_call_access(app, call_id, principal)
         try:
             samples = _pcm_to_float(body.pcm_s16le_b64)
         except Exception as exc:
@@ -399,10 +502,8 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
         body: InjectBody,
         authorization: Optional[str] = Header(default=None),
     ):
-        _check_token(authorization)
-        sess = rt.get_call(call_id)
-        if sess is None:
-            raise HTTPException(status_code=404, detail="unknown call_id")
+        principal = _check_token(authorization)
+        sess = _require_call_access(app, call_id, principal)
         turns = _script_turns(body.script_id, body.turns)
         sr = 8000
         last = None
@@ -414,12 +515,24 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
 
     @app.get("/v1/calls")
     def list_calls(authorization: Optional[str] = Header(default=None)):
-        _check_token(authorization)
-        return detector.list_calls()
+        principal = _check_token(authorization)
+        body = detector.list_calls()
+        if principal.jwt_sub is not None:
+            # An app user sees only the calls they opened.
+            owners: Dict[str, Optional[str]] = app.state.call_owners
+            body = {
+                "calls": [
+                    c
+                    for c in body.get("calls", [])
+                    if owners.get(c.get("call_id")) == principal.jwt_sub
+                ]
+            }
+        return body
 
     @app.get("/v1/calls/{call_id}")
     def get_call(call_id: str, authorization: Optional[str] = Header(default=None)):
-        _check_token(authorization)
+        principal = _check_token(authorization)
+        _require_call_access(app, call_id, principal)
         body = detector.get_call(call_id)
         if body is None:
             raise HTTPException(status_code=404, detail="unknown call_id")
@@ -427,7 +540,8 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
 
     @app.get("/v1/calls/{call_id}/decision")
     def last_decision(call_id: str, authorization: Optional[str] = Header(default=None)):
-        _check_token(authorization)
+        principal = _check_token(authorization)
+        _require_call_access(app, call_id, principal)
         body = detector.decision(call_id)
         if body is None:
             raise HTTPException(status_code=404, detail="unknown call_id")
@@ -439,7 +553,8 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
         body: ChunkBody,
         authorization: Optional[str] = Header(default=None),
     ):
-        _check_token(authorization)
+        principal = _check_token(authorization)
+        _require_call_access(app, call_id, principal)
         samples = None
         if body.pcm_s16le_b64:
             try:
@@ -473,10 +588,11 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
     @app.websocket("/v1/calls/{call_id}/stream")
     async def stream(ws: WebSocket, call_id: str):
         await ws.accept()
-        if _sidecar_tokens() or not _unauthenticated_allowed():
+        principal: Optional[AuthPrincipal] = None
+        if _sidecar_tokens() or _app_jwt_auth() is not None or not _unauthenticated_allowed():
             proto = ws.headers.get("authorization") or ""
             try:
-                _check_token(proto)
+                principal = _check_token(proto)
             except HTTPException:
                 await ws.close(code=4401)
                 return
@@ -489,6 +605,11 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
             # (resource-exhaustion vector).
             await ws.close(code=4404, reason="unknown call_id")
             return
+        if principal is not None and principal.jwt_sub is not None:
+            owner = app.state.call_owners.get(call_id)
+            if owner != principal.jwt_sub:
+                await ws.close(code=4403, reason="not your call")
+                return
         try:
             while True:
                 msg = await ws.receive_json()
