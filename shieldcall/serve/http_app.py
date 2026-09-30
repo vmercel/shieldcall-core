@@ -14,7 +14,8 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urlparse
 
 import numpy as np
 from fastapi import FastAPI, Header, HTTPException, WebSocket, WebSocketDisconnect
@@ -127,6 +128,114 @@ def _require_sidecar_auth_configured() -> None:
         "unauthenticated. For local lab use only, set "
         "SHIELDCALL_SIDECAR_ALLOW_UNAUTHENTICATED=1."
     )
+
+
+# ---------------------------------------------------------------------------
+# Pinned CORS (Phase 1, item 5)
+# ---------------------------------------------------------------------------
+
+_CORS_WILDCARD_HATCH = "SHIELDCALL_CORS_ALLOW_WILDCARD"
+
+
+@dataclass(frozen=True)
+class CorsConfig:
+    """Effective CORS policy for the sidecar API.
+
+    - origins: pinned allowlist (scheme://host[:port] tuples). Empty means
+      no cross-origin browser access at all.
+    - wildcard: True only under the explicit dev-only wildcard escape
+      hatch; the middleware then answers "*" like the old default.
+    """
+
+    origins: Tuple[str, ...] = ()
+    wildcard: bool = False
+
+
+def _cors_wildcard_allowed() -> bool:
+    return os.environ.get(_CORS_WILDCARD_HATCH, "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _validate_cors_origin(entry: str) -> str:
+    """Normalize one SHIELDCALL_CORS entry to scheme://host[:port].
+
+    Rejects anything that is not a bare http(s) origin: paths, queries,
+    fragments, userinfo, non-http schemes, or missing hosts. Raises
+    RuntimeError with the offending value so a misconfigured deployment
+    fails loudly at startup instead of serving a silently wrong policy.
+    """
+    candidate = entry.strip().rstrip("/")
+    parsed = urlparse(candidate)
+    try:
+        port: Optional[int] = parsed.port
+    except ValueError:
+        # Non-numeric port (e.g. "https://host:bad"): fail closed below.
+        port = None
+        invalid_port = True
+    else:
+        invalid_port = False
+    ok = (
+        not invalid_port
+        and parsed.scheme.lower() in {"http", "https"}
+        and parsed.hostname
+        and not parsed.username
+        and not parsed.password
+        and not parsed.path
+        and not parsed.query
+        and not parsed.fragment
+    )
+    if not ok:
+        raise RuntimeError(
+            f"Invalid SHIELDCALL_CORS origin {entry!r}: expected a bare "
+            "'https://host' or 'https://host:port' (http(s) only, no path, "
+            "query, fragment, or credentials)."
+        )
+    origin = f"{parsed.scheme.lower()}://{parsed.hostname.lower()}"
+    if port:
+        origin += f":{port}"
+    return origin
+
+
+def cors_config_from_env() -> CorsConfig:
+    """Build the CORS policy from the environment, fail-closed.
+
+    SHIELDCALL_CORS is a comma-separated origin allowlist. Unset or blank
+    means NO cross-origin access: the same-origin lab UI and native app
+    clients (which browsers do not subject to CORS) keep working, while no
+    browser page from another origin can call the API. This replaces the
+    old default of "*", which the design doc reserves for dev-only use:
+    a "*" entry now requires the explicit
+    SHIELDCALL_CORS_ALLOW_WILDCARD=1 escape hatch and refuses to boot
+    without it. Malformed origins also refuse to boot.
+    """
+    raw = os.environ.get("SHIELDCALL_CORS", "")
+    entries = [e.strip() for e in raw.split(",") if e.strip()]
+    if any(e == "*" for e in entries):
+        if not _cors_wildcard_allowed():
+            raise RuntimeError(
+                "SHIELDCALL_CORS contains '*' (wildcard CORS). Wildcard CORS "
+                "is dev-only: set SHIELDCALL_CORS_ALLOW_WILDCARD=1 explicitly "
+                "for local development, or pin SHIELDCALL_CORS to the app "
+                "origin(s) for production. Refusing to serve with an "
+                "unacknowledged wildcard."
+            )
+        log.warning(
+            "SHIELDCALL_CORS_ALLOW_WILDCARD is set: the sidecar API allows "
+            "cross-origin requests from ANY origin. Dev-only; never use in "
+            "production."
+        )
+        return CorsConfig(origins=(), wildcard=True)
+    origins: List[str] = []
+    for entry in entries:
+        origins.append(_validate_cors_origin(entry))
+    # Dedupe, order preserved.
+    seen = set()
+    unique = [o for o in origins if not (o in seen or seen.add(o))]
+    return CorsConfig(origins=tuple(unique), wildcard=False)
 
 
 class OpenCallBody(BaseModel):
@@ -382,14 +491,41 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
             key = f"{request.method} {path}" if path else f"{request.method} unmatched"
             tracker.record(key, (time.perf_counter() - t0) * 1000.0, status_code)
 
-    origins = os.environ.get("SHIELDCALL_CORS", "*").split(",")
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[o.strip() for o in origins if o.strip()],
-        allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+    # Pinned CORS (Phase 1, item 5). Unset -> no cross-origin access
+    # at all; "*" is dev-only behind SHIELDCALL_CORS_ALLOW_WILDCARD=1;
+    # malformed origins refuse to boot (raises inside cors_config_from_env).
+    # Native app clients and the same-origin lab UI are unaffected by any
+    # of these settings: browsers are the only CORS consumers.
+    cors = cors_config_from_env()
+    app.state.cors = cors
+    if cors.wildcard:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=False,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+    elif cors.origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=list(cors.origins),
+            allow_credentials=False,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+        log.info(
+            "CORS pinned to %d origin(s): %s",
+            len(cors.origins),
+            ", ".join(cors.origins),
+        )
+    else:
+        log.info(
+            "SHIELDCALL_CORS is unset: cross-origin browser access is denied; "
+            "same-origin lab UI and native app clients are unaffected. Pin "
+            "SHIELDCALL_CORS to the app origin(s) if a browser client needs "
+            "to call this API."
+        )
 
     @app.get("/")
     def lab_home():
@@ -417,6 +553,8 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
         body = detector.health()
         body["quota"] = app.state.quota_store.stats()
         body["route_latency"] = app.state.latency.snapshot()
+        cors = app.state.cors
+        body["cors"] = {"origins": list(cors.origins), "wildcard": cors.wildcard}
         return body
 
     @app.get("/ready")

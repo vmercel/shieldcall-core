@@ -96,8 +96,15 @@ be set in production. The production contract is:
    fail-closed startup check (JWT-only deployments). App side same day:
    `services/shieldcallSidecar.ts` sends the Supabase session access
    token when no static `EXPO_PUBLIC_SHIELDCALL_TOKEN` is configured.
-5. **CORS.** `SHIELDCALL_CORS` defaults to `*` today. Production must
-   pin it to the app origin; wildcard CORS stays dev-only.
+5. **CORS (shipped 2026-09-30, P2-6e).** `SHIELDCALL_CORS` no longer
+   defaults to `*`: it is a comma-separated origin allowlist, validated
+   (bare `https://host[:port]`, http(s) only) and pinned at startup, with
+   malformed values refusing to boot. Unset/blank means NO cross-origin
+   access at all (same-origin lab UI and native app clients are
+   unaffected; only browsers consume CORS). A `*` entry requires the
+   explicit dev-only escape hatch `SHIELDCALL_CORS_ALLOW_WILDCARD=1`
+   and refuses to boot without it. Effective policy is exported on
+   `/health` as `cors: {origins, wildcard}`.
 6. TLS terminates at the load balancer; the worker binds to
    localhost/loopback only.
 
@@ -262,8 +269,8 @@ probs, and the acting verdict. `GET /hosted/v1/status` reports the
 prototype config behind the same auth.
 
 Deliberately not in the prototype: JWT-for-app-origin auth, pinned
-CORS. Both remain Phase 1 work. Per-route latency histograms shipped
-2026-09-28 (P2-6c).
+CORS. Both shipped as Phase 1 hardening (JWT 2026-09-29, CORS
+2026-09-30). Per-route latency histograms shipped 2026-09-28 (P2-6c).
 
 ### Prototype hardening since P2-5
 
@@ -304,4 +311,14 @@ CORS. Both remain Phase 1 work. Per-route latency histograms shipped
   and see only their own calls in `GET /v1/calls`. Static bearer tokens
   keep working unchanged for SBC/sidecar integrations. The ShieldCallAI
   client sends the signed-in user's access token when no static token
-  is configured. Phase 1 remaining: pinned CORS.
+  is configured.
+- **2026-09-30 (P2-6e, Phase 1, item 5):** pinned CORS. The old
+  `SHIELDCALL_CORS` default of `*` is gone: unset/blank now means no
+  cross-origin browser access at all (same-origin lab UI and native app
+  clients unaffected). Explicit origins are validated at startup (bare
+  `http(s)://host[:port]`, no path/query/fragment/credentials) and a
+  `*` entry requires the explicit dev-only
+  `SHIELDCALL_CORS_ALLOW_WILDCARD=1` hatch, refusing to boot without
+  it. Effective policy exported on `/health` as
+  `cors: {origins, wildcard}`. All Phase 1 production-hardening items
+  in section 2 are now shipped.
