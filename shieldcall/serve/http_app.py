@@ -435,11 +435,12 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
     hosted_auth = None
     if hosted.hosted_enabled():
         hosted_auth = hosted.HostedAuth.from_env()
-        if not hosted_auth.tokens:
+        if not hosted_auth.tokens and hosted_auth.jwt_auth is None:
             raise RuntimeError(
                 "SHIELDCALL_HOSTED_ENDPOINT is enabled but no sidecar token is "
                 "configured (set SHIELDCALL_SIDECAR_TOKENS or "
-                "SHIELDCALL_SIDECAR_TOKEN). Refusing to serve unauthenticated."
+                "SHIELDCALL_SIDECAR_TOKEN, or SHIELDCALL_APP_JWT_JWKS_URL "
+                "for app-user JWTs). Refusing to serve unauthenticated."
             )
     cfg = PipelineConfig(channel=None, use_conformal=True, fuse_every_n_frames=5)
     rt = runtime or SidecarRuntime(max_calls=8, pipeline_config=cfg, asr=make_asr_from_env())

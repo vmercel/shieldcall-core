@@ -96,6 +96,11 @@ be set in production. The production contract is:
    fail-closed startup check (JWT-only deployments). App side same day:
    `services/shieldcallSidecar.ts` sends the Supabase session access
    token when no static `EXPO_PUBLIC_SHIELDCALL_TOKEN` is configured.
+   EXTENDED 2026-10-01 (P2-6f): the hosted routes (`/hosted/v1/analyze`,
+   `/hosted/v1/status`) also accept app-user JWTs when
+   `SHIELDCALL_APP_JWT_JWKS_URL` is set (same static-first ordering, JWT
+   principals are `jwt:<sub>` with per-user hosted-scope quota; the
+   stateless analyze route needs no call-ownership bookkeeping).
 5. **CORS (shipped 2026-09-30, P2-6e).** `SHIELDCALL_CORS` no longer
    defaults to `*`: it is a comma-separated origin allowlist, validated
    (bare `https://host[:port]`, http(s) only) and pinned at startup, with
@@ -271,6 +276,12 @@ prototype config behind the same auth.
 Deliberately not in the prototype: JWT-for-app-origin auth, pinned
 CORS. Both shipped as Phase 1 hardening (JWT 2026-09-29, CORS
 2026-09-30). Per-route latency histograms shipped 2026-09-28 (P2-6c).
+As of 2026-10-01 (P2-6f) the hosted routes also accept app-user JWTs when
+`SHIELDCALL_APP_JWT_JWKS_URL` is set (static tokens tried first, JWT
+principals are `jwt:<sub>` with per-user quota; the analyze route is
+stateless so the main API's call-ownership bookkeeping does not apply).
+A JWKS URL alone now satisfies the hosted fail-closed startup check,
+and a JWKS outage is 503 fail-closed on `/hosted/v1/*` too.
 
 ### Prototype hardening since P2-5
 
@@ -322,3 +333,17 @@ CORS. Both shipped as Phase 1 hardening (JWT 2026-09-29, CORS
   it. Effective policy exported on `/health` as
   `cors: {origins, wildcard}`. All Phase 1 production-hardening items
   in section 2 are now shipped.
+- **2026-10-01 (P2-6f):** app-origin JWT auth on the hosted prototype.
+  `/hosted/v1/analyze` and `/hosted/v1/status` accepted only static
+  bearer tokens; they now also accept Supabase Auth access tokens when
+  `SHIELDCALL_APP_JWT_JWKS_URL` is configured (`shieldcall/serve/
+  hosted.py`, reusing the P2-6d `AppJwtAuth` verifier). Static tokens are
+  tried first, so SBC/sidecar integrations are unchanged. JWT principals
+  authenticate as token_id `jwt:<sub>` and get per-user quota under the
+  existing hosted scope via the P2-6a persistent store. The analyze route
+  is stateless (ephemeral session opened and closed inside the request),
+  so the main API's call-ownership bookkeeping does not apply. A JWKS
+  URL alone satisfies the hosted fail-closed startup check (JWT-only
+  deployments boot); a JWKS outage returns 503 fail-closed, never
+  pass-through. `/hosted/v1/status` reports the new `jwt_configured`
+  boolean. No behavior change when the JWKS URL is unset.

@@ -34,6 +34,19 @@ Env knobs:
                                /health (P2-6c). Default
                                "1,2,5,10,25,50,100,250,500,1000,2500,5000".
                                Invalid values fall back to the default.
+  SHIELDCALL_APP_JWT_JWKS_URL  When set, Supabase Auth access tokens are
+                               accepted as the Bearer token (P2-6f, parity
+                               with the main API). Static tokens are tried
+                               first. JWT principals authenticate as
+                               token_id "jwt:<sub>" and get per-user quota
+                               under the hosted scope. See
+                               SHIELDCALL_APP_JWT_ISSUER /
+                               SHIELDCALL_APP_JWT_CACHE_TTL /
+                               SHIELDCALL_APP_JWT_TIMEOUT (shieldcall/serve/
+                               app_jwt.py). A JWKS URL alone satisfies the
+                               fail-closed startup check (JWT-only
+                               deployments boot); a JWKS outage is 503
+                               fail-closed, never pass-through.
 """
 
 from __future__ import annotations
@@ -50,6 +63,7 @@ import numpy as np
 from fastapi import APIRouter, FastAPI, HTTPException, Header
 from pydantic import BaseModel, Field
 
+from .app_jwt import AppJwtAuth, AppJwtInvalid, AppJwtUnavailable
 from .quota_store import QuotaStore, QuotaStoreError, default_quota_db_path
 
 log = logging.getLogger(__name__)
@@ -114,6 +128,15 @@ class HostedAuth:
     same database file. Direct construction (no store given) uses a hermetic
     in-memory store; from_env() wires the file-backed store from
     SHIELDCALL_QUOTA_DB_PATH.
+
+    When ``jwt_auth`` is given (built by from_env() from
+    SHIELDCALL_APP_JWT_JWKS_URL), Supabase app-user access tokens are also
+    accepted as the Bearer token, with static tokens tried first (same
+    ordering as the main API). JWT principals authenticate as token_id
+    "jwt:<sub>", which gives them per-user quota and logging identity
+    through the ordinary quota path. The analyze route is stateless (one
+    ephemeral session per request, closed inside the request), so the main
+    API's call-ownership bookkeeping does not apply here.
     """
 
     def __init__(
@@ -121,10 +144,12 @@ class HostedAuth:
         tokens: Dict[str, str],
         quota_per_min: int = 60,
         quota_store: Optional[QuotaStore] = None,
+        jwt_auth: Optional[AppJwtAuth] = None,
     ):
         self.tokens = tokens
         self.quota_per_min = max(0, quota_per_min)
         self.quota_store = quota_store if quota_store is not None else QuotaStore(":memory:")
+        self.jwt_auth = jwt_auth
 
     @classmethod
     def from_env(cls) -> "HostedAuth":
@@ -140,13 +165,21 @@ class HostedAuth:
                 f"Cannot open hosted quota store ({exc}). Refusing to serve "
                 "the hosted endpoint without quota accounting."
             ) from exc
-        return cls(parse_tokens(), quota_per_min=quota, quota_store=store)
+        return cls(
+            parse_tokens(),
+            quota_per_min=quota,
+            quota_store=store,
+            jwt_auth=AppJwtAuth.from_env(),
+        )
 
     def authenticate(self, authorization: Optional[str]) -> str:
         """Return the token id that authenticated the request.
 
         Raises 401 when the bearer credential is missing, 403 when it does
-        not match any configured token. Constant-time compare per token.
+        not match any configured static token (or any configured JWT),
+        503 when the JWKS cannot be reached so an app JWT cannot be
+        validated (fail closed, never pass through). Static bearer tokens
+        are tried before app JWTs. Constant-time compare per static token.
         """
         if not authorization or not authorization.startswith("Bearer "):
             raise HTTPException(status_code=401, detail="missing bearer token")
@@ -154,6 +187,18 @@ class HostedAuth:
         for tid, value in self.tokens.items():
             if hmac.compare_digest(presented, value):
                 return tid
+        if self.jwt_auth is not None:
+            try:
+                principal = self.jwt_auth.validate(presented)
+            except AppJwtUnavailable as exc:
+                raise HTTPException(
+                    status_code=503, detail=f"app JWT unavailable: {exc}"
+                ) from exc
+            except AppJwtInvalid as exc:
+                raise HTTPException(
+                    status_code=403, detail=f"bad app JWT: {exc}"
+                ) from exc
+            return principal.token_id
         raise HTTPException(status_code=403, detail="bad token")
 
     def check_quota(self, token_id: str) -> Optional[int]:
@@ -231,12 +276,14 @@ def _risk_dict(sess, events) -> Dict[str, Any]:
 
 def register_hosted_routes(app: FastAPI, runtime, auth: HostedAuth) -> None:
     """Mount the prototype hosted routes. Caller must have fail-closed
-    already: raises RuntimeError if no token is configured."""
-    if not auth.tokens:
+    already: raises RuntimeError if neither a static token nor an app-JWT
+    JWKS URL is configured."""
+    if not auth.tokens and auth.jwt_auth is None:
         raise RuntimeError(
             "SHIELDCALL_HOSTED_ENDPOINT is enabled but no sidecar token is "
             "configured (set SHIELDCALL_SIDECAR_TOKENS or "
-            "SHIELDCALL_SIDECAR_TOKEN). Refusing to serve unauthenticated."
+            "SHIELDCALL_SIDECAR_TOKEN, or SHIELDCALL_APP_JWT_JWKS_URL for "
+            "app-user JWTs). Refusing to serve unauthenticated."
         )
     router = APIRouter(prefix="/hosted/v1", tags=["hosted"])
 
@@ -247,6 +294,7 @@ def register_hosted_routes(app: FastAPI, runtime, auth: HostedAuth) -> None:
             "enabled": True,
             "prototype": True,
             "tokens_configured": len(auth.tokens),
+            "jwt_configured": auth.jwt_auth is not None,
             "quota_per_min": auth.quota_per_min,
             "token_id": tid,
             "quota": auth.quota_stats(),
