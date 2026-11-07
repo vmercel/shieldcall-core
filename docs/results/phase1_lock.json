@@ -1,0 +1,93 @@
+{
+  "locked_at_utc": "2026-11-07T22:31:12Z",
+  "seed": 20261107,
+  "source": "ASVspoof 2019 LA, https://datashare.ed.ac.uk/handle/10283/3336 (ODC-By 1.0)",
+  "zip_sha256": null,
+  "counts": {
+    "train": {
+      "bonafide": 2580,
+      "A04": 430,
+      "A03": 430,
+      "A01": 430,
+      "A05": 430,
+      "A06": 430,
+      "A02": 430
+    },
+    "dev": {
+      "A06": 170,
+      "A05": 170,
+      "bonafide": 1000,
+      "A04": 170,
+      "A01": 170,
+      "A03": 170,
+      "A02": 170
+    },
+    "test": {
+      "A19": 100,
+      "A16": 100,
+      "bonafide": 1000,
+      "A13": 100,
+      "A08": 100,
+      "A09": 100,
+      "A15": 100,
+      "A17": 100,
+      "A11": 100,
+      "A07": 100,
+      "A18": 100,
+      "A14": 100,
+      "A12": 100,
+      "A10": 100
+    }
+  },
+  "speakers": {
+    "train": 20,
+    "dev": 20,
+    "test": 67
+  },
+  "speaker_overlap": {
+    "train&dev": 0,
+    "train&test": 0,
+    "dev&test": 0
+  },
+  "attacks_train": [
+    "A01",
+    "A02",
+    "A03",
+    "A04",
+    "A05",
+    "A06"
+  ],
+  "attacks_test": [
+    "A07",
+    "A08",
+    "A09",
+    "A10",
+    "A11",
+    "A12",
+    "A13",
+    "A14",
+    "A15",
+    "A16",
+    "A17",
+    "A18",
+    "A19"
+  ],
+  "test_attacks_unseen_in_train": [
+    "A07",
+    "A08",
+    "A09",
+    "A10",
+    "A11",
+    "A12",
+    "A13",
+    "A14",
+    "A15",
+    "A16",
+    "A17",
+    "A18",
+    "A19"
+  ],
+  "manifest_sha256": "ec7855a6b23efc2e8e91186bcf7d9b3d663ae86896930f1efd16db4a786cef4a",
+  "heldout_test_audio_sha256": "08cc5e990c70197a3cb7a5e1acbdd245e687c29759371b2904db4f79848cc45d",
+  "rule": "Thresholds, calibration and model fitting use train/dev only. 'test' is scored once per configuration."
+}

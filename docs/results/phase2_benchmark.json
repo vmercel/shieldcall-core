@@ -1,0 +1,3400 @@
+{
+ "generated_utc": "2026-11-07T22:42:15Z",
+ "phase1_lock": {
+  "manifest_sha256": "ec7855a6b23efc2e8e91186bcf7d9b3d663ae86896930f1efd16db4a786cef4a",
+  "heldout_test_audio_sha256": "08cc5e990c70197a3cb7a5e1acbdd245e687c29759371b2904db4f79848cc45d"
+ },
+ "acoustic": {
+  "by_condition": {
+   "gmmA": {
+    "clean_16k": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.28,
+     "auc": 0.817826153846154,
+     "fpr": 0.229,
+     "fnr": 0.32384615384615384,
+     "ece": 0.11064699618766544,
+     "brier": 0.18729699125132274,
+     "abstain_rate": 0.26391304347826083,
+     "fpr_retained": 0.14617486338797814,
+     "fnr_retained": 0.26222684703433924,
+     "eer_ci95": [
+      0.2604582264849109,
+      0.2965232119232564
+     ]
+    },
+    "opus_wb_24k": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.29911538461538456,
+     "auc": 0.7918684615384615,
+     "fpr": 0.357,
+     "fnr": 0.24153846153846154,
+     "ece": 0.07010293031157648,
+     "brier": 0.18778469180804258,
+     "abstain_rate": 0.2834782608695652,
+     "fpr_retained": 0.311046511627907,
+     "fnr_retained": 0.171875,
+     "eer_ci95": [
+      0.2769624397724208,
+      0.31433399447024635
+     ]
+    },
+    "bandlimit_nb": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.32088461538461543,
+     "auc": 0.7492376923076922,
+     "fpr": 0.083,
+     "fnr": 0.6261538461538462,
+     "ece": 0.24638737190999221,
+     "brier": 0.2647489498930485,
+     "abstain_rate": 0.3521739130434782,
+     "fpr_retained": 0.034255599472990776,
+     "fnr_retained": 0.6580027359781122,
+     "eer_ci95": [
+      0.30171292556731283,
+      0.3379614085342566
+     ]
+    },
+    "g711_ulaw": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3391153846153846,
+     "auc": 0.7388161538461538,
+     "fpr": 0.187,
+     "fnr": 0.4907692307692308,
+     "ece": 0.17878233879012156,
+     "brier": 0.23681044264883405,
+     "abstain_rate": 0.4017391304347826,
+     "fpr_retained": 0.0976,
+     "fnr_retained": 0.45006657789613846,
+     "eer_ci95": [
+      0.3195415368574453,
+      0.3586945240606721
+     ]
+    },
+    "g711_alaw": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3291153846153846,
+     "auc": 0.7408569230769231,
+     "fpr": 0.187,
+     "fnr": 0.49153846153846154,
+     "ece": 0.18539999173101127,
+     "brier": 0.23871338664930383,
+     "abstain_rate": 0.3904347826086957,
+     "fpr_retained": 0.09021406727828746,
+     "fnr_retained": 0.47459893048128343,
+     "eer_ci95": [
+      0.31214589456332853,
+      0.3513146296229018
+     ]
+    },
+    "amr_nb_12k2": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.34088461538461545,
+     "auc": 0.7259992307692308,
+     "fpr": 0.292,
+     "fnr": 0.3930769230769231,
+     "ece": 0.13628945743012727,
+     "brier": 0.2266024570301237,
+     "abstain_rate": 0.47043478260869565,
+     "fpr_retained": 0.1965648854961832,
+     "fnr_retained": 0.30403458213256485,
+     "eer_ci95": [
+      0.32217465065630385,
+      0.36085767087277837
+     ]
+    },
+    "amr_nb_4k75": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3578461538461538,
+     "auc": 0.7008576923076923,
+     "fpr": 0.279,
+     "fnr": 0.43538461538461537,
+     "ece": 0.1539616296777791,
+     "brier": 0.24002477223229152,
+     "abstain_rate": 0.48913043478260865,
+     "fpr_retained": 0.19348659003831417,
+     "fnr_retained": 0.35834609494640124,
+     "eer_ci95": [
+      0.3386389429545582,
+      0.3747551133821126
+     ]
+    },
+    "opus_nb_12k": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3369615384615384,
+     "auc": 0.7275484615384615,
+     "fpr": 0.186,
+     "fnr": 0.49615384615384617,
+     "ece": 0.18426323849430026,
+     "brier": 0.24244345773240422,
+     "abstain_rate": 0.4317391304347826,
+     "fpr_retained": 0.09415584415584416,
+     "fnr_retained": 0.4732272069464544,
+     "eer_ci95": [
+      0.31779091786277996,
+      0.35868829830849297
+     ]
+    },
+    "ulaw_snr20": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.36823076923076925,
+     "auc": 0.6858146153846153,
+     "fpr": 0.093,
+     "fnr": 0.7392307692307692,
+     "ece": 0.2669880632166999,
+     "brier": 0.2927975608145261,
+     "abstain_rate": 0.3947826086956522,
+     "fpr_retained": 0.022535211267605635,
+     "fnr_retained": 0.8137829912023461,
+     "eer_ci95": [
+      0.34828638035021586,
+      0.38482872350113306
+     ]
+    },
+    "ulaw_snr10": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4008846153846154,
+     "auc": 0.6358507692307692,
+     "fpr": 0.035,
+     "fnr": 0.9323076923076923,
+     "ece": 0.3367063464945804,
+     "brier": 0.3470184366100889,
+     "abstain_rate": 0.2195652173913043,
+     "fpr_retained": 0.00589622641509434,
+     "fnr_retained": 0.9852164730728616,
+     "eer_ci95": [
+      0.3813309757394711,
+      0.42223720493514216
+     ]
+    },
+    "ulaw_snr0": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.43392307692307697,
+     "auc": 0.5998399999999999,
+     "fpr": 0.0,
+     "fnr": 0.9976923076923077,
+     "ece": 0.44473390216776404,
+     "brier": 0.4384582678974101,
+     "abstain_rate": 0.008260869565217432,
+     "fpr_retained": 0.0,
+     "fnr_retained": 0.9992229992229992,
+     "eer_ci95": [
+      0.41519434514968506,
+      0.45224611843018053
+     ]
+    },
+    "ulaw_loss10": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3369615384615384,
+     "auc": 0.7272807692307693,
+     "fpr": 0.179,
+     "fnr": 0.5223076923076924,
+     "ece": 0.19124101639517152,
+     "brier": 0.24521853310783034,
+     "abstain_rate": 0.4121739130434783,
+     "fpr_retained": 0.09702660406885759,
+     "fnr_retained": 0.5007012622720898,
+     "eer_ci95": [
+      0.3225846964041316,
+      0.36008667749321227
+     ]
+    },
+    "sim_harsh_voip": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3739230769230769,
+     "auc": 0.6731169230769231,
+     "fpr": 0.021,
+     "fnr": 0.8892307692307693,
+     "ece": 0.3257123480902659,
+     "brier": 0.3323373536096181,
+     "abstain_rate": 0.24652173913043474,
+     "fpr_retained": 0.005820721769499418,
+     "fnr_retained": 0.9679633867276888,
+     "eer_ci95": [
+      0.3565005915718645,
+      0.3965467953543327
+     ]
+    },
+    "sim_pstn": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4,
+     "auc": 0.6408592307692307,
+     "fpr": 0.022,
+     "fnr": 0.9423076923076923,
+     "ece": 0.3388363617141294,
+     "brier": 0.3474399960537881,
+     "abstain_rate": 0.21565217391304348,
+     "fpr_retained": 0.0011750881316098707,
+     "fnr_retained": 0.9853095487932844,
+     "eer_ci95": [
+      0.3812863967754729,
+      0.4226138521514424
+     ]
+    }
+   },
+   "lrA": {
+    "clean_16k": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.40215384615384614,
+     "auc": 0.6478823076923077,
+     "fpr": 0.42,
+     "fnr": 0.39,
+     "ece": 0.10943407885789967,
+     "brier": 0.2416217809111664,
+     "abstain_rate": 0.23478260869565215,
+     "fpr_retained": 0.4120805369127517,
+     "fnr_retained": 0.35467980295566504,
+     "eer_ci95": [
+      0.38650589919187683,
+      0.4248081790195932
+     ]
+    },
+    "opus_wb_24k": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4330384615384615,
+     "auc": 0.5959423076923076,
+     "fpr": 0.65,
+     "fnr": 0.24615384615384617,
+     "ece": 0.1088894566143013,
+     "brier": 0.2537590892056601,
+     "abstain_rate": 0.23478260869565215,
+     "fpr_retained": 0.689795918367347,
+     "fnr_retained": 0.20097560975609757,
+     "eer_ci95": [
+      0.41473643322323384,
+      0.45047269929111833
+     ]
+    },
+    "bandlimit_nb": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.43000000000000005,
+     "auc": 0.6080953846153846,
+     "fpr": 0.169,
+     "fnr": 0.6815384615384615,
+     "ece": 0.25283080472123814,
+     "brier": 0.3145941763643159,
+     "abstain_rate": 0.15217391304347827,
+     "fpr_retained": 0.11641443538998836,
+     "fnr_retained": 0.7186067827681026,
+     "eer_ci95": [
+      0.41037870257236586,
+      0.447795770052969
+     ]
+    },
+    "g711_ulaw": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4369615384615385,
+     "auc": 0.5899938461538461,
+     "fpr": 0.044,
+     "fnr": 0.8953846153846153,
+     "ece": 0.37961633747757595,
+     "brier": 0.3896885795716557,
+     "abstain_rate": 0.07826086956521738,
+     "fpr_retained": 0.02332979851537646,
+     "fnr_retained": 0.9252336448598131,
+     "eer_ci95": [
+      0.41605333376778725,
+      0.45959249552562115
+     ]
+    },
+    "g711_alaw": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4430384615384615,
+     "auc": 0.5829346153846154,
+     "fpr": 0.051,
+     "fnr": 0.8815384615384615,
+     "ece": 0.3746462006646265,
+     "brier": 0.38995765152956646,
+     "abstain_rate": 0.07260869565217387,
+     "fpr_retained": 0.02975557917109458,
+     "fnr_retained": 0.9093959731543624,
+     "eer_ci95": [
+      0.42128695812984385,
+      0.463522971143509
+     ]
+    },
+    "amr_nb_12k2": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4578461538461539,
+     "auc": 0.5557530769230768,
+     "fpr": 0.054,
+     "fnr": 0.9023076923076923,
+     "ece": 0.3486279364648218,
+     "brier": 0.3732995793532579,
+     "abstain_rate": 0.10173913043478255,
+     "fpr_retained": 0.030601092896174863,
+     "fnr_retained": 0.9400521285838401,
+     "eer_ci95": [
+      0.4412727470622517,
+      0.4769562918562162
+     ]
+    },
+    "amr_nb_4k75": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4851923076923077,
+     "auc": 0.5264915384615384,
+     "fpr": 0.175,
+     "fnr": 0.7946153846153846,
+     "ece": 0.2687153108369658,
+     "brier": 0.3372443332506625,
+     "abstain_rate": 0.19130434782608696,
+     "fpr_retained": 0.11344019728729964,
+     "fnr_retained": 0.8541468064823642,
+     "eer_ci95": [
+      0.4681909192082049,
+      0.5048235129067035
+     ]
+    },
+    "opus_nb_12k": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.46215384615384614,
+     "auc": 0.5755230769230768,
+     "fpr": 0.059,
+     "fnr": 0.9023076923076923,
+     "ece": 0.3676219263856872,
+     "brier": 0.3838853372446191,
+     "abstain_rate": 0.08739130434782605,
+     "fpr_retained": 0.033862433862433865,
+     "fnr_retained": 0.9402079722703639,
+     "eer_ci95": [
+      0.4429592848855951,
+      0.48087330128040007
+     ]
+    },
+    "ulaw_snr20": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4948076923076923,
+     "auc": 0.5163107692307691,
+     "fpr": 0.091,
+     "fnr": 0.8776923076923077,
+     "ece": 0.36747621236856765,
+     "brier": 0.40022917268081587,
+     "abstain_rate": 0.09608695652173915,
+     "fpr_retained": 0.07119386637458927,
+     "fnr_retained": 0.9048027444253859,
+     "eer_ci95": [
+      0.47564967584751416,
+      0.5166009614093373
+     ]
+    },
+    "ulaw_snr10": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.46607692307692306,
+     "auc": 0.5375384615384615,
+     "fpr": 0.128,
+     "fnr": 0.8553846153846154,
+     "ece": 0.3610984215948455,
+     "brier": 0.3948131164855254,
+     "abstain_rate": 0.10173913043478255,
+     "fpr_retained": 0.09592061742006615,
+     "fnr_retained": 0.8904227782571182,
+     "eer_ci95": [
+      0.44294933763748057,
+      0.4869542108379083
+     ]
+    },
+    "ulaw_snr0": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4951923076923077,
+     "auc": 0.5056492307692307,
+     "fpr": 0.102,
+     "fnr": 0.8953846153846153,
+     "ece": 0.4058924683548657,
+     "brier": 0.43262844530667743,
+     "abstain_rate": 0.07826086956521738,
+     "fpr_retained": 0.07252747252747253,
+     "fnr_retained": 0.9214876033057852,
+     "eer_ci95": [
+      0.47389073366564805,
+      0.5135187797750538
+     ]
+    },
+    "ulaw_loss10": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4330384615384615,
+     "auc": 0.5785092307692308,
+     "fpr": 0.077,
+     "fnr": 0.8384615384615385,
+     "ece": 0.33757174260226486,
+     "brier": 0.3665216282478155,
+     "abstain_rate": 0.10782608695652174,
+     "fpr_retained": 0.054884742041712405,
+     "fnr_retained": 0.8799298860648553,
+     "eer_ci95": [
+      0.4156217679315685,
+      0.4569702006598874
+     ]
+    },
+    "sim_harsh_voip": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4691153846153846,
+     "auc": 0.5343923076923076,
+     "fpr": 0.183,
+     "fnr": 0.7546153846153846,
+     "ece": 0.30560472827017676,
+     "brier": 0.36173340044182367,
+     "abstain_rate": 0.13652173913043475,
+     "fpr_retained": 0.14154200230149597,
+     "fnr_retained": 0.7985675917636527,
+     "eer_ci95": [
+      0.450806349893794,
+      0.490086117797193
+     ]
+    },
+    "sim_pstn": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.48,
+     "auc": 0.5256961538461539,
+     "fpr": 0.238,
+     "fnr": 0.7246153846153847,
+     "ece": 0.29972172150349796,
+     "brier": 0.36229715226224374,
+     "abstain_rate": 0.1417391304347826,
+     "fpr_retained": 0.1939252336448598,
+     "fnr_retained": 0.7647584973166368,
+     "eer_ci95": [
+      0.45998209272550006,
+      0.49960377704405484
+     ]
+    }
+   },
+   "gmmB": {
+    "clean_16k": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.30911538461538457,
+     "auc": 0.7698938461538462,
+     "fpr": 0.244,
+     "fnr": 0.36538461538461536,
+     "ece": 0.1417917459654827,
+     "brier": 0.2133879879555608,
+     "abstain_rate": 0.27826086956521734,
+     "fpr_retained": 0.1742627345844504,
+     "fnr_retained": 0.3150984682713348,
+     "eer_ci95": [
+      0.29341867462423576,
+      0.32826724330897317
+     ]
+    },
+    "opus_wb_24k": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3108846153846154,
+     "auc": 0.7616761538461538,
+     "fpr": 0.221,
+     "fnr": 0.4,
+     "ece": 0.15413252952369186,
+     "brier": 0.22036147803200667,
+     "abstain_rate": 0.2669565217391304,
+     "fpr_retained": 0.17191601049868765,
+     "fnr_retained": 0.3625541125541126,
+     "eer_ci95": [
+      0.2939060448242635,
+      0.3278364214835532
+     ]
+    },
+    "bandlimit_nb": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3069615384615385,
+     "auc": 0.7671030769230769,
+     "fpr": 0.207,
+     "fnr": 0.42230769230769233,
+     "ece": 0.16114049156089685,
+     "brier": 0.22056477187472312,
+     "abstain_rate": 0.2817391304347826,
+     "fpr_retained": 0.13660477453580902,
+     "fnr_retained": 0.37973273942093544,
+     "eer_ci95": [
+      0.28522913363179475,
+      0.3278288723141234
+     ]
+    },
+    "g711_ulaw": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.30392307692307696,
+     "auc": 0.7604123076923076,
+     "fpr": 0.283,
+     "fnr": 0.33153846153846156,
+     "ece": 0.12229880363312616,
+     "brier": 0.21167092274029617,
+     "abstain_rate": 0.2791304347826087,
+     "fpr_retained": 0.22802197802197802,
+     "fnr_retained": 0.2860215053763441,
+     "eer_ci95": [
+      0.28691939413111506,
+      0.3234934530948128
+     ]
+    },
+    "g711_alaw": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.30519230769230765,
+     "auc": 0.7594876923076923,
+     "fpr": 0.278,
+     "fnr": 0.33384615384615385,
+     "ece": 0.12431780608287886,
+     "brier": 0.21265890907798535,
+     "abstain_rate": 0.28130434782608693,
+     "fpr_retained": 0.22054794520547946,
+     "fnr_retained": 0.2903575297941495,
+     "eer_ci95": [
+      0.28738103418882155,
+      0.3230777346202796
+     ]
+    },
+    "amr_nb_12k2": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3230384615384615,
+     "auc": 0.75346,
+     "fpr": 0.17,
+     "fnr": 0.4907692307692308,
+     "ece": 0.18944390340714246,
+     "brier": 0.2347483888211003,
+     "abstain_rate": 0.2930434782608695,
+     "fpr_retained": 0.08310626702997276,
+     "fnr_retained": 0.4618834080717489,
+     "eer_ci95": [
+      0.3013221093534264,
+      0.3430928081161003
+     ]
+    },
+    "amr_nb_4k75": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.33215384615384613,
+     "auc": 0.7401915384615385,
+     "fpr": 0.199,
+     "fnr": 0.4723076923076923,
+     "ece": 0.18332437452723743,
+     "brier": 0.23812996316008173,
+     "abstain_rate": 0.3421739130434782,
+     "fpr_retained": 0.11379800853485064,
+     "fnr_retained": 0.45925925925925926,
+     "eer_ci95": [
+      0.3074145988702714,
+      0.3478021517274186
+     ]
+    },
+    "opus_nb_12k": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3069615384615385,
+     "auc": 0.7632761538461538,
+     "fpr": 0.2,
+     "fnr": 0.4369230769230769,
+     "ece": 0.17467174235823502,
+     "brier": 0.22619303686097916,
+     "abstain_rate": 0.29130434782608694,
+     "fpr_retained": 0.12117177097203728,
+     "fnr_retained": 0.40273037542662116,
+     "eer_ci95": [
+      0.289155762930535,
+      0.32653833440836505
+     ]
+    },
+    "ulaw_snr20": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3282307692307692,
+     "auc": 0.7305076923076923,
+     "fpr": 0.5,
+     "fnr": 0.20461538461538462,
+     "ece": 0.04518459194510488,
+     "brier": 0.20955854020502046,
+     "abstain_rate": 0.28565217391304343,
+     "fpr_retained": 0.5198098256735341,
+     "fnr_retained": 0.1432806324110672,
+     "eer_ci95": [
+      0.3139132106916027,
+      0.3531385221265971
+     ]
+    },
+    "ulaw_snr10": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.33215384615384613,
+     "auc": 0.7163438461538462,
+     "fpr": 0.387,
+     "fnr": 0.28,
+     "ece": 0.1021676643412194,
+     "brier": 0.22360737310301454,
+     "abstain_rate": 0.3234782608695652,
+     "fpr_retained": 0.34579439252336447,
+     "fnr_retained": 0.22975929978118162,
+     "eer_ci95": [
+      0.31127222237737484,
+      0.35134727893201567
+     ]
+    },
+    "ulaw_snr0": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.37696153846153846,
+     "auc": 0.6628092307692307,
+     "fpr": 0.087,
+     "fnr": 0.7876923076923077,
+     "ece": 0.27280775040570937,
+     "brier": 0.30223623214260975,
+     "abstain_rate": 0.3191304347826087,
+     "fpr_retained": 0.032133676092544985,
+     "fnr_retained": 0.899746192893401,
+     "eer_ci95": [
+      0.35169524427684445,
+      0.3934904518658995
+     ]
+    },
+    "ulaw_loss10": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3121538461538461,
+     "auc": 0.7547292307692308,
+     "fpr": 0.289,
+     "fnr": 0.3453846153846154,
+     "ece": 0.12604768885468048,
+     "brier": 0.2149729017616688,
+     "abstain_rate": 0.288695652173913,
+     "fpr_retained": 0.23236514522821577,
+     "fnr_retained": 0.3044906900328587,
+     "eer_ci95": [
+      0.29215189233184224,
+      0.33263678883245934
+     ]
+    },
+    "sim_harsh_voip": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3291153846153846,
+     "auc": 0.7410561538461538,
+     "fpr": 0.448,
+     "fnr": 0.22846153846153847,
+     "ece": 0.06168418522581078,
+     "brier": 0.2075866476998656,
+     "abstain_rate": 0.3308695652173913,
+     "fpr_retained": 0.4206081081081081,
+     "fnr_retained": 0.16367476240760295,
+     "eer_ci95": [
+      0.31045720524717996,
+      0.3439049394164099
+     ]
+    },
+    "sim_pstn": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3391153846153846,
+     "auc": 0.7140976923076923,
+     "fpr": 0.416,
+     "fnr": 0.27615384615384614,
+     "ece": 0.09417683397243094,
+     "brier": 0.2217225812538402,
+     "abstain_rate": 0.37043478260869567,
+     "fpr_retained": 0.37056737588652483,
+     "fnr_retained": 0.22058823529411764,
+     "eer_ci95": [
+      0.31871142976982886,
+      0.35781338125104023
+     ]
+    }
+   },
+   "lrB": {
+    "clean_16k": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3278461538461539,
+     "auc": 0.7480661538461538,
+     "fpr": 0.31,
+     "fnr": 0.34307692307692306,
+     "ece": 0.061652596806392346,
+     "brier": 0.20412268306403963,
+     "abstain_rate": 0.21260869565217388,
+     "fpr_retained": 0.24833997343957503,
+     "fnr_retained": 0.31285444234404536,
+     "eer_ci95": [
+      0.3073600231840479,
+      0.34658521496530914
+     ]
+    },
+    "opus_wb_24k": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3417692307692308,
+     "auc": 0.7316961538461537,
+     "fpr": 0.399,
+     "fnr": 0.2969230769230769,
+     "ece": 0.05507888309181878,
+     "brier": 0.20838356282177725,
+     "abstain_rate": 0.24,
+     "fpr_retained": 0.35624123422159887,
+     "fnr_retained": 0.25024154589371983,
+     "eer_ci95": [
+      0.32347381584382956,
+      0.3599704620165806
+     ]
+    },
+    "bandlimit_nb": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3282307692307692,
+     "auc": 0.7452823076923076,
+     "fpr": 0.273,
+     "fnr": 0.3646153846153846,
+     "ece": 0.07098804856470299,
+     "brier": 0.20730893019753704,
+     "abstain_rate": 0.22173913043478266,
+     "fpr_retained": 0.2080536912751678,
+     "fnr_retained": 0.33779904306220093,
+     "eer_ci95": [
+      0.3091408239422018,
+      0.34738992411651953
+     ]
+    },
+    "g711_ulaw": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3369615384615384,
+     "auc": 0.7293753846153846,
+     "fpr": 0.293,
+     "fnr": 0.3669230769230769,
+     "ece": 0.08344376738878545,
+     "brier": 0.21259233429082627,
+     "abstain_rate": 0.21695652173913038,
+     "fpr_retained": 0.2532808398950131,
+     "fnr_retained": 0.329162656400385,
+     "eer_ci95": [
+      0.3178024052725836,
+      0.3534875834045418
+     ]
+    },
+    "g711_alaw": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.33480769230769236,
+     "auc": 0.7295369230769231,
+     "fpr": 0.307,
+     "fnr": 0.3553846153846154,
+     "ece": 0.06869292781308423,
+     "brier": 0.21260578175032516,
+     "abstain_rate": 0.22869565217391308,
+     "fpr_retained": 0.2648648648648649,
+     "fnr_retained": 0.32011605415860733,
+     "eer_ci95": [
+      0.3147746087365658,
+      0.3543416749806585
+     ]
+    },
+    "amr_nb_12k2": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4121538461538461,
+     "auc": 0.6265123076923078,
+     "fpr": 0.431,
+     "fnr": 0.3946153846153846,
+     "ece": 0.08955428866770233,
+     "brier": 0.24587587828705043,
+     "abstain_rate": 0.30826086956521737,
+     "fpr_retained": 0.41353383458646614,
+     "fnr_retained": 0.3617710583153348,
+     "eer_ci95": [
+      0.3891281335596691,
+      0.4326122303498797
+     ]
+    },
+    "amr_nb_4k75": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4778461538461538,
+     "auc": 0.5342323076923077,
+     "fpr": 0.671,
+     "fnr": 0.26384615384615384,
+     "ece": 0.13024353401475855,
+     "brier": 0.26864336846368575,
+     "abstain_rate": 0.26217391304347826,
+     "fpr_retained": 0.7423822714681441,
+     "fnr_retained": 0.2153846153846154,
+     "eer_ci95": [
+      0.4465035279378927,
+      0.4974105881121258
+     ]
+    },
+    "opus_nb_12k": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.37303846153846154,
+     "auc": 0.6707407692307692,
+     "fpr": 0.297,
+     "fnr": 0.44461538461538463,
+     "ece": 0.10730016846779093,
+     "brier": 0.2396011680282256,
+     "abstain_rate": 0.25913043478260867,
+     "fpr_retained": 0.26639892904953144,
+     "fnr_retained": 0.42424242424242425,
+     "eer_ci95": [
+      0.3560481971048259,
+      0.39303873350293106
+     ]
+    },
+    "ulaw_snr20": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4182307692307692,
+     "auc": 0.6267776923076922,
+     "fpr": 0.396,
+     "fnr": 0.42923076923076925,
+     "ece": 0.1170571072912672,
+     "brier": 0.25374066914572624,
+     "abstain_rate": 0.2443478260869565,
+     "fpr_retained": 0.3760330578512397,
+     "fnr_retained": 0.39822134387351776,
+     "eer_ci95": [
+      0.39478310764864727,
+      0.4391304203222857
+     ]
+    },
+    "ulaw_snr10": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.453923076923077,
+     "auc": 0.5772653846153847,
+     "fpr": 0.31,
+     "fnr": 0.5892307692307692,
+     "ece": 0.1846335378280132,
+     "brier": 0.2882801491390334,
+     "abstain_rate": 0.23173913043478256,
+     "fpr_retained": 0.25718015665796345,
+     "fnr_retained": 0.6133866133866134,
+     "eer_ci95": [
+      0.42871615830480303,
+      0.47088158600958374
+     ]
+    },
+    "ulaw_snr0": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.4878461538461538,
+     "auc": 0.5284907692307692,
+     "fpr": 0.195,
+     "fnr": 0.7715384615384615,
+     "ece": 0.2703031388425006,
+     "brier": 0.34038848361483554,
+     "abstain_rate": 0.18173913043478263,
+     "fpr_retained": 0.13916256157635468,
+     "fnr_retained": 0.822429906542056,
+     "eer_ci95": [
+      0.4695096360841977,
+      0.508288190494678
+     ]
+    },
+    "ulaw_loss10": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.3330384615384615,
+     "auc": 0.7294269230769231,
+     "fpr": 0.406,
+     "fnr": 0.28615384615384615,
+     "ece": 0.06151417871669393,
+     "brier": 0.21003242673325415,
+     "abstain_rate": 0.21739130434782605,
+     "fpr_retained": 0.3986206896551724,
+     "fnr_retained": 0.2372093023255814,
+     "eer_ci95": [
+      0.31213611456980206,
+      0.3495809525920124
+     ]
+    },
+    "sim_harsh_voip": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.426076923076923,
+     "auc": 0.6251715384615384,
+     "fpr": 0.452,
+     "fnr": 0.39384615384615385,
+     "ece": 0.1224699142756056,
+     "brier": 0.2519792743262784,
+     "abstain_rate": 0.24608695652173918,
+     "fpr_retained": 0.4392905866302865,
+     "fnr_retained": 0.36663336663336665,
+     "eer_ci95": [
+      0.4073434390132488,
+      0.44527286780698994
+     ]
+    },
+    "sim_pstn": {
+     "n": 2300,
+     "n_pos": 1300,
+     "eer": 0.42519230769230765,
+     "auc": 0.6035561538461538,
+     "fpr": 0.289,
+     "fnr": 0.5561538461538461,
+     "ece": 0.16888558336968146,
+     "brier": 0.27972380784743645,
+     "abstain_rate": 0.22999999999999998,
+     "fpr_retained": 0.23567708333333334,
+     "fnr_retained": 0.5643070787637089,
+     "eer_ci95": [
+      0.406022621186313,
+      0.4461338663392889
+     ]
+    }
+   }
+  },
+  "by_attack": {
+   "gmmA": {
+    "clean_16k": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.22999999999999998,
+      "fnr": 0.22999999999999998,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.01800000000000001,
+      "fnr": 0.0,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.02000000000000001,
+      "fnr": 0.0,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.32999999999999996,
+      "fnr": 0.43999999999999995,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.13,
+      "fnr": 0.07999999999999996,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.32999999999999996,
+      "fnr": 0.5900000000000001,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.30000000000000004,
+      "fnr": 0.45999999999999996,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.119,
+      "fnr": 0.050000000000000044,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.10999999999999999,
+      "fnr": 0.020000000000000018,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.33999999999999997,
+      "fnr": 0.55,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.28800000000000003,
+      "fnr": 0.31000000000000005,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4515,
+      "fnr": 0.85,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.42800000000000005,
+      "fnr": 0.63,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    },
+    "g711_ulaw": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.27,
+      "fnr": 0.44999999999999996,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.06150000000000003,
+      "fnr": 0.010000000000000009,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.10849999999999999,
+      "fnr": 0.030000000000000027,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.39,
+      "fnr": 0.6699999999999999,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.2885,
+      "fnr": 0.45999999999999996,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.41000000000000003,
+      "fnr": 0.75,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.43000000000000005,
+      "fnr": 0.69,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.26,
+      "fnr": 0.36,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.29000000000000004,
+      "fnr": 0.41000000000000003,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4,
+      "fnr": 0.6699999999999999,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.19749999999999998,
+      "fnr": 0.21999999999999997,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.5,
+      "fnr": 0.87,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.478,
+      "fnr": 0.79,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    },
+    "amr_nb_12k2": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.32999999999999996,
+      "fnr": 0.39,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.1285,
+      "fnr": 0.020000000000000018,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.12,
+      "fnr": 0.050000000000000044,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.3885,
+      "fnr": 0.48,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.3695,
+      "fnr": 0.42000000000000004,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4295,
+      "fnr": 0.5900000000000001,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.43100000000000005,
+      "fnr": 0.61,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.29000000000000004,
+      "fnr": 0.29000000000000004,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.262,
+      "fnr": 0.18999999999999995,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.38,
+      "fnr": 0.49,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.19999999999999998,
+      "fnr": 0.14,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.49,
+      "fnr": 0.73,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4785,
+      "fnr": 0.71,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    },
+    "ulaw_snr10": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.3695,
+      "fnr": 0.92,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.3185,
+      "fnr": 0.87,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.2605,
+      "fnr": 0.8200000000000001,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.3815,
+      "fnr": 0.95,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.3715,
+      "fnr": 0.95,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.3705,
+      "fnr": 0.97,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.40800000000000003,
+      "fnr": 0.94,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.43000000000000005,
+      "fnr": 0.97,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.41000000000000003,
+      "fnr": 0.94,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.3975,
+      "fnr": 0.95,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4,
+      "fnr": 0.96,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.55,
+      "fnr": 0.96,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.51,
+      "fnr": 0.92,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    }
+   },
+   "lrA": {
+    "clean_16k": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.499,
+      "fnr": 0.55,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.251,
+      "fnr": 0.09999999999999998,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.10999999999999999,
+      "fnr": 0.050000000000000044,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.49,
+      "fnr": 0.55,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.050000000000000024,
+      "fnr": 0.0,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.5095000000000001,
+      "fnr": 0.64,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.48,
+      "fnr": 0.54,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.508,
+      "fnr": 0.62,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.2695,
+      "fnr": 0.17000000000000004,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.52,
+      "fnr": 0.62,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.33999999999999997,
+      "fnr": 0.27,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.5275000000000001,
+      "fnr": 0.64,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.371,
+      "fnr": 0.31999999999999995,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    },
+    "g711_ulaw": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.5385,
+      "fnr": 0.96,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.33199999999999996,
+      "fnr": 0.87,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.24,
+      "fnr": 0.62,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.52,
+      "fnr": 0.95,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.32999999999999996,
+      "fnr": 0.75,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.529,
+      "fnr": 0.94,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.41000000000000003,
+      "fnr": 0.86,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.53,
+      "fnr": 0.98,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.38,
+      "fnr": 0.9299999999999999,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.54,
+      "fnr": 0.95,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.379,
+      "fnr": 0.89,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.44999999999999996,
+      "fnr": 0.96,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4615,
+      "fnr": 0.98,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    },
+    "amr_nb_12k2": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.49,
+      "fnr": 0.95,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.41900000000000004,
+      "fnr": 0.8200000000000001,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.359,
+      "fnr": 0.78,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.49,
+      "fnr": 0.96,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.49,
+      "fnr": 0.9299999999999999,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.511,
+      "fnr": 0.96,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.43100000000000005,
+      "fnr": 0.84,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.518,
+      "fnr": 0.97,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.43000000000000005,
+      "fnr": 0.86,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.5,
+      "fnr": 0.96,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.42800000000000005,
+      "fnr": 0.88,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.47,
+      "fnr": 0.92,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.43000000000000005,
+      "fnr": 0.9,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    },
+    "ulaw_snr10": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.472,
+      "fnr": 0.85,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4215,
+      "fnr": 0.77,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.39,
+      "fnr": 0.7,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4805,
+      "fnr": 0.89,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4575,
+      "fnr": 0.89,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4805,
+      "fnr": 0.89,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.3995,
+      "fnr": 0.73,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.53,
+      "fnr": 0.97,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.49,
+      "fnr": 0.9,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4705,
+      "fnr": 0.87,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.5195000000000001,
+      "fnr": 0.9299999999999999,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.45999999999999996,
+      "fnr": 0.8,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4805,
+      "fnr": 0.9299999999999999,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    }
+   },
+   "gmmB": {
+    "clean_16k": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.30200000000000005,
+      "fnr": 0.4,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.09999999999999999,
+      "fnr": 0.050000000000000044,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.02000000000000001,
+      "fnr": 0.0,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.35,
+      "fnr": 0.5,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.32199999999999995,
+      "fnr": 0.43000000000000005,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.33199999999999996,
+      "fnr": 0.5,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.17900000000000002,
+      "fnr": 0.10999999999999999,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.21899999999999997,
+      "fnr": 0.18000000000000005,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.2775,
+      "fnr": 0.30000000000000004,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.37,
+      "fnr": 0.55,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.18999999999999997,
+      "fnr": 0.17000000000000004,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.49,
+      "fnr": 0.81,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.55,
+      "fnr": 0.75,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    },
+    "g711_ulaw": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.2785,
+      "fnr": 0.26,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.09749999999999999,
+      "fnr": 0.030000000000000027,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.030000000000000013,
+      "fnr": 0.0,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.3575,
+      "fnr": 0.44999999999999996,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.31999999999999995,
+      "fnr": 0.39,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.33999999999999997,
+      "fnr": 0.5,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.19099999999999998,
+      "fnr": 0.07999999999999996,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.20149999999999998,
+      "fnr": 0.10999999999999999,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.2775,
+      "fnr": 0.26,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.41000000000000003,
+      "fnr": 0.55,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.19899999999999998,
+      "fnr": 0.18000000000000005,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.49,
+      "fnr": 0.79,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.56,
+      "fnr": 0.71,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    },
+    "amr_nb_12k2": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.31999999999999995,
+      "fnr": 0.52,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.12,
+      "fnr": 0.08999999999999997,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.060000000000000026,
+      "fnr": 0.010000000000000009,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.37,
+      "fnr": 0.7,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.35,
+      "fnr": 0.6599999999999999,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.39,
+      "fnr": 0.7,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.22999999999999998,
+      "fnr": 0.29000000000000004,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.19999999999999998,
+      "fnr": 0.24,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.27,
+      "fnr": 0.42000000000000004,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4305,
+      "fnr": 0.74,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.22999999999999998,
+      "fnr": 0.28,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.47,
+      "fnr": 0.85,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.53,
+      "fnr": 0.88,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    },
+    "ulaw_snr10": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.27,
+      "fnr": 0.15000000000000002,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.20199999999999996,
+      "fnr": 0.07999999999999996,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.09999999999999999,
+      "fnr": 0.010000000000000009,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.32099999999999995,
+      "fnr": 0.22999999999999998,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.31000000000000005,
+      "fnr": 0.26,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.39,
+      "fnr": 0.39,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.22149999999999997,
+      "fnr": 0.08999999999999997,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.3195,
+      "fnr": 0.20999999999999996,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.28,
+      "fnr": 0.10999999999999999,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4,
+      "fnr": 0.42000000000000004,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.32199999999999995,
+      "fnr": 0.28,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.6114999999999999,
+      "fnr": 0.78,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.5,
+      "fnr": 0.63,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    }
+   },
+   "lrB": {
+    "clean_16k": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.45899999999999996,
+      "fnr": 0.69,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.058000000000000024,
+      "fnr": 0.020000000000000018,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.02000000000000001,
+      "fnr": 0.0,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.49,
+      "fnr": 0.6799999999999999,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.119,
+      "fnr": 0.040000000000000036,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.3875,
+      "fnr": 0.55,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.14,
+      "fnr": 0.08999999999999997,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.3005,
+      "fnr": 0.29000000000000004,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.15150000000000002,
+      "fnr": 0.07999999999999996,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.51,
+      "fnr": 0.75,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.28,
+      "fnr": 0.27,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.33999999999999997,
+      "fnr": 0.39,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.45899999999999996,
+      "fnr": 0.61,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    },
+    "g711_ulaw": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.46199999999999997,
+      "fnr": 0.64,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.06999999999999998,
+      "fnr": 0.020000000000000018,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.04250000000000002,
+      "fnr": 0.010000000000000009,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.49,
+      "fnr": 0.69,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.17000000000000004,
+      "fnr": 0.10999999999999999,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.41000000000000003,
+      "fnr": 0.5700000000000001,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.16000000000000003,
+      "fnr": 0.10999999999999999,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.37,
+      "fnr": 0.44999999999999996,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.20149999999999998,
+      "fnr": 0.10999999999999999,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.48,
+      "fnr": 0.6699999999999999,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.31000000000000005,
+      "fnr": 0.32999999999999996,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.33999999999999997,
+      "fnr": 0.38,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4905,
+      "fnr": 0.6799999999999999,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    },
+    "amr_nb_12k2": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4615,
+      "fnr": 0.52,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.25,
+      "fnr": 0.09999999999999998,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.24,
+      "fnr": 0.09999999999999998,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4905,
+      "fnr": 0.55,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.539,
+      "fnr": 0.62,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.491,
+      "fnr": 0.56,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.29000000000000004,
+      "fnr": 0.15000000000000002,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.49,
+      "fnr": 0.5,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.35,
+      "fnr": 0.29000000000000004,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4675,
+      "fnr": 0.48,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.391,
+      "fnr": 0.35,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.3685,
+      "fnr": 0.29000000000000004,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.501,
+      "fnr": 0.62,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    },
+    "ulaw_snr10": {
+     "A07": {
+      "n": 100,
+      "eer_vs_bonafide": 0.45999999999999996,
+      "fnr": 0.6799999999999999,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder+GAN"
+     },
+     "A08": {
+      "n": 100,
+      "eer_vs_bonafide": 0.29000000000000004,
+      "fnr": 0.27,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A09": {
+      "n": 100,
+      "eer_vs_bonafide": 0.25,
+      "fnr": 0.20999999999999996,
+      "algorithm_seen_in_training": false,
+      "type": "TTS vocoder"
+     },
+     "A10": {
+      "n": 100,
+      "eer_vs_bonafide": 0.5275000000000001,
+      "fnr": 0.73,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A11": {
+      "n": 100,
+      "eer_vs_bonafide": 0.45999999999999996,
+      "fnr": 0.6699999999999999,
+      "algorithm_seen_in_training": false,
+      "type": "TTS griffin-lim"
+     },
+     "A12": {
+      "n": 100,
+      "eer_vs_bonafide": 0.45999999999999996,
+      "fnr": 0.63,
+      "algorithm_seen_in_training": false,
+      "type": "TTS neural waveform"
+     },
+     "A13": {
+      "n": 100,
+      "eer_vs_bonafide": 0.279,
+      "fnr": 0.26,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC waveform concat+filtering"
+     },
+     "A14": {
+      "n": 100,
+      "eer_vs_bonafide": 0.5795,
+      "fnr": 0.83,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC vocoder"
+     },
+     "A15": {
+      "n": 100,
+      "eer_vs_bonafide": 0.45999999999999996,
+      "fnr": 0.63,
+      "algorithm_seen_in_training": false,
+      "type": "TTS_VC neural waveform"
+     },
+     "A16": {
+      "n": 100,
+      "eer_vs_bonafide": 0.44999999999999996,
+      "fnr": 0.63,
+      "algorithm_seen_in_training": true,
+      "type": "TTS waveform concat"
+     },
+     "A17": {
+      "n": 100,
+      "eer_vs_bonafide": 0.599,
+      "fnr": 0.89,
+      "algorithm_seen_in_training": false,
+      "type": "VC waveform filtering"
+     },
+     "A18": {
+      "n": 100,
+      "eer_vs_bonafide": 0.4485,
+      "fnr": 0.54,
+      "algorithm_seen_in_training": false,
+      "type": "VC vocoder"
+     },
+     "A19": {
+      "n": 100,
+      "eer_vs_bonafide": 0.529,
+      "fnr": 0.69,
+      "algorithm_seen_in_training": true,
+      "type": "VC spectral filtering"
+     }
+    }
+   }
+  },
+  "by_speaker": {
+   "gmmA": {
+    "clean_16k": {
+     "n_speakers": 67,
+     "global_fpr": 0.229,
+     "fpr_median": 0.1111111111111111,
+     "fpr_p90": 0.554,
+     "fpr_max": 0.7619047619047619,
+     "fnr_median": 0.31762749445676275,
+     "fnr_p90": 0.5408783783783784,
+     "fnr_max": 0.6875,
+     "speakers_fpr_over_2x_global": 10
+    },
+    "g711_ulaw": {
+     "n_speakers": 67,
+     "global_fpr": 0.187,
+     "fpr_median": 0.13636363636363635,
+     "fpr_p90": 0.38499999999999995,
+     "fpr_max": 0.56,
+     "fnr_median": 0.49390243902439024,
+     "fnr_p90": 0.7248641304347827,
+     "fnr_max": 0.8333333333333334,
+     "speakers_fpr_over_2x_global": 9
+    }
+   },
+   "lrA": {
+    "clean_16k": {
+     "n_speakers": 67,
+     "global_fpr": 0.42,
+     "fpr_median": 0.42105263157894735,
+     "fpr_p90": 0.6894230769230769,
+     "fpr_max": 0.9375,
+     "fnr_median": 0.396969696969697,
+     "fnr_p90": 0.5555555555555556,
+     "fnr_max": 0.6956521739130435,
+     "speakers_fpr_over_2x_global": 1
+    },
+    "g711_ulaw": {
+     "n_speakers": 67,
+     "global_fpr": 0.044,
+     "fpr_median": 0.0,
+     "fpr_p90": 0.125,
+     "fpr_max": 0.2857142857142857,
+     "fnr_median": 0.9183333333333333,
+     "fnr_p90": 1.0,
+     "fnr_max": 1.0,
+     "speakers_fpr_over_2x_global": 15
+    }
+   },
+   "gmmB": {
+    "clean_16k": {
+     "n_speakers": 67,
+     "global_fpr": 0.244,
+     "fpr_median": 0.15,
+     "fpr_p90": 0.4869565217391304,
+     "fpr_max": 0.72,
+     "fnr_median": 0.3741258741258741,
+     "fnr_p90": 0.5848039215686274,
+     "fnr_max": 0.85,
+     "speakers_fpr_over_2x_global": 7
+    },
+    "g711_ulaw": {
+     "n_speakers": 67,
+     "global_fpr": 0.283,
+     "fpr_median": 0.21052631578947367,
+     "fpr_p90": 0.555,
+     "fpr_max": 0.76,
+     "fnr_median": 0.3181818181818182,
+     "fnr_p90": 0.5992647058823531,
+     "fnr_max": 0.7,
+     "speakers_fpr_over_2x_global": 6
+    }
+   },
+   "lrB": {
+    "clean_16k": {
+     "n_speakers": 67,
+     "global_fpr": 0.31,
+     "fpr_median": 0.25,
+     "fpr_p90": 0.5727941176470588,
+     "fpr_max": 0.8333333333333334,
+     "fnr_median": 0.3385416666666667,
+     "fnr_p90": 0.5848039215686274,
+     "fnr_max": 0.7692307692307692,
+     "speakers_fpr_over_2x_global": 6
+    },
+    "g711_ulaw": {
+     "n_speakers": 67,
+     "global_fpr": 0.293,
+     "fpr_median": 0.2222222222222222,
+     "fpr_p90": 0.5260504201680672,
+     "fpr_max": 0.8,
+     "fnr_median": 0.36698717948717946,
+     "fnr_p90": 0.6284090909090909,
+     "fnr_max": 0.7692307692307692,
+     "speakers_fpr_over_2x_global": 5
+    }
+   }
+  },
+  "calibration": {
+   "gmmA": {
+    "threshold": -0.26838794350624084,
+    "dev_eer": 0.2207941176470588,
+    "abstain_delta": 0.2559389531612396
+   },
+   "lrA": {
+    "threshold": -0.4616491708924849,
+    "dev_eer": 0.27079411764705885,
+    "abstain_delta": 0.40376243453088784
+   },
+   "gmmB": {
+    "threshold": -0.13816198706626892,
+    "dev_eer": 0.24108823529411766,
+    "abstain_delta": 0.19546087980270385
+   },
+   "lrB": {
+    "threshold": -0.12114842094719919,
+    "dev_eer": 0.28712745098039216,
+    "abstain_delta": 0.3891936277908159
+   }
+  },
+  "latency": {
+   "clean_16k": {
+    "channel_ms_per_clip": 0.16777848434809012,
+    "score_ms_per_clip_both_models": 3.81159535652105,
+    "audio_s_per_clip": 2.4580347826086957
+   },
+   "opus_wb_24k": {
+    "channel_ms_per_clip": 30.113985760433483,
+    "score_ms_per_clip_both_models": 4.741189633916006,
+    "audio_s_per_clip": 2.4786782608695654
+   },
+   "bandlimit_nb": {
+    "channel_ms_per_clip": 1.164549833478917,
+    "score_ms_per_clip_both_models": 3.830986274345615,
+    "audio_s_per_clip": 2.4580347826086957
+   },
+   "g711_ulaw": {
+    "channel_ms_per_clip": 1.9486831034774972,
+    "score_ms_per_clip_both_models": 3.8818892556506674,
+    "audio_s_per_clip": 2.4580347826086957
+   },
+   "g711_alaw": {
+    "channel_ms_per_clip": 1.9273649930437387,
+    "score_ms_per_clip_both_models": 3.86757183913094,
+    "audio_s_per_clip": 2.4580347826086957
+   },
+   "amr_nb_12k2": {
+    "channel_ms_per_clip": 14.822662845652145,
+    "score_ms_per_clip_both_models": 4.8647168239152885,
+    "audio_s_per_clip": 2.5282608695652176
+   },
+   "amr_nb_4k75": {
+    "channel_ms_per_clip": 13.734570860869018,
+    "score_ms_per_clip_both_models": 4.7827506247814275,
+    "audio_s_per_clip": 2.5282608695652176
+   },
+   "opus_nb_12k": {
+    "channel_ms_per_clip": 18.290432375650038,
+    "score_ms_per_clip_both_models": 4.847805889564726,
+    "audio_s_per_clip": 2.5082608695652175
+   },
+   "ulaw_snr20": {
+    "channel_ms_per_clip": 2.3537480991323085,
+    "score_ms_per_clip_both_models": 3.8840047817366807,
+    "audio_s_per_clip": 2.4580347826086957
+   },
+   "ulaw_snr10": {
+    "channel_ms_per_clip": 2.3707972469614815,
+    "score_ms_per_clip_both_models": 3.874641520865423,
+    "audio_s_per_clip": 2.4580347826086957
+   },
+   "ulaw_snr0": {
+    "channel_ms_per_clip": 2.329557690431814,
+    "score_ms_per_clip_both_models": 3.8813406773928087,
+    "audio_s_per_clip": 2.4580347826086957
+   },
+   "ulaw_loss10": {
+    "channel_ms_per_clip": 2.073524096958962,
+    "score_ms_per_clip_both_models": 3.8625292730417327,
+    "audio_s_per_clip": 2.4580347826086957
+   },
+   "sim_harsh_voip": {
+    "channel_ms_per_clip": 2.043200229564896,
+    "score_ms_per_clip_both_models": 3.854857473914545,
+    "audio_s_per_clip": 2.4580347826086957
+   },
+   "sim_pstn": {
+    "channel_ms_per_clip": 2.051403924348229,
+    "score_ms_per_clip_both_models": 3.8585426578259536,
+    "audio_s_per_clip": 2.4580347826086957
+   }
+  }
+ },
+ "language": {
+  "by_wer": {
+   "repo": {
+    "0.0": {
+     "n": 800,
+     "n_pos": 400,
+     "eer": 0.09499999999999999,
+     "auc": 0.97688125,
+     "fpr": 0.1075,
+     "fnr": 0.0775,
+     "ece": 0.06390417435657779,
+     "brier": 0.055513982741317316,
+     "abstain_rate": 0.22250000000000003,
+     "fpr_retained": 0.02556818181818182,
+     "fnr_retained": 0.018518518518518517,
+     "eer_ci95": [
+      0.06997246718907044,
+      0.1149917287267713
+     ]
+    },
+    "0.15": {
+     "n": 800,
+     "n_pos": 400,
+     "eer": 0.08999999999999998,
+     "auc": 0.9681562499999999,
+     "fpr": 0.0825,
+     "fnr": 0.155,
+     "ece": 0.060515981622651066,
+     "brier": 0.07429289779693027,
+     "abstain_rate": 0.26375000000000004,
+     "fpr_retained": 0.016713091922005572,
+     "fnr_retained": 0.09130434782608696,
+     "eer_ci95": [
+      0.06500315217269934,
+      0.11749024697637178
+     ]
+    },
+    "0.3": {
+     "n": 800,
+     "n_pos": 400,
+     "eer": 0.10750000000000001,
+     "auc": 0.9534625000000001,
+     "fpr": 0.0625,
+     "fnr": 0.265,
+     "ece": 0.09992551648899153,
+     "brier": 0.10808778781167062,
+     "abstain_rate": 0.2825,
+     "fpr_retained": 0.005571030640668524,
+     "fnr_retained": 0.2372093023255814,
+     "eer_ci95": [
+      0.09865905257701739,
+      0.14754021897085137
+     ]
+    }
+   },
+   "wide_bag": {
+    "0.0": {
+     "n": 800,
+     "n_pos": 400,
+     "eer": 0.04500000000000002,
+     "auc": 0.9859749999999999,
+     "fpr": 0.23,
+     "fnr": 0.035,
+     "ece": 0.01772902859893017,
+     "brier": 0.06349456456469518,
+     "abstain_rate": 0.37875000000000003,
+     "fpr_retained": 0.03015075376884422,
+     "fnr_retained": 0.0,
+     "eer_ci95": [
+      0.06616646458127379,
+      0.11750008090033082
+     ]
+    },
+    "0.15": {
+     "n": 800,
+     "n_pos": 400,
+     "eer": 0.08250000000000002,
+     "auc": 0.98265,
+     "fpr": 0.1425,
+     "fnr": 0.0825,
+     "ece": 0.04719040585990971,
+     "brier": 0.07625941515070593,
+     "abstain_rate": 0.38875000000000004,
+     "fpr_retained": 0.008849557522123894,
+     "fnr_retained": 0.011406844106463879,
+     "eer_ci95": [
+      0.08496439201552883,
+      0.13248729693875
+     ]
+    },
+    "0.3": {
+     "n": 800,
+     "n_pos": 400,
+     "eer": 0.09750000000000002,
+     "auc": 0.97315,
+     "fpr": 0.0975,
+     "fnr": 0.13,
+     "ece": 0.09736866576769414,
+     "brier": 0.1016736570308506,
+     "abstain_rate": 0.395,
+     "fpr_retained": 0.0,
+     "fnr_retained": 0.06086956521739131,
+     "eer_ci95": [
+      0.09746941681693976,
+      0.14253032211303798
+     ]
+    }
+   },
+   "tfidf_lr": {
+    "0.0": {
+     "n": 800,
+     "n_pos": 400,
+     "eer": 0.0,
+     "auc": 1.0,
+     "fpr": 0.02,
+     "fnr": 0.0,
+     "ece": 0.00015097451242156344,
+     "brier": 3.5741267979370077e-06,
+     "abstain_rate": 0.20999999999999996,
+     "fpr_retained": 0.0,
+     "fnr_retained": 0.0,
+     "eer_ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "0.15": {
+     "n": 800,
+     "n_pos": 400,
+     "eer": 0.0,
+     "auc": 1.0,
+     "fpr": 0.025,
+     "fnr": 0.0,
+     "ece": 0.0002034502295405979,
+     "brier": 4.136296820744319e-06,
+     "abstain_rate": 0.25625,
+     "fpr_retained": 0.0,
+     "fnr_retained": 0.0,
+     "eer_ci95": [
+      0.0,
+      0.0
+     ]
+    },
+    "0.3": {
+     "n": 800,
+     "n_pos": 400,
+     "eer": 0.0,
+     "auc": 1.0,
+     "fpr": 0.0375,
+     "fnr": 0.0,
+     "ece": 0.00026328386771234675,
+     "brier": 3.773242351201374e-06,
+     "abstain_rate": 0.3175,
+     "fpr_retained": 0.0,
+     "fnr_retained": 0.0,
+     "eer_ci95": [
+      0.0,
+      0.0
+     ]
+    }
+   }
+  },
+  "by_type": {
+   "repo": {
+    "0.0": {
+     "delivery": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.01
+     },
+     "insurance": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.2
+     },
+     "refund": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.16
+     },
+     "reward": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.0
+     },
+     "ssn": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.0
+     },
+     "support": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.15
+     },
+     "telemarketing": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.22
+     },
+     "wrong": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.0
+     }
+    },
+    "0.3": {
+     "delivery": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.0
+     },
+     "insurance": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.1
+     },
+     "refund": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.47
+     },
+     "reward": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.24
+     },
+     "ssn": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.03
+     },
+     "support": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.32
+     },
+     "telemarketing": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.15
+     },
+     "wrong": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.0
+     }
+    }
+   },
+   "wide_bag": {
+    "0.0": {
+     "delivery": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.04
+     },
+     "insurance": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.43
+     },
+     "refund": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.02
+     },
+     "reward": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.08
+     },
+     "ssn": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.0
+     },
+     "support": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.04
+     },
+     "telemarketing": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.45
+     },
+     "wrong": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.0
+     }
+    },
+    "0.3": {
+     "delivery": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.02
+     },
+     "insurance": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.19
+     },
+     "refund": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.12
+     },
+     "reward": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.29
+     },
+     "ssn": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.0
+     },
+     "support": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.11
+     },
+     "telemarketing": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.18
+     },
+     "wrong": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.0
+     }
+    }
+   },
+   "tfidf_lr": {
+    "0.0": {
+     "delivery": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.03
+     },
+     "insurance": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.03
+     },
+     "refund": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.0
+     },
+     "reward": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.0
+     },
+     "ssn": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.0
+     },
+     "support": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.0
+     },
+     "telemarketing": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.02
+     },
+     "wrong": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.0
+     }
+    },
+    "0.3": {
+     "delivery": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.05
+     },
+     "insurance": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.04
+     },
+     "refund": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.0
+     },
+     "reward": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.0
+     },
+     "ssn": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.0
+     },
+     "support": {
+      "n": 100,
+      "label": 1,
+      "error_rate": 0.0
+     },
+     "telemarketing": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.06
+     },
+     "wrong": {
+      "n": 100,
+      "label": 0,
+      "error_rate": 0.0
+     }
+    }
+   }
+  },
+  "calibration": {
+   "repo": {
+    "threshold": 0.4325917760033044,
+    "dev_eer": 0.09999999999999999
+   },
+   "wide_bag": {
+    "threshold": 0.5,
+    "dev_eer": 0.060000000000000026
+   },
+   "tfidf_lr": {
+    "threshold": -1.6747283779409443,
+    "dev_eer": 0.0
+   }
+  },
+  "meta": {
+   "source_sha256": "fe8a8fa0aa2b8afb0b0a672fb7f9739b323cb6dd12064f786a68c2a1f49a4e0b",
+   "n": 1600,
+   "n_dev": 800,
+   "n_test": 800,
+   "repo_ms_per_turn_mean": 0.8247579470714872,
+   "repo_ms_per_turn_p95": 1.0680213049991494,
+   "tfidf_ms_per_dialogue_mean": 0.6949741454167935
+  }
+ },
+ "fusion_synthetic_pairs": {
+  "clean_16k": {
+   "audio_only": {
+    "fpr": 0.2335907335907336,
+    "fnr": 0.46464646464646464,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.2335907335907336,
+     "human_scamscript": 0.234251968503937,
+     "synthetic_benign": 0.6600609756097561,
+     "synthetic_scamscript": 0.6504854368932039
+    },
+    "n": 2300
+   },
+   "text_only": {
+    "fpr": 0.07528957528957529,
+    "fnr": 0.4298540965207632,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.07528957528957529,
+     "human_scamscript": 0.8543307086614174,
+     "synthetic_benign": 0.08536585365853659,
+     "synthetic_scamscript": 0.8511326860841424
+    },
+    "n": 2300
+   },
+   "OR_rule": {
+    "fpr": 0.29343629343629346,
+    "fnr": 0.15937149270482603,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.29343629343629346,
+     "human_scamscript": 0.8917322834645669,
+     "synthetic_benign": 0.6996951219512195,
+     "synthetic_scamscript": 0.948220064724919
+    },
+    "n": 2300
+   },
+   "noisy_OR_p>0.5": {
+    "fpr": 0.24517374517374518,
+    "fnr": 0.16217732884399552,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.24517374517374518,
+     "human_scamscript": 0.9488188976377953,
+     "synthetic_benign": 0.625,
+     "synthetic_scamscript": 0.9724919093851133
+    },
+    "n": 2300
+   },
+   "logistic_fusion": {
+    "fpr": 0.28378378378378377,
+    "fnr": 0.14029180695847362,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.28378378378378377,
+     "human_scamscript": 0.9606299212598425,
+     "synthetic_benign": 0.6692073170731707,
+     "synthetic_scamscript": 0.9789644012944984
+    },
+    "n": 2300
+   }
+  },
+  "g711_ulaw": {
+   "audio_only": {
+    "fpr": 0.2702702702702703,
+    "fnr": 0.4270482603815937,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.2702702702702703,
+     "human_scamscript": 0.28937007874015747,
+     "synthetic_benign": 0.7027439024390244,
+     "synthetic_scamscript": 0.6682847896440129
+    },
+    "n": 2300
+   },
+   "text_only": {
+    "fpr": 0.07528957528957529,
+    "fnr": 0.4298540965207632,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.07528957528957529,
+     "human_scamscript": 0.8543307086614174,
+     "synthetic_benign": 0.08536585365853659,
+     "synthetic_scamscript": 0.8511326860841424
+    },
+    "n": 2300
+   },
+   "OR_rule": {
+    "fpr": 0.32625482625482627,
+    "fnr": 0.14646464646464646,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.32625482625482627,
+     "human_scamscript": 0.8956692913385826,
+     "synthetic_benign": 0.7347560975609756,
+     "synthetic_scamscript": 0.9449838187702265
+    },
+    "n": 2300
+   },
+   "noisy_OR_p>0.5": {
+    "fpr": 0.28185328185328185,
+    "fnr": 0.14534231200897868,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.28185328185328185,
+     "human_scamscript": 0.9547244094488189,
+     "synthetic_benign": 0.6661585365853658,
+     "synthetic_scamscript": 0.9724919093851133
+    },
+    "n": 2300
+   },
+   "logistic_fusion": {
+    "fpr": 0.3301158301158301,
+    "fnr": 0.12738496071829405,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.3301158301158301,
+     "human_scamscript": 0.9606299212598425,
+     "synthetic_benign": 0.7073170731707317,
+     "synthetic_scamscript": 0.9757281553398058
+    },
+    "n": 2300
+   }
+  },
+  "amr_nb_12k2": {
+   "audio_only": {
+    "fpr": 0.1718146718146718,
+    "fnr": 0.574635241301908,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.1718146718146718,
+     "human_scamscript": 0.17519685039370078,
+     "synthetic_benign": 0.5426829268292683,
+     "synthetic_scamscript": 0.5064724919093851
+    },
+    "n": 2300
+   },
+   "text_only": {
+    "fpr": 0.07528957528957529,
+    "fnr": 0.4298540965207632,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.07528957528957529,
+     "human_scamscript": 0.8543307086614174,
+     "synthetic_benign": 0.08536585365853659,
+     "synthetic_scamscript": 0.8511326860841424
+    },
+    "n": 2300
+   },
+   "OR_rule": {
+    "fpr": 0.22972972972972974,
+    "fnr": 0.20931537598204264,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.22972972972972974,
+     "human_scamscript": 0.8838582677165354,
+     "synthetic_benign": 0.5914634146341463,
+     "synthetic_scamscript": 0.9255663430420712
+    },
+    "n": 2300
+   },
+   "noisy_OR_p>0.5": {
+    "fpr": 0.20463320463320464,
+    "fnr": 0.2059483726150393,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.20463320463320464,
+     "human_scamscript": 0.952755905511811,
+     "synthetic_benign": 0.5076219512195121,
+     "synthetic_scamscript": 0.9676375404530745
+    },
+    "n": 2300
+   },
+   "logistic_fusion": {
+    "fpr": 0.23552123552123552,
+    "fnr": 0.17845117845117844,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.23552123552123552,
+     "human_scamscript": 0.9586614173228346,
+     "synthetic_benign": 0.573170731707317,
+     "synthetic_scamscript": 0.9724919093851133
+    },
+    "n": 2300
+   }
+  },
+  "ulaw_snr10": {
+   "audio_only": {
+    "fpr": 0.3667953667953668,
+    "fnr": 0.36924803591470257,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.3667953667953668,
+     "human_scamscript": 0.38976377952755903,
+     "synthetic_benign": 0.7362804878048781,
+     "synthetic_scamscript": 0.7168284789644013
+    },
+    "n": 2300
+   },
+   "text_only": {
+    "fpr": 0.07528957528957529,
+    "fnr": 0.4298540965207632,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.07528957528957529,
+     "human_scamscript": 0.8543307086614174,
+     "synthetic_benign": 0.08536585365853659,
+     "synthetic_scamscript": 0.8511326860841424
+    },
+    "n": 2300
+   },
+   "OR_rule": {
+    "fpr": 0.4092664092664093,
+    "fnr": 0.12850729517396184,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.4092664092664093,
+     "human_scamscript": 0.90748031496063,
+     "synthetic_benign": 0.7652439024390244,
+     "synthetic_scamscript": 0.9546925566343042
+    },
+    "n": 2300
+   },
+   "noisy_OR_p>0.5": {
+    "fpr": 0.35135135135135137,
+    "fnr": 0.13973063973063973,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.35135135135135137,
+     "human_scamscript": 0.9547244094488189,
+     "synthetic_benign": 0.6783536585365854,
+     "synthetic_scamscript": 0.9757281553398058
+    },
+    "n": 2300
+   },
+   "logistic_fusion": {
+    "fpr": 0.38996138996138996,
+    "fnr": 0.11391694725028058,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.38996138996138996,
+     "human_scamscript": 0.9606299212598425,
+     "synthetic_benign": 0.739329268292683,
+     "synthetic_scamscript": 0.9805825242718447
+    },
+    "n": 2300
+   }
+  },
+  "ulaw_snr0": {
+   "audio_only": {
+    "fpr": 0.09073359073359073,
+    "fnr": 0.8215488215488216,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.09073359073359073,
+     "human_scamscript": 0.07086614173228346,
+     "synthetic_benign": 0.19969512195121952,
+     "synthetic_scamscript": 0.24433656957928804
+    },
+    "n": 2300
+   },
+   "text_only": {
+    "fpr": 0.07528957528957529,
+    "fnr": 0.4298540965207632,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.07528957528957529,
+     "human_scamscript": 0.8543307086614174,
+     "synthetic_benign": 0.08536585365853659,
+     "synthetic_scamscript": 0.8511326860841424
+    },
+    "n": 2300
+   },
+   "OR_rule": {
+    "fpr": 0.16216216216216217,
+    "fnr": 0.3451178451178451,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.16216216216216217,
+     "human_scamscript": 0.8681102362204725,
+     "synthetic_benign": 0.2728658536585366,
+     "synthetic_scamscript": 0.8851132686084142
+    },
+    "n": 2300
+   },
+   "noisy_OR_p>0.5": {
+    "fpr": 0.13513513513513514,
+    "fnr": 0.31986531986531985,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.13513513513513514,
+     "human_scamscript": 0.9409448818897638,
+     "synthetic_benign": 0.22560975609756098,
+     "synthetic_scamscript": 0.948220064724919
+    },
+    "n": 2300
+   },
+   "logistic_fusion": {
+    "fpr": 0.1776061776061776,
+    "fnr": 0.2991021324354658,
+    "rate_flagged_by_cell": {
+     "human_benign": 0.1776061776061776,
+     "human_scamscript": 0.9468503937007874,
+     "synthetic_benign": 0.27439024390243905,
+     "synthetic_scamscript": 0.9514563106796117
+    },
+    "n": 2300
+   }
+  }
+ },
+ "axes_not_covered": [
+  "language (audio corpus is English VCTK speakers; text is English)",
+  "real phone-call recordings",
+  "real (non-LLM-generated) scam transcripts",
+  "voice-cloning systems newer than 2019"
+ ]
+}
