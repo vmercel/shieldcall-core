@@ -1,5 +1,7 @@
 # ShieldCall Core
 
+![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square) ![Status](https://img.shields.io/badge/Status-research%20prototype-yellow?style=flat-square) ![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?style=flat-square)
+
 Streaming detector for **vishing language** and **vocoded speech** on telephone-bandwidth audio.
 
 ## Who uses what
@@ -27,7 +29,7 @@ This is a research prototype (v0.7 MVP), not a certified product and not a state
 
 **v0.5 agent:** the pipeline is a sensor. `shieldcall.agent.DefenseAgent` holds a belief over five call hypotheses and chooses monitor / challenge / warn / escalate / adapt / abstain by information gain minus interruption cost. It never sees raw audio. It is not an LLM. Demo: `python scripts/run_agent_demo.py`. ADR: `docs/ADR-002-belief-state-defense-agent.md`.
 
-**Journal manuscript** (Information Fusion / TASLP target; do not submit to Computers \& Security): `paper/main.pdf`  
+**Manuscript:** `paper/main.pdf`  
 **Reproduce confirmatory tables:** `python scripts/run_upgrade_experiments.py`  
 Author held-out linguistic numbers from `run_paper_experiments.py` are **sanity only**.
 
@@ -106,4 +108,8 @@ Build and evaluate a **U.S.-deployable telephony detector** that flags (a) scam-
 
 ## License
 
-Proprietary / all rights reserved for the time being.
+Licensed under the [Apache License 2.0](LICENSE). This is a research prototype and is provided without warranty.
+
+## Feedback and support
+
+If you work on telephone fraud, speech anti-spoofing, or consumer protection and find this useful, please [star the repository](https://github.com/vmercel/shieldcall-core) and open an issue with feedback, test results, or questions. Independent review is welcome. The companion phone client is [ShieldCallAI](https://github.com/vmercel/ShieldCallAI).
