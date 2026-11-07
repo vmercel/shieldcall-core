@@ -42,7 +42,7 @@ On a shared 8 kHz timeline it:
 3. Scores transcript fragments with a keyword layer plus a scam-script stage tracker.
 4. Fuses the two streams with disagreement rules (human voice + scam script vs vocoded voice + mild language).
 
-There is no production ASR in this repository. Linguistic experiments inject text. Acoustic experiments use Mini LibriSpeech plus vocoders, not ASVspoof, unless you point `SHIELDCALL_ASVSPOOF_ROOT` at a licensed copy.
+There is no production ASR in this repository. Linguistic experiments inject text. Early acoustic experiments used Mini LibriSpeech plus vocoders; the Phase 1-2 benchmark below uses ASVspoof 2019 LA. (Optional loader: `SHIELDCALL_ASVSPOOF_ROOT` at a licensed copy.)
 
 ## Results (what is actually measured)
 
@@ -56,12 +56,23 @@ Re-run that script after pulling; the table below is the **claim set**, not a fr
 | LPC vs LibriSpeech after bandlimiting | Headline acoustic condition; residual features remain weak. |
 | Pulse-formant / `neural_quant` | Easy unit conditions — **not headlines**. |
 | Operational fusion (OR-label) | Report complementary-cell recall and TPR at FPR, not AUC 1.0. |
-| ASVspoof | **Not run** |
+| ASVspoof 2019 LA (subset, locked splits) | **Run** (Phase 1-2, 2026-11-07). Reference LFCC-GMM baseline: EER 28-34% on unseen attacks, worse under noise; the repo's own acoustic scorer is near chance (EER 41-47%). See [`docs/results/BENCHMARK_PHASE1_2.md`](docs/results/BENCHMARK_PHASE1_2.md). |
 | SAPC audio splices | **Not supported** |
 | ACI vs frozen quantile | Frozen still wins on the reported synthetic stream |
 | Agent | Simulator + closed-loop pipeline scores; likelihoods heuristic |
 
 Sine-wave unit tests still exist. They are not evidence.
+
+## Benchmark (Phase 1 data foundation, Phase 2 baselines)
+
+Locked, reproducible, and deliberately modest. Data card: [`data/DATA_CARD.md`](data/DATA_CARD.md). Protocol: [`docs/lab/ANNOTATION_PROTOCOL.md`](docs/lab/ANNOTATION_PROTOCOL.md). Lock file with hashes: [`docs/results/phase1_lock.json`](docs/results/phase1_lock.json). Full tables: [`docs/results/BENCHMARK_PHASE1_2.md`](docs/results/BENCHMARK_PHASE1_2.md).
+
+* **Data**: ASVspoof 2019 LA subset (ODC-By; 67 held-out speakers; 13 attack systems not used for training), 14 channel conditions including real G.711, AMR-NB, Opus codecs via FFmpeg; 1,600 LLM-generated scam/benign dialogues (Apache-2.0).
+* **Acoustic** (EER, held-out speakers and attacks): LFCC-GMM trained on clean audio 28.0% clean, 33.9% G.711, 36.8% at 20 dB noise, 43.4% at 0 dB; trained with telephone augmentation 30.4% G.711, 33.2% at 10 dB. The repository's STRF/prototype scorer: 41-47% (near chance) on a subset.
+* **Language** (synthetic dialogues, English): repo scorer EER 9.5%, rising to 10.8% at 30% simulated ASR word error; a TF-IDF classifier reaches 0% because the generator leaves stylistic artifacts, so these numbers say little about real calls.
+* **Not covered**: real recordings, real scam transcripts, languages other than English, post-2019 voice cloning, AMR-WB/EVS/G.729.
+
+Reproduce: see the bottom of `docs/lab/ANNOTATION_PROTOCOL.md`. Needs `pip install av pandas` in addition to `requirements.txt`.
 
 ## Setup
 
