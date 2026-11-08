@@ -1,0 +1,15 @@
+{
+ "recipe": "phase4: truncated wav2vec2 (4 layers) + spectral gate + 3000 noise views + LR(C=0.01)",
+ "n_clips": 3200,
+ "per_condition_eer": {
+  "amr_nb_12k2": 0.1386622168206751,
+  "clean_16k": 0.12623222794529002,
+  "g711_ulaw": 0.13244722238298257,
+  "ulaw_snr0": 0.29125592401823663
+ },
+ "mean_eer": 0.17214939779179608,
+ "bootstrap95": [
+  0.15776005120159242,
+  0.18345115973729392
+ ]
+}
