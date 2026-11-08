@@ -1,0 +1,10 @@
+{
+ "recipe": "wav2vec2-base layers 3/6/9/12 mean+std pooling, logistic regression, C=0.01",
+ "test": {
+  "clean_16k": 0.08744075981763347,
+  "g711_ulaw": 0.09258509044376284,
+  "amr_nb_12k2": 0.11744506819453286,
+  "ulaw_snr0": 0.2788259351428516,
+  "MEAN": 0.14407421339969517
+ }
+}
