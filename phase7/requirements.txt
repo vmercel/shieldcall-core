@@ -1,0 +1,9 @@
+numpy
+scipy
+pandas
+matplotlib
+soundfile
+requests
+torch
+transformers
+av
