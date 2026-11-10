@@ -5,10 +5,26 @@ MODE="${1:-smoke}"
 cd "$(dirname "$0")"
 WORK="$PWD/../phase7/work"; mkdir -p "$WORK"   # shares the Phase 7 download (keys, 7.8 GB eval audio) if you already ran it
 echo "== 1/5 python environment"
-python3 -m venv .venv8
+# torch/scipy wheels exist only for Python 3.10-3.12. Find one; if none is installed, fetch a private Python 3.11 with uv (no admin rights, no conda needed).
+PYOK=""
+for c in python3.11 python3.12 python3.10 python3 python; do
+  if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys;sys.exit(0 if (3,10)<=sys.version_info[:2]<=(3,12) else 1)' 2>/dev/null; then PYOK="$c"; break; fi
+done
+if [ ! -x .venv8/bin/python ] || ! .venv8/bin/python -c 'import sys;sys.exit(0 if (3,10)<=sys.version_info[:2]<=(3,12) else 1)' 2>/dev/null; then
+  rm -rf .venv8
+  if [ -n "$PYOK" ]; then
+    echo "using $($PYOK --version)"; "$PYOK" -m venv .venv8
+  else
+    echo "no Python 3.10-3.12 found; installing a private Python 3.11 with uv"
+    TOOLS="$WORK/uvtool"; python3 -m venv "$TOOLS"; "$TOOLS/bin/pip" install -q uv
+    "$TOOLS/bin/uv" venv --python 3.11 .venv8
+  fi
+fi
 source .venv8/bin/activate
-pip install -q --upgrade pip
-pip install -q -r requirements.txt
+python -m pip install -q --upgrade pip 2>/dev/null || true
+if python -m pip --version >/dev/null 2>&1; then python -m pip install -q -r requirements.txt
+else "$WORK/uvtool/bin/uv" pip install -q -r requirements.txt; fi
+python -c "import torch, transformers, librosa, av, sklearn, scipy, soundfile, pyarrow; print('environment OK: torch', torch.__version__, 'python', __import__('sys').version.split()[0])"
 echo "== 2/5 organizers' evaluation package + keys"
 [ -d "$WORK/2021" ] || git clone -q --depth 1 https://github.com/asvspoof-challenge/2021 "$WORK/2021"
 git -C "$WORK/2021" rev-parse HEAD > "$WORK/eval_package_commit.txt"
