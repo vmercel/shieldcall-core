@@ -1,4 +1,4 @@
-numpy
+numpy<2
 scipy
 scikit-learn
 pandas
@@ -9,5 +9,5 @@ torch
 transformers
 av
 librosa
-pyarrow
+pyarrow<17
 huggingface_hub
