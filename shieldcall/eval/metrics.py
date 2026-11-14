@@ -208,3 +208,134 @@ def fpr_at_threshold(labels: Sequence[int], scores: Sequence[float], th: float =
     pred = scores >= th
     n_neg = max((labels == 0).sum(), 1)
     return float(((pred) & (labels == 0)).sum() / n_neg)
+
+
+# ---------------------------------------------------------------------------
+# Actual-DCF and per-cell calibration reporting (TDD v2.0 sections 6.6, 15.4;
+# ADR-005). EER and min DCF are oracle thresholds; a deployed system is
+# judged at the threshold it actually uses, so actDCF is the DCF at the
+# Bayes threshold on calibrated LLRs, with the same normaliser as min_dcf
+# so the two are directly comparable (gate G2: actDCF within 10% of minDCF).
+# ---------------------------------------------------------------------------
+
+def bayes_threshold(
+    p_target: float = 0.05, c_miss: float = 1.0, c_fa: float = 1.0
+) -> float:
+    """LLR threshold from Bayes' rule (TDD v2.0 section 6.6).
+
+    Decide spoof when ``l > log(C_fa / C_miss) - logit(p_target)``:
+    deciding spoof costs ``C_fa * P(bona | x)`` and deciding bona fide
+    costs ``C_miss * P(spoof | x)``, so spoof wins when the posterior
+    odds exceed ``C_fa / C_miss``. With the defaults (``p_target=0.05``,
+    equal costs) the threshold is ``log(19)`` ≈ 2.944.
+    """
+    import math
+
+    p = min(max(float(p_target), 1e-12), 1.0 - 1e-12)
+    return float(math.log(float(c_fa) / float(c_miss)) - math.log(p / (1.0 - p)))
+
+
+def dcf_at_threshold(
+    labels: Sequence[int],
+    llrs: Sequence[float],
+    threshold: float,
+    p_target: float = 0.05,
+    c_miss: float = 1.0,
+    c_fa: float = 1.0,
+) -> float:
+    """Normalised DCF at one fixed LLR threshold (``llr > threshold``)."""
+    labels = np.asarray(labels, dtype=int)
+    llrs = np.asarray(llrs, dtype=float)
+    n_pos = max((labels == 1).sum(), 1)
+    n_neg = max((labels == 0).sum(), 1)
+    pred = llrs > threshold
+    fnr = ((~pred) & (labels == 1)).sum() / n_pos
+    fpr = ((pred) & (labels == 0)).sum() / n_neg
+    dcf = c_miss * p_target * fnr + c_fa * (1.0 - p_target) * fpr
+    denom = min(c_miss * p_target, c_fa * (1.0 - p_target))
+    return float(dcf / max(denom, 1e-12))
+
+
+def act_dcf(
+    labels: Sequence[int],
+    llrs: Sequence[float],
+    p_target: float = 0.05,
+    c_miss: float = 1.0,
+    c_fa: float = 1.0,
+) -> float:
+    """Actual DCF at the Bayes threshold the system actually uses."""
+    return dcf_at_threshold(
+        labels, llrs, bayes_threshold(p_target, c_miss, c_fa), p_target, c_miss, c_fa
+    )
+
+
+def per_cell_report(
+    cells,
+    p_target: float = 0.05,
+    c_miss: float = 1.0,
+    c_fa: float = 1.0,
+    n_boot: int = 0,
+):
+    """Per-cell and pooled EER / minDCF / actDCF / Cllr / Cllr-min.
+
+    ``cells`` maps a cell key (e.g. an ASVspoof 2021 LA codec: C1 none,
+    C2 alaw, C3 pstn, C4 g722, C5 ulaw, C6 gsm, C7 opus) to
+    ``(labels, llrs)`` with labels 1 = spoof and ``llrs`` calibrated
+    log-likelihood ratios. Returns ``{"cells": {...}, "pooled": {...},
+    "actdcf_spread": float | None, "pooled_min_dcf": float | None}``.
+
+    Each row carries ``n``, ``n_spoof``, ``n_bona``, ``eer``,
+    ``min_dcf``, ``act_dcf``, ``cllr``, ``cllr_min`` and, when
+    ``n_boot > 0``, ``eer_ci`` as a ``(lo, hi)`` bootstrap interval.
+    Rows for cells holding only one class carry ``None`` for the
+    metrics that need both classes and are excluded from the spread.
+    ``actdcf_spread`` is the best-to-worst codec actDCF spread, the
+    quantity the TDD section 5 acceptance criterion requires
+    per-cell calibration to narrow without raising pooled minDCF.
+    """
+    from ..fusion.calibration import cllr, cllr_min
+
+    def _row(labels, llrs):
+        labels = np.asarray(labels, dtype=int)
+        llrs = np.asarray(llrs, dtype=float)
+        n_spoof = int((labels == 1).sum())
+        n_bona = int((labels == 0).sum())
+        row = {"n": int(len(labels)), "n_spoof": n_spoof, "n_bona": n_bona}
+        if n_spoof == 0 or n_bona == 0 or len(labels) == 0:
+            row.update(
+                {"eer": None, "min_dcf": None, "act_dcf": None, "cllr": None, "cllr_min": None}
+            )
+            return row
+        # EER is invariant to monotone transforms; evaluate it on the
+        # posterior so the [0, 1] threshold grid in equal_error_rate
+        # applies (raw LLRs range over the whole real line).
+        posterior = 1.0 / (1.0 + np.exp(-np.clip(llrs, -500.0, 500.0)))
+        row["eer"] = equal_error_rate(labels, posterior)
+        row["min_dcf"] = min_dcf(labels, posterior, p_target, c_miss, c_fa)
+        row["act_dcf"] = act_dcf(labels, llrs, p_target, c_miss, c_fa)
+        row["cllr"] = cllr(labels, llrs)
+        row["cllr_min"] = cllr_min(labels, llrs)
+        if n_boot > 0:
+            _, lo, hi = bootstrap_ci(labels, posterior, equal_error_rate, n_boot=n_boot)
+            row["eer_ci"] = (lo, hi)
+        return row
+
+    out_cells = {}
+    pooled_labels: list = []
+    pooled_llrs: list = []
+    for key, (labels, llrs) in cells.items():
+        out_cells[str(key)] = _row(labels, llrs)
+        pooled_labels.extend(list(labels))
+        pooled_llrs.extend(list(llrs))
+    pooled = _row(pooled_labels, pooled_llrs)
+    spreads = [
+        row["act_dcf"]
+        for row in out_cells.values()
+        if row["act_dcf"] is not None
+    ]
+    return {
+        "cells": out_cells,
+        "pooled": pooled,
+        "actdcf_spread": (max(spreads) - min(spreads)) if spreads else None,
+        "pooled_min_dcf": pooled["min_dcf"],
+    }
