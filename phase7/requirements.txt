@@ -1,9 +1,0 @@
-numpy
-scipy
-pandas
-matplotlib<3.9
-soundfile
-requests
-torch
-transformers
-av
