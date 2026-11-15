@@ -1,0 +1,13 @@
+numpy<2
+scipy
+scikit-learn
+pandas
+matplotlib<3.9
+soundfile
+requests
+torch
+transformers
+av
+librosa
+pyarrow<17
+huggingface_hub
