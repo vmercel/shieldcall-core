@@ -115,6 +115,7 @@ class Capabilities:
         "POST /v1/score/acoustic",
         "POST /v1/score/fuse",
         "WS /v1/calls/{id}/stream",
+        "WS /v1/ingest/twilio",
         "GET /docs",
         "GET /openapi.json",
     )

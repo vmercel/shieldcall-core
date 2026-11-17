@@ -30,6 +30,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 from ..application.detector import DetectorApplication
 from ..eval.corpora.independent_scripts import independent_scripts
+from ..ingest.twilio import TwilioError, TwilioMediaStream
 from ..linguistic.provider import make_asr_from_env
 from ..pipeline import PipelineConfig
 from ..runtime.runtime import SidecarRuntime
@@ -766,6 +767,94 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
                     await ws.send_json(_last_event_dict(sess, events))
                 else:
                     await ws.send_json({"type": "error", "detail": f"unknown type {kind}"})
+        except WebSocketDisconnect:
+            return
+        except Exception as exc:
+            try:
+                await ws.send_json({"type": "error", "detail": str(exc)})
+            except Exception:
+                pass
+
+    # -- Twilio Media Streams ingest (ADR-008, TDD v2.0 §4) ----------------
+    #
+    # Twilio cannot send an Authorization header when it opens the Stream
+    # websocket, so the credential travels as a `token` query parameter
+    # (the mechanism Twilio documents for Stream URLs). It must be a
+    # single-purpose, per-integration token from
+    # SHIELDCALL_TWILIO_TOKENS ("id:value,...", same shape as the
+    # sidecar tokens), never the sidecar bearer token, and the route
+    # only serves over wss in production. With no Twilio tokens
+    # configured the route refuses connections unless the local-dev
+    # escape hatch is on, exactly like the sidecar auth gate.
+    #
+    # The call must already exist (POST /v1/calls, P2-6b): the operator
+    # opens it with the Twilio Call SID as the call_id, and the
+    # adapter rejects a `start.callSid` that does not match. The
+    # stream is recommend-only like every other ingest path: audio
+    # flows into the same pipeline and session, nothing hangs up.
+
+    def _twilio_tokens() -> Dict[str, str]:
+        multi = os.environ.get("SHIELDCALL_TWILIO_TOKENS", "").strip()
+        tokens: Dict[str, str] = {}
+        if multi:
+            for item in multi.split(","):
+                item = item.strip()
+                if not item or ":" not in item:
+                    continue
+                tid, _, value = item.partition(":")
+                tid, value = tid.strip(), value.strip()
+                if tid and value:
+                    tokens[tid] = value
+        return tokens
+
+    @app.websocket("/v1/ingest/twilio")
+    async def twilio_ingest(ws: WebSocket):
+        call_id = (ws.query_params.get("call_id") or "").strip()
+        presented = ws.query_params.get("token") or ""
+        await ws.accept()
+        tokens = _twilio_tokens()
+        if tokens:
+            if not any(hmac.compare_digest(presented, v) for v in tokens.values()):
+                await ws.close(code=4401)
+                return
+        elif not _unauthenticated_allowed():
+            await ws.close(code=4401)
+            return
+        if not call_id:
+            await ws.close(code=4404, reason="call_id required")
+            return
+        sess = rt.get_call(call_id)
+        if sess is None:
+            # No implicit call creation (P2-6b): opening here would let
+            # a stream bypass the per-token new-call quota on POST
+            # /v1/calls and create unbounded sessions.
+            await ws.close(code=4404, reason="unknown call_id")
+            return
+        stream = TwilioMediaStream(call_id=call_id)
+        try:
+            while True:
+                msg = await ws.receive_json()
+                try:
+                    frames = stream.handle_message(msg)
+                except TwilioError as exc:
+                    await ws.send_json({"type": "error", "detail": str(exc)})
+                    await ws.close(code=4400, reason=str(exc)[:120])
+                    return
+                if frames:
+                    samples = np.concatenate([f.samples for f in frames])
+                    t0 = time.perf_counter()
+                    events = sess.push_audio(samples, 8000)
+                    rt.observe_frame_ms((time.perf_counter() - t0) * 1000.0)
+                    await ws.send_json(_last_event_dict(sess, events))
+                if stream.is_stopped:
+                    log.info(
+                        "twilio stream %s closed: %s",
+                        stream.stream_sid,
+                        stream.stats(),
+                    )
+                    await ws.send_json(_last_event_dict(sess))
+                    await ws.close(code=1000)
+                    return
         except WebSocketDisconnect:
             return
         except Exception as exc:
