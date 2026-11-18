@@ -45,6 +45,9 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 
 from .frame import FRAME_MS, FRAME_SAMPLES_8K, MediaFrame
+from .g711 import _MULAW_TABLE, mulaw_decode
+
+__all__ = ["TwilioError", "TwilioMediaStream", "mulaw_decode", "_MULAW_TABLE"]
 
 SAMPLE_RATE = 8000
 """Twilio media is always 8 kHz mu-law (per the docs above)."""
@@ -59,35 +62,6 @@ class TwilioError(ValueError):
     """A Twilio protocol violation: malformed message, wrong state, or
     an unsupported media format. The caller should close the stream;
     the adapter never guesses its way past one."""
-
-
-def _build_mulaw_table() -> np.ndarray:
-    """Exact G.711 mu-law decode table (ITU-T G.711), as float32 in
-    [-1, 1]. Byte 0xFF decodes to 0.0, 0x00 to -32124/32768, 0x80 to
-    +32124/32768; the table is verified against those vectors in
-    tests/test_twilio_ingest.py."""
-    table = np.empty(256, dtype=np.float32)
-    for byte in range(256):
-        u = (~byte) & 0xFF
-        sign = u & 0x80
-        exponent = (u >> 4) & 0x07
-        mantissa = u & 0x0F
-        sample = ((mantissa << 3) + 0x84) << exponent
-        sample -= 0x84
-        if sign:
-            sample = -sample
-        table[byte] = sample / 32768.0
-    return table
-
-
-_MULAW_TABLE = _build_mulaw_table()
-
-
-def mulaw_decode(raw: bytes) -> np.ndarray:
-    """Decode G.711 mu-law bytes to float32 mono PCM in [-1, 1]."""
-    if not raw:
-        return np.empty(0, dtype=np.float32)
-    return _MULAW_TABLE[np.frombuffer(raw, dtype=np.uint8)].copy()
 
 
 @dataclass
