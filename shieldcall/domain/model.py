@@ -116,6 +116,7 @@ class Capabilities:
         "POST /v1/score/fuse",
         "WS /v1/calls/{id}/stream",
         "WS /v1/ingest/twilio",
+        "WS /v1/ingest/telnyx",
         "GET /docs",
         "GET /openapi.json",
     )

@@ -30,6 +30,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 from ..application.detector import DetectorApplication
 from ..eval.corpora.independent_scripts import independent_scripts
+from ..ingest.telnyx import TelnyxError, TelnyxMediaStream
 from ..ingest.twilio import TwilioError, TwilioMediaStream
 from ..linguistic.provider import make_asr_from_env
 from ..pipeline import PipelineConfig
@@ -850,6 +851,96 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
                     log.info(
                         "twilio stream %s closed: %s",
                         stream.stream_sid,
+                        stream.stats(),
+                    )
+                    await ws.send_json(_last_event_dict(sess))
+                    await ws.close(code=1000)
+                    return
+        except WebSocketDisconnect:
+            return
+        except Exception as exc:
+            try:
+                await ws.send_json({"type": "error", "detail": str(exc)})
+            except Exception:
+                pass
+
+    # -- Telnyx Media Streaming ingest (ADR-011, TDD v2.0 §4) ------------
+    #
+    # Telnyx opens the stream WebSocket from its own side, so the
+    # credential travels as a `token` query parameter in the
+    # `stream_url` (the same shape as the Twilio route). It must be a
+    # single-purpose, per-integration token from
+    # SHIELDCALL_TELNYX_TOKENS ("id:value,..."), never the sidecar
+    # bearer token. With no Telnyx tokens configured the route refuses
+    # connections unless the local-dev escape hatch is on.
+    #
+    # The call must already exist (POST /v1/calls, P2-6b): the operator
+    # opens it with the Telnyx call_control_id as the call_id, and the
+    # adapter rejects a `start.call_control_id` that does not match.
+    # Telnyx also signs every stream connection (Ed25519 over
+    # "{timestamp}|{stream_url}"); signature verification is NOT done
+    # here (needs the account public key plus an Ed25519
+    # implementation) and is logged as a follow-up in ADR-011. The
+    # stream is recommend-only like every other ingest path: audio
+    # flows into the same pipeline and session, nothing hangs up.
+
+    def _telnyx_tokens() -> Dict[str, str]:
+        multi = os.environ.get("SHIELDCALL_TELNYX_TOKENS", "").strip()
+        tokens: Dict[str, str] = {}
+        if multi:
+            for item in multi.split(","):
+                item = item.strip()
+                if not item or ":" not in item:
+                    continue
+                tid, _, value = item.partition(":")
+                tid, value = tid.strip(), value.strip()
+                if tid and value:
+                    tokens[tid] = value
+        return tokens
+
+    @app.websocket("/v1/ingest/telnyx")
+    async def telnyx_ingest(ws: WebSocket):
+        call_id = (ws.query_params.get("call_id") or "").strip()
+        presented = ws.query_params.get("token") or ""
+        await ws.accept()
+        tokens = _telnyx_tokens()
+        if tokens:
+            if not any(hmac.compare_digest(presented, v) for v in tokens.values()):
+                await ws.close(code=4401)
+                return
+        elif not _unauthenticated_allowed():
+            await ws.close(code=4401)
+            return
+        if not call_id:
+            await ws.close(code=4404, reason="call_id required")
+            return
+        sess = rt.get_call(call_id)
+        if sess is None:
+            # No implicit call creation (P2-6b): opening here would let
+            # a stream bypass the per-token new-call quota on POST
+            # /v1/calls and create unbounded sessions.
+            await ws.close(code=4404, reason="unknown call_id")
+            return
+        stream = TelnyxMediaStream(call_id=call_id)
+        try:
+            while True:
+                msg = await ws.receive_json()
+                try:
+                    frames = stream.handle_message(msg)
+                except TelnyxError as exc:
+                    await ws.send_json({"type": "error", "detail": str(exc)})
+                    await ws.close(code=4400, reason=str(exc)[:120])
+                    return
+                if frames:
+                    samples = np.concatenate([f.samples for f in frames])
+                    t0 = time.perf_counter()
+                    events = sess.push_audio(samples, 8000)
+                    rt.observe_frame_ms((time.perf_counter() - t0) * 1000.0)
+                    await ws.send_json(_last_event_dict(sess, events))
+                if stream.is_stopped:
+                    log.info(
+                        "telnyx stream %s closed: %s",
+                        stream.stream_id,
                         stream.stats(),
                     )
                     await ws.send_json(_last_event_dict(sess))
