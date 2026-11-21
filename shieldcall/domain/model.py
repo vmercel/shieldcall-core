@@ -117,6 +117,7 @@ class Capabilities:
         "WS /v1/calls/{id}/stream",
         "WS /v1/ingest/twilio",
         "WS /v1/ingest/telnyx",
+        "WS /v1/ingest/vonage",
         "GET /docs",
         "GET /openapi.json",
     )

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import base64
 import hmac
+import json
 import logging
 import os
 import time
@@ -32,6 +33,7 @@ from ..application.detector import DetectorApplication
 from ..eval.corpora.independent_scripts import independent_scripts
 from ..ingest.telnyx import TelnyxError, TelnyxMediaStream
 from ..ingest.twilio import TwilioError, TwilioMediaStream
+from ..ingest.vonage import VonageError, VonageMediaStream
 from ..linguistic.provider import make_asr_from_env
 from ..pipeline import PipelineConfig
 from ..runtime.runtime import SidecarRuntime
@@ -953,6 +955,116 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
                 await ws.send_json({"type": "error", "detail": str(exc)})
             except Exception:
                 pass
+
+    # -- Vonage Voice API WebSocket ingest (ADR-012, TDD v2.0 §4) --------
+    #
+    # Vonage opens the stream WebSocket from its own side, so the
+    # credential travels as a `token` query parameter in the NCCO
+    # `uri` (the same shape as the Twilio and Telnyx routes). It must
+    # be a single-purpose, per-integration token from
+    # SHIELDCALL_VONAGE_TOKENS ("id:value,..."), never the sidecar
+    # bearer token. With no Vonage tokens configured the route refuses
+    # connections unless the local-dev escape hatch is on.
+    #
+    # The call must already exist (POST /v1/calls, P2-6b): the operator
+    # opens it with the Vonage call uuid as the call_id and puts that
+    # id in the NCCO websocket URI. Vonage sends no call identifier
+    # over the socket, so there is nothing in-band to check the
+    # binding against; a distinct URI per call is an operator
+    # obligation (ADR-012 item 9). Vonage's `vonage` authorization
+    # mode (a signed JWT in the handshake Authorization header) is
+    # NOT verified here; the query token is the auth mechanism in
+    # this slice, the same as the Twilio route.
+    #
+    # Unlike the Twilio and Telnyx routes, this route reads both text
+    # and binary WebSocket messages: text is JSON events, binary is
+    # raw L16 PCM. There is no stop event, so the stream ends when
+    # the socket closes, and the adapter's finish() discards any
+    # partial trailing frame. The stream is recommend-only like every
+    # other ingest path: audio flows into the same pipeline and
+    # session, nothing hangs up.
+
+    def _vonage_tokens() -> Dict[str, str]:
+        multi = os.environ.get("SHIELDCALL_VONAGE_TOKENS", "").strip()
+        tokens: Dict[str, str] = {}
+        if multi:
+            for item in multi.split(","):
+                item = item.strip()
+                if not item or ":" not in item:
+                    continue
+                tid, _, value = item.partition(":")
+                tid, value = tid.strip(), value.strip()
+                if tid and value:
+                    tokens[tid] = value
+        return tokens
+
+    @app.websocket("/v1/ingest/vonage")
+    async def vonage_ingest(ws: WebSocket):
+        call_id = (ws.query_params.get("call_id") or "").strip()
+        presented = ws.query_params.get("token") or ""
+        await ws.accept()
+        tokens = _vonage_tokens()
+        if tokens:
+            if not any(hmac.compare_digest(presented, v) for v in tokens.values()):
+                await ws.close(code=4401)
+                return
+        elif not _unauthenticated_allowed():
+            await ws.close(code=4401)
+            return
+        if not call_id:
+            await ws.close(code=4404, reason="call_id required")
+            return
+        sess = rt.get_call(call_id)
+        if sess is None:
+            # No implicit call creation (P2-6b): opening here would let
+            # a stream bypass the per-token new-call quota on POST
+            # /v1/calls and create unbounded sessions.
+            await ws.close(code=4404, reason="unknown call_id")
+            return
+        stream = VonageMediaStream(call_id=call_id)
+        try:
+            while True:
+                msg = await ws.receive()
+                if msg.get("type") == "websocket.disconnect":
+                    break
+                try:
+                    data = msg.get("bytes")
+                    text = msg.get("text")
+                    if data is not None:
+                        frames = stream.handle_audio(data)
+                    elif text is not None:
+                        try:
+                            parsed = json.loads(text)
+                        except ValueError as exc:
+                            raise VonageError(
+                                f"text message is not JSON: {exc}"
+                            ) from exc
+                        frames = stream.handle_message(parsed)
+                    else:
+                        continue
+                except VonageError as exc:
+                    await ws.send_json({"type": "error", "detail": str(exc)})
+                    await ws.close(code=4400, reason=str(exc)[:120])
+                    return
+                if frames:
+                    samples = np.concatenate([f.samples for f in frames])
+                    t0 = time.perf_counter()
+                    events = sess.push_audio(samples, 8000)
+                    rt.observe_frame_ms((time.perf_counter() - t0) * 1000.0)
+                    await ws.send_json(_last_event_dict(sess, events))
+        except WebSocketDisconnect:
+            pass
+        except Exception as exc:
+            try:
+                await ws.send_json({"type": "error", "detail": str(exc)})
+            except Exception:
+                pass
+        finally:
+            # No stop event exists: the socket closing ends the
+            # stream. finish() is idempotent and discards a partial
+            # trailing frame rather than padding it.
+            stream.finish()
+            log.info("vonage stream %s closed: %s", call_id, stream.stats())
 
     if hosted_auth is not None:
         hosted.register_hosted_routes(app, rt, hosted_auth)
