@@ -118,6 +118,7 @@ class Capabilities:
         "WS /v1/ingest/twilio",
         "WS /v1/ingest/telnyx",
         "WS /v1/ingest/vonage",
+        "POST /v1/ingest/amazon-connect",
         "GET /docs",
         "GET /openapi.json",
     )

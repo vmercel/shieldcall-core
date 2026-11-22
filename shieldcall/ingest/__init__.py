@@ -2,6 +2,7 @@
 canonical 10 ms frame envelope (TDD v2.0 §4).
 """
 
+from .amazon_connect import AmazonConnectError, AmazonConnectStream
 from .asterisk import AsteriskError, AsteriskRtpStream
 from .frame import FRAME_MS, FRAME_SAMPLES_8K, MediaFrame
 from .g711 import alaw_decode, mulaw_decode
@@ -19,6 +20,8 @@ __all__ = [
     "FRAME_MS",
     "FRAME_SAMPLES_8K",
     "MediaFrame",
+    "AmazonConnectError",
+    "AmazonConnectStream",
     "AsteriskError",
     "AsteriskRtpStream",
     "RtpError",

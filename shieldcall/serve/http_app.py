@@ -31,6 +31,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 from ..application.detector import DetectorApplication
 from ..eval.corpora.independent_scripts import independent_scripts
+from ..ingest.amazon_connect import AmazonConnectError, AmazonConnectStream
 from ..ingest.telnyx import TelnyxError, TelnyxMediaStream
 from ..ingest.twilio import TwilioError, TwilioMediaStream
 from ..ingest.vonage import VonageError, VonageMediaStream
@@ -469,6 +470,11 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
     # bearer token (trusted integrator: SBC/sidecar/lab, unrestricted).
     # A JWT principal may only touch sessions it opened itself.
     app.state.call_owners: Dict[str, Optional[str]] = {}
+    # Per-call Amazon Connect fragment state (ADR-013): call_id ->
+    # AmazonConnectStream, holding the partial-frame buffers, the
+    # per-track clocks and the track map across fragment POSTs.
+    # Dropped when the call is closed, with the stream finished.
+    app.state.amazon_connect_streams: Dict[str, AmazonConnectStream] = {}
     # Per-route latency histograms + 4xx/5xx rates (P2-6c, Phase 1). Buckets
     # are env-overridable via SHIELDCALL_LATENCY_BUCKETS.
     app.state.latency = RouteLatencyTracker(buckets_from_env())
@@ -599,6 +605,9 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
         _require_call_access(app, call_id, principal)
         trace = rt.close_call(call_id)
         app.state.call_owners.pop(call_id, None)
+        stream = app.state.amazon_connect_streams.pop(call_id, None)
+        if stream is not None:
+            stream.finish()
         return {"call_id": call_id, "n_decisions": len(trace)}
 
     @app.get("/v1/calls/{call_id}/trace")
@@ -1065,6 +1074,89 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
             # trailing frame rather than padding it.
             stream.finish()
             log.info("vonage stream %s closed: %s", call_id, stream.stats())
+
+    # -- Amazon Connect KVS fragment ingest (ADR-013, TDD v2.0 §4) -------
+    #
+    # Amazon Connect pushes nothing to the sidecar: it streams call
+    # audio into Kinesis Video Streams, and a consumer pulls it with
+    # GetMedia. This route is the consumer's handoff, not an AWS
+    # endpoint: the operator's KVS consumer reassembles complete
+    # MKV fragments and POSTs each fragment body (raw bytes) here,
+    # with the ContactId as call_id and a per-integration token.
+    # No AWS credential ever reaches this route. The consumer loop
+    # itself is not shipped (it needs the operator's AWS account
+    # and IAM credentials); see ADR-013 item 10.
+    #
+    # The token is a single-purpose, per-integration credential
+    # from SHIELDCALL_AMAZON_CONNECT_TOKENS ("id:value,..."),
+    # never the sidecar bearer token. With no tokens configured
+    # the route refuses unless the local-dev escape hatch is on.
+    # Auth is checked before the call gate (401, then 404). The
+    # call must already exist (POST /v1/calls, P2-6b), opened
+    # with the ContactId as the call_id; the adapter also checks
+    # the fragment's ContactId tag in-band when present. Only
+    # inbound (customer) frames reach the pipeline; outbound
+    # frames are counted, never scored. The route adds no new
+    # decision path: CSCF stays the production fusion, and the
+    # sidecar stays recommend-only.
+
+    def _amazon_connect_tokens() -> Dict[str, str]:
+        multi = os.environ.get("SHIELDCALL_AMAZON_CONNECT_TOKENS", "").strip()
+        tokens: Dict[str, str] = {}
+        if multi:
+            for item in multi.split(","):
+                item = item.strip()
+                if not item or ":" not in item:
+                    continue
+                tid, _, value = item.partition(":")
+                tid, value = tid.strip(), value.strip()
+                if tid and value:
+                    tokens[tid] = value
+        return tokens
+
+    @app.post("/v1/ingest/amazon-connect")
+    async def amazon_connect_ingest(request: Request):
+        call_id = (request.query_params.get("call_id") or "").strip()
+        presented = request.query_params.get("token") or ""
+        tokens = _amazon_connect_tokens()
+        if tokens:
+            if not any(hmac.compare_digest(presented, v) for v in tokens.values()):
+                raise HTTPException(status_code=401, detail="invalid token")
+        elif not _unauthenticated_allowed():
+            raise HTTPException(status_code=401, detail="token required")
+        if not call_id:
+            raise HTTPException(status_code=400, detail="call_id required")
+        sess = rt.get_call(call_id)
+        if sess is None:
+            # No implicit call creation (P2-6b): opening here would
+            # let a fragment POST bypass the per-token new-call
+            # quota on POST /v1/calls and create unbounded sessions.
+            raise HTTPException(status_code=404, detail="unknown call_id")
+        body = await request.body()
+        if not body:
+            raise HTTPException(status_code=400, detail="empty fragment")
+        streams = app.state.amazon_connect_streams
+        stream = streams.get(call_id)
+        if stream is None:
+            stream = AmazonConnectStream(call_id=call_id)
+            streams[call_id] = stream
+        try:
+            frames = stream.feed_fragment(body)
+        except AmazonConnectError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        inbound = [f for f in frames if f.track == "inbound"]
+        outbound = len(frames) - len(inbound)
+        events = None
+        if inbound:
+            samples = np.concatenate([f.samples for f in inbound])
+            t0 = time.perf_counter()
+            events = sess.push_audio(samples, 8000)
+            rt.observe_frame_ms((time.perf_counter() - t0) * 1000.0)
+        result = _last_event_dict(sess, events)
+        result["frames"] = len(inbound)
+        result["outbound_frames"] = outbound
+        result["fragment_number"] = stream.fragment_number
+        return result
 
     if hosted_auth is not None:
         hosted.register_hosted_routes(app, rt, hosted_auth)
