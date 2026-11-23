@@ -119,6 +119,7 @@ class Capabilities:
         "WS /v1/ingest/telnyx",
         "WS /v1/ingest/vonage",
         "POST /v1/ingest/amazon-connect",
+        "WS /v1/ingest/freeswitch",
         "GET /docs",
         "GET /openapi.json",
     )

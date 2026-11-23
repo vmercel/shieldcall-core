@@ -32,6 +32,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 from ..application.detector import DetectorApplication
 from ..eval.corpora.independent_scripts import independent_scripts
 from ..ingest.amazon_connect import AmazonConnectError, AmazonConnectStream
+from ..ingest.freeswitch import FreeSwitchError, FreeSwitchMediaStream
 from ..ingest.telnyx import TelnyxError, TelnyxMediaStream
 from ..ingest.twilio import TwilioError, TwilioMediaStream
 from ..ingest.vonage import VonageError, VonageMediaStream
@@ -1157,6 +1158,114 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
         result["outbound_frames"] = outbound
         result["fragment_number"] = stream.fragment_number
         return result
+
+    # -- FreeSWITCH mod_audio_fork ingest (ADR-014, TDD v2.0 §4) ---------
+    #
+    # mod_audio_fork opens the stream WebSocket from its own side, so
+    # the credential travels as a `token` query parameter in the
+    # `wss-url` passed to the `uuid_audio_fork start` command (the
+    # module sends no custom HTTP headers, so a header credential
+    # is impossible). It must be a single-purpose, per-integration
+    # token from SHIELDCALL_FREESWITCH_TOKENS ("id:value,..."),
+    # never the sidecar bearer token. With no FreeSWITCH tokens
+    # configured the route refuses connections unless the local-dev
+    # escape hatch is on. The operator should also firewall the
+    # route to the FreeSWITCH host: the token appears in the
+    # dialplan and in FreeSWITCH logs.
+    #
+    # The call must already exist (POST /v1/calls, P2-6b): the
+    # operator opens it and puts that id in the websocket URI as a
+    # query parameter. The module sends no call identifier of its
+    # own; when the metadata frame carries `call_id` the adapter
+    # checks it against this binding, and when it does not, a
+    # distinct URI per call is an operator obligation (ADR-014
+    # item 9).
+    #
+    # This route sends NOTHING back over the socket: no session
+    # events, no error JSON. mod_audio_fork treats JSON text
+    # frames from the server as control events (playback, kill,
+    # transfer, disconnect), so anything ShieldCall sent back
+    # could be read as an instruction to play audio to the
+    # caller or move the call. On a protocol error the route
+    # closes with code 4400 and the reason in the close reason.
+    # The stream ends when the socket closes (the module sends
+    # no stop event); the adapter's finish() discards any
+    # partial trailing frame. The stream is recommend-only like
+    # every other ingest path: audio flows into the same
+    # pipeline and session, nothing hangs up.
+
+    def _freeswitch_tokens() -> Dict[str, str]:
+        multi = os.environ.get("SHIELDCALL_FREESWITCH_TOKENS", "").strip()
+        tokens: Dict[str, str] = {}
+        if multi:
+            for item in multi.split(","):
+                item = item.strip()
+                if not item or ":" not in item:
+                    continue
+                tid, _, value = item.partition(":")
+                tid, value = tid.strip(), value.strip()
+                if tid and value:
+                    tokens[tid] = value
+        return tokens
+
+    @app.websocket("/v1/ingest/freeswitch")
+    async def freeswitch_ingest(ws: WebSocket):
+        call_id = (ws.query_params.get("call_id") or "").strip()
+        presented = ws.query_params.get("token") or ""
+        await ws.accept()
+        tokens = _freeswitch_tokens()
+        if tokens:
+            if not any(hmac.compare_digest(presented, v) for v in tokens.values()):
+                await ws.close(code=4401)
+                return
+        elif not _unauthenticated_allowed():
+            await ws.close(code=4401)
+            return
+        if not call_id:
+            await ws.close(code=4404, reason="call_id required")
+            return
+        sess = rt.get_call(call_id)
+        if sess is None:
+            # No implicit call creation (P2-6b): opening here would let
+            # a stream bypass the per-token new-call quota on POST
+            # /v1/calls and create unbounded sessions.
+            await ws.close(code=4404, reason="unknown call_id")
+            return
+        stream = FreeSwitchMediaStream(call_id=call_id)
+        try:
+            while True:
+                msg = await ws.receive()
+                if msg.get("type") == "websocket.disconnect":
+                    break
+                try:
+                    data = msg.get("bytes")
+                    text = msg.get("text")
+                    if data is not None:
+                        frames = stream.handle_audio(data)
+                    elif text is not None:
+                        frames = stream.handle_text(text)
+                    else:
+                        continue
+                except FreeSwitchError as exc:
+                    # No error JSON: anything sent back could be
+                    # read by mod_audio_fork as a control event.
+                    await ws.close(code=4400, reason=str(exc)[:120])
+                    return
+                if frames:
+                    samples = np.concatenate([f.samples for f in frames])
+                    t0 = time.perf_counter()
+                    sess.push_audio(samples, 8000)
+                    rt.observe_frame_ms((time.perf_counter() - t0) * 1000.0)
+        except WebSocketDisconnect:
+            pass
+        except Exception as exc:
+            log.warning("freeswitch stream %s error: %s", call_id, exc)
+        finally:
+            # No stop event exists: the socket closing ends the
+            # stream. finish() is idempotent and discards a partial
+            # trailing frame rather than padding it.
+            stream.finish()
+            log.info("freeswitch stream %s closed: %s", call_id, stream.stats())
 
     if hosted_auth is not None:
         hosted.register_hosted_routes(app, rt, hosted_auth)
