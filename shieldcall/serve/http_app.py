@@ -33,6 +33,7 @@ from ..application.detector import DetectorApplication
 from ..eval.corpora.independent_scripts import independent_scripts
 from ..ingest.amazon_connect import AmazonConnectError, AmazonConnectStream
 from ..ingest.freeswitch import FreeSwitchError, FreeSwitchMediaStream
+from ..ingest.inapp import InAppError, InAppMediaStream
 from ..ingest.telnyx import TelnyxError, TelnyxMediaStream
 from ..ingest.twilio import TwilioError, TwilioMediaStream
 from ..ingest.vonage import VonageError, VonageMediaStream
@@ -1266,6 +1267,110 @@ def create_app(runtime: Optional[SidecarRuntime] = None) -> FastAPI:
             # trailing frame rather than padding it.
             stream.finish()
             log.info("freeswitch stream %s closed: %s", call_id, stream.stats())
+
+    # -- In-app VoIP/WebRTC ingest (ADR-015, TDD v2.0 §4) ----------------
+    #
+    # The app itself opens this WebSocket from its Encoded
+    # Transform fork, so unlike the provider routes the sender is
+    # ShieldCall's own client, and the route answers with session
+    # events (the Twilio/Telnyx pattern) rather than staying
+    # silent (the FreeSWITCH pattern: mod_audio_fork would read
+    # server JSON as control events, which does not apply here).
+    # The credential travels as a `token` query parameter: a
+    # browser/React Native WebSocket cannot send a custom
+    # Authorization header. It must be a single-purpose,
+    # per-integration token from SHIELDCALL_INAPP_TOKENS
+    # ("id:value,..."), never the sidecar bearer token, and with
+    # no tokens configured the route refuses connections unless
+    # the local-dev escape hatch is on. Accepting the user's
+    # Supabase access token over this socket is a follow-up
+    # (ADR-015): the app already sends it to the REST routes
+    # under P2-6d, but no WebSocket JWT verification exists yet.
+    #
+    # The call must already exist (POST /v1/calls, P2-6b): the
+    # app opens it and puts that id in the websocket URI. A
+    # hello `call_id` that disagrees is refused by the adapter.
+    # Binary WebSocket frames are not read: an Opus packet with
+    # no seq or timestamp cannot be ordered, so the fork must
+    # send JSON media messages (ADR-015 item 3). The stream is
+    # recommend-only like every other ingest path: audio flows
+    # into the same pipeline and session, nothing hangs up.
+
+    def _inapp_tokens() -> Dict[str, str]:
+        multi = os.environ.get("SHIELDCALL_INAPP_TOKENS", "").strip()
+        tokens: Dict[str, str] = {}
+        if multi:
+            for item in multi.split(","):
+                item = item.strip()
+                if not item or ":" not in item:
+                    continue
+                tid, _, value = item.partition(":")
+                tid, value = tid.strip(), value.strip()
+                if tid and value:
+                    tokens[tid] = value
+        return tokens
+
+    @app.websocket("/v1/ingest/inapp")
+    async def inapp_ingest(ws: WebSocket):
+        call_id = (ws.query_params.get("call_id") or "").strip()
+        presented = ws.query_params.get("token") or ""
+        await ws.accept()
+        tokens = _inapp_tokens()
+        if tokens:
+            if not any(hmac.compare_digest(presented, v) for v in tokens.values()):
+                await ws.close(code=4401)
+                return
+        elif not _unauthenticated_allowed():
+            await ws.close(code=4401)
+            return
+        if not call_id:
+            await ws.close(code=4404, reason="call_id required")
+            return
+        sess = rt.get_call(call_id)
+        if sess is None:
+            # No implicit call creation (P2-6b): opening here would let
+            # a fork bypass the per-token new-call quota on POST
+            # /v1/calls and create unbounded sessions.
+            await ws.close(code=4404, reason="unknown call_id")
+            return
+        stream = InAppMediaStream(call_id=call_id)
+        try:
+            while True:
+                msg = await ws.receive_json()
+                try:
+                    frames = stream.handle_message(msg)
+                except InAppError as exc:
+                    await ws.send_json({"type": "error", "detail": str(exc)})
+                    await ws.close(code=4400, reason=str(exc)[:120])
+                    return
+                if frames:
+                    samples = np.concatenate([f.samples for f in frames])
+                    t0 = time.perf_counter()
+                    events = sess.push_audio(samples, 8000)
+                    rt.observe_frame_ms((time.perf_counter() - t0) * 1000.0)
+                    await ws.send_json(_last_event_dict(sess, events))
+                if stream.is_finished:
+                    log.info(
+                        "inapp stream %s closed: %s",
+                        call_id,
+                        stream.stats(),
+                    )
+                    await ws.send_json(_last_event_dict(sess))
+                    await ws.close(code=1000)
+                    return
+        except WebSocketDisconnect:
+            return
+        except Exception as exc:
+            try:
+                await ws.send_json({"type": "error", "detail": str(exc)})
+            except Exception:
+                pass
+        finally:
+            # The socket closing ends the stream. finish() is
+            # idempotent and discards a partial trailing frame
+            # rather than padding it.
+            stream.finish()
+            log.info("inapp stream %s closed: %s", call_id, stream.stats())
 
     if hosted_auth is not None:
         hosted.register_hosted_routes(app, rt, hosted_auth)

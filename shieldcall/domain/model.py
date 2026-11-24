@@ -120,6 +120,7 @@ class Capabilities:
         "WS /v1/ingest/vonage",
         "POST /v1/ingest/amazon-connect",
         "WS /v1/ingest/freeswitch",
+        "WS /v1/ingest/inapp",
         "GET /docs",
         "GET /openapi.json",
     )

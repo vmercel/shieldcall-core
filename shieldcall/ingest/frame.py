@@ -42,6 +42,15 @@ class MediaFrame:
       silently bridge it.
     - source: adapter that produced the frame ("twilio", "asterisk",
       ...). Recorded for audit, never used for branching.
+    - source_codec: codec as received, before decoding ("opus",
+      "PCMU", ...), or "" when the adapter did not record one.
+      Codec identity is preserved for the Channel Passport rather
+      than discarded at decode (TDD section 4.1); adapters that
+      predate this field leave it empty, which means unknown,
+      never a guess.
+    - source_rate: sample rate as received, in Hz, or 0 when
+      unknown. Never upsampled to fake bandwidth: a frame decoded
+      to 8 kHz from 48 kHz Opus still records 48000 here.
     """
 
     call_id: str
@@ -53,3 +62,5 @@ class MediaFrame:
     sample_rate: int = 8000
     discontinuous: bool = False
     source: str = ""
+    source_codec: str = ""
+    source_rate: int = 0
