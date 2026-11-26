@@ -1,5 +1,24 @@
 from .scorer import LinguisticFraudScorer, LinguisticScore, PATTERN_GROUPS
 from .discourse import ScamDiscourseGraph, DiscourseState, STAGES
+from .factorial import (
+    ACTIONS,
+    HARMFUL_ACTIONS,
+    CallTranscript,
+    DialogueTurn,
+    FactorialConfig,
+    FactorialDiscourseModel,
+    FactorialState,
+    LeadTimeComparison,
+    LeadTimeReport,
+    TACTICS,
+    TfidfPrefixBaseline,
+    compare_lead_time,
+    evaluate_lead_time,
+    factorial_scorer_for,
+    harmful_probability,
+    requested_action_active,
+    threshold_at_false_alert_budget,
+)
 from .asr_bridge import ASRBridge, PassthroughASR, ScheduledTranscriptASR, TranscriptFragment
 from .deepgram_stream import DeepgramStreamingASR, LoopbackTransport, TransportError
 from .provider import make_asr_from_env
@@ -11,6 +30,23 @@ __all__ = [
     "ScamDiscourseGraph",
     "DiscourseState",
     "STAGES",
+    "ACTIONS",
+    "HARMFUL_ACTIONS",
+    "CallTranscript",
+    "DialogueTurn",
+    "FactorialConfig",
+    "FactorialDiscourseModel",
+    "FactorialState",
+    "LeadTimeComparison",
+    "LeadTimeReport",
+    "TACTICS",
+    "TfidfPrefixBaseline",
+    "compare_lead_time",
+    "evaluate_lead_time",
+    "factorial_scorer_for",
+    "harmful_probability",
+    "requested_action_active",
+    "threshold_at_false_alert_budget",
     "ASRBridge",
     "PassthroughASR",
     "ScheduledTranscriptASR",
