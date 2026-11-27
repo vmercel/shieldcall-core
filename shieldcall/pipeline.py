@@ -9,13 +9,20 @@ or mobile FFI later.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Iterator, List, Optional
+from typing import TYPE_CHECKING, Iterator, List, Optional
 
 import numpy as np
 
 from .audio.preprocessor import TelephonyPreprocessor, Frame
 from .audio.channel import ChannelConfig
 from .acoustic.scorer import AcousticDeepfakeScorer, AcousticScore
+from .acoustic.cascade import prob_to_llr
+from .linguistic.factorial import FactorialState
+
+if TYPE_CHECKING:
+    # Imported lazily in __init__: importing the runtime package
+    # at module level would cycle (runtime imports the pipeline).
+    from .runtime.shadow import ShadowObserver, ShadowWindowRecord
 from .linguistic.scorer import LinguisticFraudScorer, LinguisticScore
 from .linguistic.asr_bridge import ASRBridge, PassthroughASR, TranscriptFragment
 from .fusion.engine import FusionEngine, FusedRisk
@@ -37,6 +44,21 @@ class PipelineConfig:
     use_conformal: bool = True
     channel: Optional[ChannelConfig] = None
     fuse_every_n_frames: int = 5
+    # Shadow wiring (ADR-018): the cascade and the factorial
+    # discourse model run beside CSCF and are recorded, never
+    # fused. False restores the pre-ADR-018 pipeline exactly.
+    shadow_enabled: bool = True
+    # Neutral LLR point, not a fitted operating point (ADR-016).
+    # Set from benign shadow traffic before any live use.
+    shadow_tau0: float = 0.0
+    # Audit seed: None seeds from OS entropy, the only correct
+    # choice for production. Fixed seeds are for tests only.
+    shadow_audit_seed: Optional[int] = None
+    # Phase 8 model file for Tier 1. None means no scorer is
+    # configured: triggered windows are recorded with the
+    # reason, and no score is invented.
+    shadow_tier1_model_path: Optional[str] = None
+    shadow_requested_action_threshold: float = 0.5
 
 
 @dataclass
@@ -46,6 +68,11 @@ class PipelineEvent:
     linguistic: Optional[LinguisticScore]
     risk: Optional[FusedRisk]
     transcripts: List[TranscriptFragment] = field(default_factory=list)
+    # Shadow-only (ADR-018): factorial state after this event's
+    # turns, and the cascade window record when a window
+    # completed on this frame. Neither affects the risk.
+    factorial: Optional[FactorialState] = None
+    shadow_window: Optional[ShadowWindowRecord] = None
 
 
 class ShieldCallPipeline:
@@ -78,6 +105,50 @@ class ShieldCallPipeline:
         self.cusum = StreamingCUSUM()
         self.sapc = StageAlignedCoupling()
         self._last_risk: Optional[FusedRisk] = None
+        self.shadow: Optional[ShadowObserver] = None
+        if self.config.shadow_enabled:
+            # Lazy import: the runtime package imports this
+            # module, so a top-level import would cycle.
+            from .runtime.shadow import (
+                ShadowConfig,
+                ShadowObserver,
+                scorer_factory_for_model,
+            )
+
+            factory = None
+            if self.config.shadow_tier1_model_path is not None:
+                factory = scorer_factory_for_model(
+                    self.config.shadow_tier1_model_path
+                )
+            self.shadow = ShadowObserver(
+                ShadowConfig(
+                    window_sec=2.0,
+                    sample_rate=self.config.target_sr,
+                    tau0=self.config.shadow_tau0,
+                    seed=self.config.shadow_audit_seed,
+                    requested_action_threshold=self.config.shadow_requested_action_threshold,
+                ),
+                scorer_factory=factory,
+            )
+
+    @property
+    def shadow_windows(self) -> List[ShadowWindowRecord]:
+        """Completed cascade windows, in order (empty when shadow is off)."""
+        return self.shadow.windows if self.shadow is not None else []
+
+    @property
+    def last_factorial(self) -> Optional[FactorialState]:
+        """Latest factorial state, or None when shadow is off / no turn yet."""
+        return self.shadow.last_factorial if self.shadow is not None else None
+
+    def drain_shadow(self, timeout_sec: float = 5.0) -> bool:
+        """Wait for queued Tier 1 windows to finish; True when drained."""
+        return self.shadow.drain_shadow(timeout_sec) if self.shadow is not None else True
+
+    def close(self) -> None:
+        """Stop the shadow worker thread, if one was started. Idempotent."""
+        if self.shadow is not None:
+            self.shadow.close()
 
     def reset(self) -> None:
         self.preprocessor.reset()
@@ -89,6 +160,8 @@ class ShieldCallPipeline:
         self.cusum.reset()
         self.sapc.reset()
         self._last_risk = None
+        if self.shadow is not None:
+            self.shadow.reset()
 
     def push_audio(self, samples: np.ndarray, sample_rate: int) -> List[PipelineEvent]:
         events: List[PipelineEvent] = []
@@ -101,6 +174,12 @@ class ShieldCallPipeline:
         frag = self.asr.push_text(text, timestamp_sec)
         score = self.linguistic.update(frag.text, frag.timestamp_sec)
         self.fusion.update_linguistic(score)
+        if self.shadow is not None:
+            # No speaker is supplied on this path; far-end is
+            # the safe default (ADR-018).
+            self.shadow.observe_turn(
+                frag.text, frag.timestamp_sec, "far", score.discourse_stage
+            )
         return score
 
     def _attach_handoff(self, risk: FusedRisk) -> FusedRisk:
@@ -121,10 +200,12 @@ class ShieldCallPipeline:
     def _process_frame(self, frame: Frame) -> PipelineEvent:
         ac = self.acoustic.score_frame(frame)
         self.fusion.update_acoustic(ac)
+        alarm = False
         if ac.is_speech:
-            alarm = self.cusum.update(ac.synthetic_prob, frame.timestamp_sec)
-            if alarm is not None:
-                self.sapc.observe_alarm(alarm.timestamp_sec)
+            cusum_alarm = self.cusum.update(ac.synthetic_prob, frame.timestamp_sec)
+            if cusum_alarm is not None:
+                alarm = True
+                self.sapc.observe_alarm(cusum_alarm.timestamp_sec)
 
         if ac.embedding is not None and ac.is_speech:
             gap = self.acoustic.memory.coverage_gap(ac.embedding)
@@ -132,15 +213,37 @@ class ShieldCallPipeline:
 
         transcripts = self.asr.push_audio(frame.samples, frame.sample_rate, frame.timestamp_sec)
         li_score: Optional[LinguisticScore] = None
+        factorial: Optional[FactorialState] = None
         for frag in transcripts:
             li_score = self.linguistic.update(frag.text, frag.timestamp_sec)
             self.fusion.update_linguistic(li_score)
             self.sapc.observe_stage(li_score.discourse_stage, frag.timestamp_sec)
+            if self.shadow is not None:
+                factorial = self.shadow.observe_turn(
+                    frag.text, frag.timestamp_sec, frag.speaker, li_score.discourse_stage
+                )
 
         risk: Optional[FusedRisk] = None
         if frame.frame_index % self.config.fuse_every_n_frames == 0:
             risk = self._attach_handoff(self.fusion.fuse(frame.timestamp_sec))
             self._last_risk = risk
+
+        shadow_window: Optional[ShadowWindowRecord] = None
+        if self.shadow is not None:
+            # Frames overlap (25 ms frame, 10 ms hop), so only
+            # the newest hop advances the shadow window; the
+            # whole frame would double-count audio (ADR-018).
+            hop_len = max(1, self.preprocessor.hop_len)
+            hop = frame.samples[-hop_len:] if len(frame.samples) > hop_len else frame.samples
+            hop_t = frame.timestamp_sec + (len(frame.samples) - len(hop)) / frame.sample_rate
+            shadow_window = self.shadow.observe_frame(
+                hop,
+                ac.is_speech,
+                hop_t,
+                prob_to_llr(ac.synthetic_prob),
+                alarm,
+                risk,
+            )
 
         return PipelineEvent(
             frame=frame,
@@ -148,6 +251,8 @@ class ShieldCallPipeline:
             linguistic=li_score,
             risk=risk,
             transcripts=transcripts,
+            factorial=factorial,
+            shadow_window=shadow_window,
         )
 
     def stream(

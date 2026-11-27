@@ -19,6 +19,7 @@ from .capacity import CapacityPlan, plan_capacity
 from .health import Health
 from .runtime import SidecarRuntime, ShedError
 from .session import CallSession, SessionEvent
+from .shadow import ShadowConfig, ShadowObserver, ShadowWindowRecord
 from .slo import SLO
 
 __all__ = [
@@ -29,6 +30,9 @@ __all__ = [
     "Health",
     "SLO",
     "SessionEvent",
+    "ShadowConfig",
+    "ShadowObserver",
+    "ShadowWindowRecord",
     "ShedError",
     "SidecarRuntime",
     "plan_capacity",
