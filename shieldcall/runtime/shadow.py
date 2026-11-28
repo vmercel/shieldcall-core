@@ -155,6 +155,12 @@ class ShadowWindowRecord:
     tier1_model_sha256: Optional[str] = None
     tier1_unavailable_reason: Optional[str] = None
     tier1_dropped: bool = False
+    # Wall-clock stamps for time-to-warning measurement
+    # (ADR-019). Set from time.monotonic, never from audio
+    # time. The Tier 1 stamp stays None on any record that
+    # was never scored, so no latency is computed from it.
+    decision_monotonic_sec: Optional[float] = None
+    tier1_monotonic_sec: Optional[float] = None
 
 
 # A scorer scores one window and returns a Tier1Result.
@@ -296,6 +302,7 @@ class ShadowObserver:
             sdtg_stage=self._last_sdtg_stage,
             cscf_risk_score=float(cscf.risk_score) if cscf is not None else None,
             cscf_tier=str(cscf.tier) if cscf is not None else None,
+            decision_monotonic_sec=time.monotonic(),
         )
         self._llr_sum = 0.0
         self._llr_samples = 0
@@ -423,6 +430,7 @@ class ShadowObserver:
             record.tier1_llr = result.llr
             record.tier1_calibrated = bool(result.calibrated)
             record.tier1_model_sha256 = result.model_sha256
+            record.tier1_monotonic_sec = time.monotonic()
 
     # -- reading and lifecycle ----------------------------------------
 
